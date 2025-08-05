@@ -13,9 +13,14 @@ const EnhancedTaskList = () => {
   const [newTask, setNewTask] = useState('');
   const [newTaskPriority, setNewTaskPriority] = useState<'low' | 'medium' | 'high' | 'urgent'>('medium');
   
-  const { data: tasks = [], isLoading } = useTasks();
+  const { data: tasks = [], isLoading, error } = useTasks();
   const createTask = useCreateTask();
   const updateTask = useUpdateTask();
+
+  // Add console log to debug
+  console.log('Tasks data:', tasks);
+  console.log('Loading:', isLoading);
+  console.log('Error:', error);
 
   const addTask = () => {
     if (newTask.trim()) {
@@ -57,7 +62,29 @@ const EnhancedTaskList = () => {
   };
 
   if (isLoading) {
-    return <Card className="p-6"><div className="animate-pulse">Loading tasks...</div></Card>;
+    return (
+      <Card className="p-6">
+        <div className="animate-pulse">
+          <div className="h-4 bg-gray-200 rounded w-1/4 mb-4"></div>
+          <div className="h-10 bg-gray-200 rounded mb-4"></div>
+          <div className="space-y-3">
+            <div className="h-16 bg-gray-200 rounded"></div>
+            <div className="h-16 bg-gray-200 rounded"></div>
+            <div className="h-16 bg-gray-200 rounded"></div>
+          </div>
+        </div>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="p-6">
+        <div className="text-red-600">
+          <p>Error loading tasks: {error.message}</p>
+        </div>
+      </Card>
+    );
   }
 
   const completedCount = tasks.filter(task => task.status === 'completed').length;
@@ -67,17 +94,17 @@ const EnhancedTaskList = () => {
     <Card className="p-6 bg-white shadow-lg border-0">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-gray-900">Tasks</h2>
+          <h2 className="text-xl font-semibold text-gray-900">المهام</h2>
           <div className="flex items-center gap-2 text-sm text-gray-600">
             <div className="w-2 h-2 bg-productivity-green rounded-full"></div>
-            {completedCount} of {totalCount} completed
+            {completedCount} من {totalCount} مكتملة
           </div>
         </div>
 
         <div className="space-y-3">
           <div className="flex gap-2">
             <Input
-              placeholder="Add a new task..."
+              placeholder="إضافة مهمة جديدة..."
               value={newTask}
               onChange={(e) => setNewTask(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && addTask()}
@@ -88,10 +115,10 @@ const EnhancedTaskList = () => {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="low">Low</SelectItem>
-                <SelectItem value="medium">Medium</SelectItem>
-                <SelectItem value="high">High</SelectItem>
-                <SelectItem value="urgent">Urgent</SelectItem>
+                <SelectItem value="low">منخفضة</SelectItem>
+                <SelectItem value="medium">متوسطة</SelectItem>
+                <SelectItem value="high">عالية</SelectItem>
+                <SelectItem value="urgent">عاجلة</SelectItem>
               </SelectContent>
             </Select>
             <Button
@@ -108,7 +135,7 @@ const EnhancedTaskList = () => {
           {tasks.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               <Clock className="w-8 h-8 mx-auto mb-2 opacity-50" />
-              <p>No tasks yet. Add one above to get started!</p>
+              <p>لا توجد مهام حتى الآن. أضف مهمة أعلاه للبدء!</p>
             </div>
           ) : (
             tasks.map((task) => (
@@ -148,10 +175,13 @@ const EnhancedTaskList = () => {
                     <div className="flex items-center gap-2 flex-shrink-0">
                       <Badge className={`text-xs ${getPriorityColor(task.priority)}`}>
                         <Flag className="w-3 h-3 mr-1" />
-                        {task.priority}
+                        {task.priority === 'low' ? 'منخفضة' : 
+                         task.priority === 'medium' ? 'متوسطة' :
+                         task.priority === 'high' ? 'عالية' : 'عاجلة'}
                       </Badge>
                       <Badge className={`text-xs ${getStatusColor(task.status)}`}>
-                        {task.status.replace('_', ' ')}
+                        {task.status === 'completed' ? 'مكتملة' :
+                         task.status === 'in_progress' ? 'قيد التنفيذ' : 'معلقة'}
                       </Badge>
                     </div>
                   </div>
@@ -174,10 +204,10 @@ const EnhancedTaskList = () => {
                     {task.due_date && (
                       <span className="flex items-center gap-1">
                         <Clock className="w-3 h-3" />
-                        Due {format(new Date(task.due_date), 'MMM d')}
+                        تاريخ الانتهاء {format(new Date(task.due_date), 'MMM d')}
                       </span>
                     )}
-                    <span>Created {format(new Date(task.created_at), 'MMM d')}</span>
+                    <span>تم الإنشاء {format(new Date(task.created_at), 'MMM d')}</span>
                   </div>
                 </div>
               </div>
@@ -189,7 +219,7 @@ const EnhancedTaskList = () => {
           <div className="pt-4 border-t border-gray-100">
             <div className="flex items-center gap-2 text-sm text-productivity-green">
               <Check className="w-4 h-4" />
-              <span>Great job! You've completed {completedCount} task{completedCount !== 1 ? 's' : ''}.</span>
+              <span>أحسنت! لقد أكملت {completedCount} مهمة{completedCount !== 1 ? '' : ''}.</span>
             </div>
           </div>
         )}
