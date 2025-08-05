@@ -18,8 +18,7 @@ const GroupInfo = ({ groupId }: GroupInfoProps) => {
         .select(`
           *,
           industry_sectors(name, icon),
-          countries(name, flag_emoji),
-          profiles!groups_creator_id_fkey(full_name, company_name)
+          countries(name, flag_emoji)
         `)
         .eq('id', groupId)
         .single();
@@ -27,6 +26,23 @@ const GroupInfo = ({ groupId }: GroupInfoProps) => {
       if (error) throw error;
       return data;
     },
+  });
+
+  const { data: creatorProfile } = useQuery({
+    queryKey: ['creator-profile', group?.creator_id],
+    queryFn: async () => {
+      if (!group?.creator_id) return null;
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('full_name, company_name')
+        .eq('id', group.creator_id)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!group?.creator_id,
   });
 
   const getStatusColor = (status: string) => {
@@ -75,8 +91,8 @@ const GroupInfo = ({ groupId }: GroupInfoProps) => {
             {group.name}
           </h1>
           <p className="text-gray-600">
-            Created by {group.profiles?.full_name || 'Unknown'} 
-            {group.profiles?.company_name && ` from ${group.profiles.company_name}`}
+            Created by {creatorProfile?.full_name || 'Unknown'} 
+            {creatorProfile?.company_name && ` from ${creatorProfile.company_name}`}
           </p>
         </div>
         <Badge className={`${getStatusColor(group.status)} border-0`}>
