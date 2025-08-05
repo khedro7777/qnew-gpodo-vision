@@ -36,8 +36,8 @@ const Dashboard = () => {
             <div className="flex items-center gap-3">
               <Shield className="w-5 h-5 text-yellow-600" />
               <div>
-                <h3 className="font-semibold text-yellow-900">وضع تجريبي - Demo Mode</h3>
-                <p className="text-sm text-yellow-700">المصادقة معطلة مؤقتاً • البيانات وهمية للتطوير</p>
+                <h3 className="font-semibold text-yellow-900">Demo Mode - Development Version</h3>
+                <p className="text-sm text-yellow-700">Authentication temporarily disabled • Mock data for development</p>
               </div>
             </div>
           </Card>
@@ -47,7 +47,7 @@ const Dashboard = () => {
           
           {/* Enhanced Stats Overview */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">نظرة عامة على اليوم</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Today's Overview</h2>
             <EnhancedStats />
           </section>
 

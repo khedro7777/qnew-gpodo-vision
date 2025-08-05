@@ -31,29 +31,29 @@ const ClientDashboard = () => {
             <div className="flex items-center gap-3">
               <Shield className="w-5 h-5 text-yellow-600" />
               <div>
-                <h3 className="font-semibold text-yellow-900">وضع تجريبي - Demo Mode</h3>
-                <p className="text-sm text-yellow-700">المصادقة معطلة مؤقتاً • البيانات وهمية للتطوير</p>
+                <h3 className="font-semibold text-yellow-900">Demo Mode - Development Version</h3>
+                <p className="text-sm text-yellow-700">Authentication temporarily disabled • Mock data for development</p>
               </div>
             </div>
           </Card>
 
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">لوحة تحكم العميل</h1>
-            <p className="text-gray-600">مرحباً بك، {profile?.full_name || profile?.email}</p>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Client Dashboard</h1>
+            <p className="text-gray-600">Welcome, {profile?.full_name || profile?.email}</p>
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-5 lg:grid-cols-10 mb-8">
-              <TabsTrigger value="my-groups">مجموعاتي</TabsTrigger>
-              <TabsTrigger value="group-rooms">غرف المجموعات</TabsTrigger>
-              <TabsTrigger value="wallet">المحفظة</TabsTrigger>
-              <TabsTrigger value="mcp-assistant">مساعد MCP</TabsTrigger>
-              <TabsTrigger value="discount-offers">عروض الخصم</TabsTrigger>
-              <TabsTrigger value="arbitration">التحكيم</TabsTrigger>
-              <TabsTrigger value="archive">الأرشيف</TabsTrigger>
-              <TabsTrigger value="store">المتجر</TabsTrigger>
-              <TabsTrigger value="company-formation">تكوين الشركة</TabsTrigger>
-              <TabsTrigger value="notifications">الإشعارات</TabsTrigger>
+              <TabsTrigger value="my-groups">My Groups</TabsTrigger>
+              <TabsTrigger value="group-rooms">Group Rooms</TabsTrigger>
+              <TabsTrigger value="wallet">Wallet</TabsTrigger>
+              <TabsTrigger value="mcp-assistant">MCP Assistant</TabsTrigger>
+              <TabsTrigger value="discount-offers">Discount Offers</TabsTrigger>
+              <TabsTrigger value="arbitration">Arbitration</TabsTrigger>
+              <TabsTrigger value="archive">Archive</TabsTrigger>
+              <TabsTrigger value="store">Store</TabsTrigger>
+              <TabsTrigger value="company-formation">Company Formation</TabsTrigger>
+              <TabsTrigger value="notifications">Notifications</TabsTrigger>
             </TabsList>
 
             <TabsContent value="my-groups">
