@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Plus, Check, Clock, Flag, User } from 'lucide-react';
+import { Plus, Check, Clock, Flag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
@@ -17,13 +17,13 @@ const EnhancedTaskList = () => {
   const createTask = useCreateTask();
   const updateTask = useUpdateTask();
 
-  // Add console log to debug
-  console.log('Tasks data:', tasks);
-  console.log('Loading:', isLoading);
-  console.log('Error:', error);
+  console.log('Tasks data in component:', tasks);
+  console.log('Loading state:', isLoading);
+  console.log('Error state:', error);
 
   const addTask = () => {
     if (newTask.trim()) {
+      console.log('Adding new task:', newTask);
       createTask.mutate({
         title: newTask.trim(),
         priority: newTaskPriority,
@@ -35,6 +35,7 @@ const EnhancedTaskList = () => {
 
   const toggleTask = (id: string, currentStatus: string) => {
     const newStatus = currentStatus === 'completed' ? 'pending' : 'completed';
+    console.log('Toggling task:', id, 'from', currentStatus, 'to', newStatus);
     updateTask.mutate({ id, status: newStatus });
   };
 
@@ -73,6 +74,7 @@ const EnhancedTaskList = () => {
             <div className="h-16 bg-gray-200 rounded"></div>
           </div>
         </div>
+        <p className="text-center text-gray-500 mt-4">جاري تحميل المهام...</p>
       </Card>
     );
   }
@@ -80,8 +82,9 @@ const EnhancedTaskList = () => {
   if (error) {
     return (
       <Card className="p-6">
-        <div className="text-red-600">
-          <p>Error loading tasks: {error.message}</p>
+        <div className="text-red-600 text-center">
+          <p>خطأ في تحميل المهام</p>
+          <p className="text-sm mt-2">{error.message}</p>
         </div>
       </Card>
     );
@@ -96,7 +99,7 @@ const EnhancedTaskList = () => {
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-semibold text-gray-900">المهام</h2>
           <div className="flex items-center gap-2 text-sm text-gray-600">
-            <div className="w-2 h-2 bg-productivity-green rounded-full"></div>
+            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
             {completedCount} من {totalCount} مكتملة
           </div>
         </div>
@@ -124,7 +127,7 @@ const EnhancedTaskList = () => {
             <Button
               onClick={addTask}
               disabled={createTask.isPending}
-              className="bg-productivity-blue hover:bg-productivity-blue/90 text-white px-4"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4"
             >
               <Plus className="w-4 h-4" />
             </Button>
@@ -148,7 +151,7 @@ const EnhancedTaskList = () => {
                 }`}
               >
                 <Button
-                  onClick={() => toggleTask(task.id, task.status)}
+                  onClick={() => toggleTask(task.id, task.status || 'pending')}
                   variant="ghost"
                   size="sm"
                   disabled={updateTask.isPending}
@@ -179,7 +182,7 @@ const EnhancedTaskList = () => {
                          task.priority === 'medium' ? 'متوسطة' :
                          task.priority === 'high' ? 'عالية' : 'عاجلة'}
                       </Badge>
-                      <Badge className={`text-xs ${getStatusColor(task.status)}`}>
+                      <Badge className={`text-xs ${getStatusColor(task.status || 'pending')}`}>
                         {task.status === 'completed' ? 'مكتملة' :
                          task.status === 'in_progress' ? 'قيد التنفيذ' : 'معلقة'}
                       </Badge>
@@ -195,12 +198,6 @@ const EnhancedTaskList = () => {
                   )}
                   
                   <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
-                    {task.assigned_profile && (
-                      <span className="flex items-center gap-1">
-                        <User className="w-3 h-3" />
-                        {task.assigned_profile.full_name}
-                      </span>
-                    )}
                     {task.due_date && (
                       <span className="flex items-center gap-1">
                         <Clock className="w-3 h-3" />
@@ -217,9 +214,9 @@ const EnhancedTaskList = () => {
 
         {completedCount > 0 && (
           <div className="pt-4 border-t border-gray-100">
-            <div className="flex items-center gap-2 text-sm text-productivity-green">
+            <div className="flex items-center gap-2 text-sm text-green-600">
               <Check className="w-4 h-4" />
-              <span>أحسنت! لقد أكملت {completedCount} مهمة{completedCount !== 1 ? '' : ''}.</span>
+              <span>أحسنت! لقد أكملت {completedCount} مهمة.</span>
             </div>
           </div>
         )}

@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -7,39 +8,27 @@ export const useTasks = () => {
   return useQuery({
     queryKey: ['tasks'],
     queryFn: async () => {
+      console.log('Fetching tasks...');
+      
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user) {
+        console.log('No authenticated user');
+        return [];
+      }
+
       const { data, error } = await supabase
         .from('tasks')
-        .select(`
-          *
-        `)
+        .select('*')
+        .eq('created_by', user.user.id)
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
-      
-      // Fetch profile data separately for assigned users
-      const assignedUserIds = data?.filter(task => task.assigned_to).map(task => task.assigned_to) || [];
-      const createdUserIds = data?.map(task => task.created_by) || [];
-      const allUserIds = [...new Set([...assignedUserIds, ...createdUserIds])];
-      
-      let profilesData: any[] = [];
-      if (allUserIds.length > 0) {
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('id, full_name')
-          .in('id', allUserIds);
-        profilesData = profiles || [];
+      if (error) {
+        console.error('Error fetching tasks:', error);
+        return [];
       }
-      
-      // Map profile data to tasks
-      const tasksWithProfiles = data?.map(task => ({
-        ...task,
-        assigned_profile: task.assigned_to 
-          ? { full_name: profilesData.find(p => p.id === task.assigned_to)?.full_name || 'Unknown User' }
-          : null,
-        created_profile: { full_name: profilesData.find(p => p.id === task.created_by)?.full_name || 'Unknown User' }
-      })) || [];
-      
-      return tasksWithProfiles;
+
+      console.log('Tasks fetched successfully:', data);
+      return data || [];
     },
   });
 };
@@ -70,7 +59,7 @@ export const useCreateTask = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      toast.success('Task created successfully!');
+      toast.success('تم إنشاء المهمة بنجاح!');
     },
     onError: (error: any) => {
       toast.error(error.message);
@@ -100,7 +89,7 @@ export const useUpdateTask = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      toast.success('Task updated successfully!');
+      toast.success('تم تحديث المهمة بنجاح!');
     },
     onError: (error: any) => {
       toast.error(error.message);
@@ -108,21 +97,25 @@ export const useUpdateTask = () => {
   });
 };
 
-// Focus Sessions hooks
+// Simple focus sessions without complex relations
 export const useFocusSessions = () => {
   return useQuery({
     queryKey: ['focus_sessions'],
     queryFn: async () => {
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user) return [];
+
       const { data, error } = await supabase
         .from('focus_sessions')
-        .select(`
-          *,
-          task:tasks(title)
-        `)
+        .select('*')
+        .eq('user_id', user.user.id)
         .order('started_at', { ascending: false });
       
-      if (error) throw error;
-      return data;
+      if (error) {
+        console.error('Error fetching focus sessions:', error);
+        return [];
+      }
+      return data || [];
     },
   });
 };
@@ -183,19 +176,26 @@ export const useUpdateFocusSession = () => {
   });
 };
 
-// Notifications hooks
+// Simplified notifications
 export const useNotifications = () => {
   return useQuery({
     queryKey: ['notifications'],
     queryFn: async () => {
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user) return [];
+
       const { data, error } = await supabase
         .from('notifications')
         .select('*')
+        .eq('user_id', user.user.id)
         .order('created_at', { ascending: false })
         .limit(50);
       
-      if (error) throw error;
-      return data;
+      if (error) {
+        console.error('Error fetching notifications:', error);
+        return [];
+      }
+      return data || [];
     },
   });
 };
@@ -221,18 +221,25 @@ export const useMarkNotificationRead = () => {
   });
 };
 
-// Goals hooks
+// Simplified goals
 export const useGoals = () => {
   return useQuery({
     queryKey: ['user_goals'],
     queryFn: async () => {
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user) return [];
+
       const { data, error } = await supabase
         .from('user_goals')
         .select('*')
+        .eq('user_id', user.user.id)
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
-      return data;
+      if (error) {
+        console.error('Error fetching goals:', error);
+        return [];
+      }
+      return data || [];
     },
   });
 };
@@ -262,7 +269,7 @@ export const useCreateGoal = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user_goals'] });
-      toast.success('Goal created successfully!');
+      toast.success('تم إنشاء الهدف بنجاح!');
     },
     onError: (error: any) => {
       toast.error(error.message);
