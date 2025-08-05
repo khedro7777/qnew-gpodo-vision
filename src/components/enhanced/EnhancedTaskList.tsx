@@ -165,7 +165,7 @@ const EnhancedTaskList = () => {
                   )}
                   
                   <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
-                    {task.assigned_profile?.full_name && (
+                    {task.assigned_profile && (
                       <span className="flex items-center gap-1">
                         <User className="w-3 h-3" />
                         {task.assigned_profile.full_name}

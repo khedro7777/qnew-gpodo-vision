@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -12,8 +11,8 @@ export const useTasks = () => {
         .from('tasks')
         .select(`
           *,
-          assigned_profile:profiles!tasks_assigned_to_fkey(full_name),
-          created_profile:profiles!tasks_created_by_fkey(full_name)
+          assigned_profile:assigned_to(full_name),
+          created_profile:created_by(full_name)
         `)
         .order('created_at', { ascending: false });
       
