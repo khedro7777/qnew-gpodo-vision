@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { MapPin, Users, Clock, TrendingUp, Eye, Loader2 } from 'lucide-react';
+import { MapPin, Users, Clock, TrendingUp, Eye, Loader2, Building } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useGroups } from '@/hooks/useSupabaseData';
