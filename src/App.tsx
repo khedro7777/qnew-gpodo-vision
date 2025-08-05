@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import GatewayLanding from "./pages/GatewayLanding";
 import GroupProfile from "./pages/GroupProfile";
+import ClientDashboard from "./pages/ClientDashboard";
 
 const queryClient = new QueryClient();
 
@@ -44,6 +45,11 @@ function AppRoutes() {
       <Route path="/dashboard" element={
         <ProtectedRoute>
           <Dashboard />
+        </ProtectedRoute>
+      } />
+      <Route path="/client-dashboard" element={
+        <ProtectedRoute>
+          <ClientDashboard />
         </ProtectedRoute>
       } />
       <Route path="/gateway/:gatewayType" element={<GatewayLanding />} />
