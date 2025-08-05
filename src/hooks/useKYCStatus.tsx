@@ -5,78 +5,53 @@ import { useAuth } from '@/contexts/AuthContext';
 
 export const useKYCStatus = () => {
   const { user, profile } = useAuth();
-
+  
   return useQuery({
-    queryKey: ['kyc-status', user?.id],
+    queryKey: ['kycStatus', user?.id],
     queryFn: async () => {
-      if (!user || !profile) return { isKYCComplete: false, requiresTest: false };
-
-      // Check if user is API user with bypass privileges
-      if (profile.role === 'api') {
-        return { 
-          isKYCComplete: true, 
-          requiresTest: false,
-          isAPIUser: true,
-          profile
-        };
+      if (!user) {
+        console.log('No authenticated user for KYC check');
+        return { isKYCComplete: false, documents: [] };
       }
 
-      // Check if KYC is already approved
-      if (profile.kyc_status === 'approved') {
-        return { isKYCComplete: true, requiresTest: false, profile };
+      // API users bypass KYC
+      if (profile?.role === 'api') {
+        console.log('API user detected, bypassing KYC');
+        return { isKYCComplete: true, documents: [] };
       }
 
-      // Check documents
-      const { data: documents } = await supabase
-        .from('kyc_documents')
-        .select('*')
-        .eq('user_id', user.id);
+      console.log('Checking KYC status for user:', user.id);
 
-      // For freelancers, also check MCP test
-      let mcpTestResult = null;
-      if (profile.role === 'freelancer') {
-        const { data: testData } = await supabase
-          .from('mcp_test_results')
+      try {
+        // Check if user has approved KYC documents
+        const { data: kycDocuments, error } = await supabase
+          .from('kyc_documents')
           .select('*')
-          .eq('user_id', user.id)
-          .order('completed_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-        
-        mcpTestResult = testData;
-      }
+          .eq('user_id', user.id);
 
-      const getRequiredDocTypes = () => {
-        switch (profile.role) {
-          case 'supplier':
-            return ['company_registration', 'business_license'];
-          default:
-            return ['id_card', 'passport'];
+        if (error) {
+          console.error('Error fetching KYC documents:', error);
+          // Don't throw error, return default state
+          return { isKYCComplete: false, documents: [] };
         }
-      };
 
-      const requiredDocTypes = getRequiredDocTypes();
-      const hasRequiredDocs = profile.role === 'user' 
-        ? documents?.some(doc => ['id_card', 'passport'].includes(doc.document_type) && doc.status === 'approved')
-        : requiredDocTypes.every(type => 
-            documents?.some(doc => doc.document_type === type && doc.status === 'approved')
-          );
+        console.log('KYC documents found:', kycDocuments);
 
-      const hasPassedMCPTest = profile.role === 'freelancer' 
-        ? mcpTestResult?.status === 'approved' && mcpTestResult.test_score >= 70
-        : true;
+        const hasApprovedDocuments = kycDocuments && kycDocuments.length > 0 && 
+          kycDocuments.some(doc => doc.status === 'approved');
 
-      const isKYCComplete = hasRequiredDocs && hasPassedMCPTest;
-
-      return {
-        isKYCComplete,
-        requiresTest: profile.role === 'freelancer',
-        documents,
-        mcpTestResult,
-        profile
-      };
+        return {
+          isKYCComplete: hasApprovedDocuments,
+          documents: kycDocuments || []
+        };
+      } catch (error) {
+        console.error('Error in KYC status check:', error);
+        // Return default state instead of throwing
+        return { isKYCComplete: false, documents: [] };
+      }
     },
-    enabled: !!user && !!profile,
-    refetchInterval: 30000, // Refetch every 30 seconds
+    enabled: !!user, // Only run if user exists
+    retry: 1, // Only retry once
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 };

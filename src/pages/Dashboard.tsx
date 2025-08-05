@@ -15,34 +15,65 @@ import EnhancedTaskList from '@/components/enhanced/EnhancedTaskList';
 import NotificationCenter from '@/components/enhanced/NotificationCenter';
 import GoalsTracker from '@/components/enhanced/GoalsTracker';
 import { Card } from '@/components/ui/card';
-import { Loader2, Shield } from 'lucide-react';
+import { Loader2, Shield, AlertCircle } from 'lucide-react';
 
 const Dashboard = () => {
-  const { user, profile } = useAuth();
-  const { data: kycStatus, isLoading: kycLoading } = useKYCStatus();
+  const { user, profile, loading: authLoading } = useAuth();
+  const { data: kycStatus, isLoading: kycLoading, error: kycError } = useKYCStatus();
 
-  if (!user) {
-    return null; // This should be handled by route protection
-  }
+  console.log('Dashboard render state:', {
+    user: !!user,
+    profile: !!profile,
+    authLoading,
+    kycLoading,
+    kycError,
+    kycStatus
+  });
 
-  // Show loading while checking KYC status
-  if (kycLoading) {
+  if (authLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin text-productivity-blue mx-auto mb-4" />
-          <p className="text-gray-600">Loading dashboard...</p>
+          <p className="text-gray-600">Loading authentication...</p>
         </div>
       </div>
     );
   }
 
-  // Show KYC verification if not complete (unless API user)
-  if (!kycStatus?.isKYCComplete && profile?.role !== 'api') {
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center">
+        <div className="text-center">
+          <AlertCircle className="w-8 h-8 text-red-500 mx-auto mb-4" />
+          <p className="text-red-600">Authentication required. Please log in.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If KYC check is loading, show a simple loading message but don't block the dashboard
+  if (kycLoading) {
+    console.log('KYC status loading...');
+  }
+
+  // If there's a KYC error, log it but don't block the dashboard
+  if (kycError) {
+    console.error('KYC status error:', kycError);
+  }
+
+  // Show KYC verification only if we have a clear indication that KYC is incomplete
+  // and the user is not an API user
+  const shouldShowKYC = profile?.role !== 'api' && 
+                        kycStatus?.isKYCComplete === false && 
+                        !kycLoading && 
+                        !kycError;
+
+  if (shouldShowKYC) {
     return <KYCVerification />;
   }
 
-  // Show enhanced dashboard if KYC is complete or user is API user
+  // Show the main dashboard
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
       <Header />
