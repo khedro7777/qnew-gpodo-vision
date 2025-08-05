@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -11,14 +10,36 @@ export const useTasks = () => {
       const { data, error } = await supabase
         .from('tasks')
         .select(`
-          *,
-          assigned_profile:profiles!assigned_to(full_name),
-          created_profile:profiles!created_by(full_name)
+          *
         `)
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data;
+      
+      // Fetch profile data separately for assigned users
+      const assignedUserIds = data?.filter(task => task.assigned_to).map(task => task.assigned_to) || [];
+      const createdUserIds = data?.map(task => task.created_by) || [];
+      const allUserIds = [...new Set([...assignedUserIds, ...createdUserIds])];
+      
+      let profilesData: any[] = [];
+      if (allUserIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, full_name')
+          .in('id', allUserIds);
+        profilesData = profiles || [];
+      }
+      
+      // Map profile data to tasks
+      const tasksWithProfiles = data?.map(task => ({
+        ...task,
+        assigned_profile: task.assigned_to 
+          ? { full_name: profilesData.find(p => p.id === task.assigned_to)?.full_name || 'Unknown User' }
+          : null,
+        created_profile: { full_name: profilesData.find(p => p.id === task.created_by)?.full_name || 'Unknown User' }
+      })) || [];
+      
+      return tasksWithProfiles;
     },
   });
 };
