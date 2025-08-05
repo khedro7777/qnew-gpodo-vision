@@ -54,11 +54,11 @@ const Header = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-productivity-blue to-productivity-purple rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
               <Clock className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-gray-900">GPODO</h1>
+              <h1 className="text-xl font-bold text-gray-900">GPO SMART</h1>
               <p className="text-xs text-gray-600">Smart B2B Platform</p>
             </div>
           </div>
@@ -111,6 +111,8 @@ const Header = () => {
                   <DropdownMenuItem>🇨🇦 Canada</DropdownMenuItem>
                   <DropdownMenuItem>🇦🇺 Australia</DropdownMenuItem>
                   <DropdownMenuItem>🇩🇪 Germany</DropdownMenuItem>
+                  <DropdownMenuItem>🇸🇦 Saudi Arabia</DropdownMenuItem>
+                  <DropdownMenuItem>🇦🇪 United Arab Emirates</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
 
@@ -126,6 +128,8 @@ const Header = () => {
                   <DropdownMenuItem>EUR - Euro</DropdownMenuItem>
                   <DropdownMenuItem>GBP - British Pound</DropdownMenuItem>
                   <DropdownMenuItem>CAD - Canadian Dollar</DropdownMenuItem>
+                  <DropdownMenuItem>SAR - Saudi Riyal</DropdownMenuItem>
+                  <DropdownMenuItem>AED - UAE Dirham</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -134,7 +138,8 @@ const Header = () => {
             <nav className="flex items-center gap-4 text-sm">
               <a href="#about" className="text-gray-600 hover:text-gray-900 transition-colors">About Us</a>
               <a href="#how-it-works" className="text-gray-600 hover:text-gray-900 transition-colors">How It Works</a>
-              <a href="#support" className="text-gray-600 hover:text-gray-900 transition-colors">Help & Support</a>
+              <a href="#founders-message" className="text-gray-600 hover:text-gray-900 transition-colors">Founder's Message</a>
+              <a href="#support" className="text-gray-600 hover:text-gray-900 transition-colors">Support</a>
             </nav>
 
             {/* Auth Section */}
@@ -163,6 +168,10 @@ const Header = () => {
                     <DropdownMenuSeparator />
                     <DropdownMenuItem>
                       <User className="mr-2 h-4 w-4" />
+                      Dashboard
+                    </DropdownMenuItem>
+                    <DropdownMenuItem>
+                      <User className="mr-2 h-4 w-4" />
                       Profile
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
@@ -177,7 +186,7 @@ const Header = () => {
                   <Button variant="ghost" size="sm" onClick={() => setShowAuthModal(true)}>
                     Login
                   </Button>
-                  <Button size="sm" className="bg-productivity-blue hover:bg-productivity-blue/90" onClick={() => setShowAuthModal(true)}>
+                  <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={() => setShowAuthModal(true)}>
                     Create Account
                   </Button>
                 </>
@@ -204,14 +213,34 @@ const Header = () => {
                 <span className="text-sm font-medium text-gray-700">Quick Links</span>
                 <a href="#about" className="text-sm text-gray-600 hover:text-gray-900">About Us</a>
                 <a href="#how-it-works" className="text-sm text-gray-600 hover:text-gray-900">How It Works</a>
-                <a href="#support" className="text-sm text-gray-600 hover:text-gray-900">Help & Support</a>
+                <a href="#founders-message" className="text-sm text-gray-600 hover:text-gray-900">Founder's Message</a>
+                <a href="#support" className="text-sm text-gray-600 hover:text-gray-900">Support</a>
               </div>
+              
+              <div className="flex flex-col gap-2">
+                <span className="text-sm font-medium text-gray-700">Settings</span>
+                <div className="flex gap-2">
+                  <Button variant="ghost" size="sm" className="gap-1 flex-1">
+                    <Globe className="w-4 h-4" />
+                    EN
+                  </Button>
+                  <Button variant="ghost" size="sm" className="gap-1 flex-1">
+                    <MapPin className="w-4 h-4" />
+                    US
+                  </Button>
+                  <Button variant="ghost" size="sm" className="gap-1 flex-1">
+                    <DollarSign className="w-4 h-4" />
+                    USD
+                  </Button>
+                </div>
+              </div>
+              
               {!user && (
                 <div className="flex gap-2">
                   <Button variant="ghost" size="sm" onClick={() => setShowAuthModal(true)}>
                     Login
                   </Button>
-                  <Button size="sm" className="bg-productivity-blue hover:bg-productivity-blue/90" onClick={() => setShowAuthModal(true)}>
+                  <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={() => setShowAuthModal(true)}>
                     Create Account
                   </Button>
                 </div>

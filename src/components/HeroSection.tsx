@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Search, ArrowRight, Users, Building, Briefcase } from 'lucide-react';
+import { Search, ArrowRight, Users, Building, Briefcase, ShieldCheck, Globe, Handshake } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { 
   Select, 
@@ -28,75 +28,111 @@ const HeroSection = () => {
     // TODO: Implement search functionality
   };
 
+  const portalGateways = [
+    { value: 'purchasing', label: 'Cooperative Purchasing', icon: '🛒' },
+    { value: 'marketing', label: 'Cooperative Marketing', icon: '📈' },
+    { value: 'formation', label: 'Company Formation', icon: '🏢' },
+    { value: 'investment', label: 'Investment Groups', icon: '💰' },
+    { value: 'suppliers', label: 'Suppliers', icon: '🏭' },
+    { value: 'freelancers', label: 'Freelancers', icon: '👨‍💻' },
+    { value: 'teams', label: 'Freelancer Teams', icon: '👥' },
+    { value: 'services', label: 'Service Providers', icon: '🛠️' },
+    { value: 'products', label: 'Product Listings', icon: '📦' },
+    { value: 'arbitration', label: 'Arbitration & Documentation', icon: '⚖️' },
+    { value: 'requests', label: 'Arbitration Requests', icon: '📋' },
+    { value: 'negotiation', label: 'Smart Negotiation Tools', icon: '🤝' }
+  ];
+
   return (
     <section className="py-16 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-12">
+          <div className="mb-6">
+            <span className="text-sm font-medium text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
+              🌍 International Commercial Law Compliant
+            </span>
+          </div>
+          
           <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
-            Collaborative Intelligence for{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-productivity-blue to-productivity-purple">
-              Smarter B2B Contracting
+            GPO SMART Platform
+            <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
+              Smart B2B Collaboration
             </span>
           </h1>
           
-          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-            Connect, collaborate, and succeed with our intelligent platform designed 
-            for modern B2B partnerships and contracting solutions.
+          <p className="text-xl text-gray-600 mb-8 max-w-4xl mx-auto">
+            Introducing the future of business collaboration to the industrial world. 
+            A unified platform with smart enhancements for collective procurement, 
+            fair negotiation, and transparent contract management.
           </p>
 
-          <Button size="lg" className="mb-12 bg-productivity-blue hover:bg-productivity-blue/90 text-lg px-8 py-6">
-            {user ? 'Create Group' : 'Get Started'}
-            <ArrowRight className="w-5 h-5 ml-2" />
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
+            <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-lg px-8 py-6">
+              {user ? 'Create Your Group' : 'Get Started Free'}
+              <ArrowRight className="w-5 h-5 ml-2" />
+            </Button>
+            <Button variant="outline" size="lg" className="text-lg px-8 py-6">
+              Watch Demo
+            </Button>
+          </div>
+
+          {/* Founders Message */}
+          <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-6 mb-12">
+            <p className="text-sm text-gray-600 mb-2">Founded by</p>
+            <p className="font-semibold text-gray-900 text-lg">Mohamed Hassanein & Ahmed Seddiq</p>
+            <p className="text-gray-600 italic mt-2">
+              "Transforming negotiation from a privilege into a professional, participatory process — accessible to all"
+            </p>
+          </div>
         </div>
 
-        {/* AI Simulation Box */}
+        {/* Platform Features */}
         <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-8 border border-white/50 mb-12">
           <div className="text-center mb-6">
-            <h3 className="text-2xl font-bold text-gray-900 mb-2">AI-Powered Group Creation</h3>
-            <p className="text-gray-600">Watch how our intelligent system helps create and manage B2B groups</p>
+            <h3 className="text-2xl font-bold text-gray-900 mb-2">Smart Collaboration Features</h3>
+            <p className="text-gray-600">Built on international standards and AI-powered intelligence</p>
           </div>
           
           <div className="grid md:grid-cols-3 gap-6">
             <div className="bg-gradient-to-br from-blue-50 to-indigo-100 p-6 rounded-xl">
-              <Users className="w-8 h-8 text-productivity-blue mb-3" />
-              <h4 className="font-semibold text-gray-900 mb-2">Smart Matching</h4>
-              <p className="text-sm text-gray-600">AI matches companies with similar needs and goals</p>
+              <Users className="w-8 h-8 text-blue-600 mb-3" />
+              <h4 className="font-semibold text-gray-900 mb-2">Collective Empowerment</h4>
+              <p className="text-sm text-gray-600">Form groups, vote on decisions, and negotiate collectively with transparent governance</p>
             </div>
             
             <div className="bg-gradient-to-br from-purple-50 to-pink-100 p-6 rounded-xl">
-              <Building className="w-8 h-8 text-productivity-purple mb-3" />
-              <h4 className="font-semibold text-gray-900 mb-2">Industry Focus</h4>
-              <p className="text-sm text-gray-600">Specialized groups for every sector and business type</p>
+              <ShieldCheck className="w-8 h-8 text-purple-600 mb-3" />
+              <h4 className="font-semibold text-gray-900 mb-2">Legal Compliance</h4>
+              <p className="text-sm text-gray-600">UNCITRAL & ICC standards with built-in arbitration and smart contracts</p>
             </div>
             
             <div className="bg-gradient-to-br from-green-50 to-emerald-100 p-6 rounded-xl">
-              <Briefcase className="w-8 h-8 text-productivity-green mb-3" />
-              <h4 className="font-semibold text-gray-900 mb-2">Automated Setup</h4>
-              <p className="text-sm text-gray-600">We handle invitations, setup, and initial coordination</p>
+              <Globe className="w-8 h-8 text-green-600 mb-3" />
+              <h4 className="font-semibold text-gray-900 mb-2">Global Reach</h4>
+              <p className="text-sm text-gray-600">Multi-language, multi-currency platform connecting businesses worldwide</p>
             </div>
           </div>
         </div>
 
-        {/* Smart Search Filter */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 border border-white/50">
+        {/* Smart Gateway Selector */}
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 border border-white/50 mb-12">
           <div className="text-center mb-6">
-            <h3 className="text-2xl font-bold text-gray-900 mb-2">Find Your Perfect Group</h3>
-            <p className="text-gray-600">Use our smart filters to discover relevant B2B collaboration opportunities</p>
+            <h3 className="text-2xl font-bold text-gray-900 mb-2">Find Your Perfect Gateway</h3>
+            <p className="text-gray-600">Choose from 12 specialized portals designed for different business needs</p>
           </div>
           
           <div className="grid md:grid-cols-4 gap-4 mb-6">
             <Select value={searchFilters.gateway} onValueChange={(value) => setSearchFilters({...searchFilters, gateway: value})}>
               <SelectTrigger>
-                <SelectValue placeholder="Type of Gateway" />
+                <SelectValue placeholder="Select Gateway" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="purchasing">Collaborative Purchasing</SelectItem>
-                <SelectItem value="marketing">Collaborative Marketing</SelectItem>
-                <SelectItem value="suppliers">Supplier Offers</SelectItem>
-                <SelectItem value="freelancers">Freelancers</SelectItem>
-                <SelectItem value="formation">Company Formation</SelectItem>
-                <SelectItem value="legal">Legal & Arbitration</SelectItem>
+                {portalGateways.map((portal) => (
+                  <SelectItem key={portal.value} value={portal.value}>
+                    {portal.icon} {portal.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
 
@@ -126,17 +162,36 @@ const HeroSection = () => {
               </SelectContent>
             </Select>
 
-            <Button className="bg-productivity-blue hover:bg-productivity-blue/90" onClick={handleSearch}>
+            <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleSearch}>
               <Search className="w-4 h-4 mr-2" />
-              Search Groups
+              Explore Groups
             </Button>
           </div>
 
-          <div className="text-center p-6 bg-gradient-to-r from-productivity-green/10 to-productivity-blue/10 rounded-xl">
-            <p className="text-productivity-green font-medium">
-              💡 Can't find a group in your industry? 
-              <strong> We'll help you create one and invite relevant members!</strong>
+          <div className="text-center p-6 bg-gradient-to-r from-green-100 to-blue-100 rounded-xl">
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <Handshake className="w-5 h-5 text-green-600" />
+              <span className="font-medium text-gray-900">Smart Group Creation</span>
+            </div>
+            <p className="text-gray-700">
+              Can't find a suitable group? Our AI will help you create one and invite relevant members from our global network!
             </p>
+          </div>
+        </div>
+
+        {/* Reference Standards */}
+        <div className="text-center">
+          <p className="text-sm text-gray-500 mb-2">Built on International Standards</p>
+          <div className="flex flex-wrap justify-center items-center gap-6 text-xs text-gray-400">
+            <span>UNCITRAL Compliance</span>
+            <span>•</span>
+            <span>ICC Commercial Law</span>
+            <span>•</span>
+            <span>ISO 44001 Standards</span>
+            <span>•</span>
+            <span>Smart Governance (DAO)</span>
+            <span>•</span>
+            <span>MCP AI Integration</span>
           </div>
         </div>
       </div>
