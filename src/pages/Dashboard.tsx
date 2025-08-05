@@ -9,95 +9,45 @@ import QuickActions from '@/components/dashboard/QuickActions';
 import RecentActivity from '@/components/dashboard/RecentActivity';
 import WelcomeSection from '@/components/dashboard/WelcomeSection';
 import UpcomingEvents from '@/components/dashboard/UpcomingEvents';
-import KYCVerification from '@/components/kyc/KYCVerification';
 import EnhancedPomodoroTimer from '@/components/enhanced/EnhancedPomodoroTimer';
 import EnhancedTaskList from '@/components/enhanced/EnhancedTaskList';
 import NotificationCenter from '@/components/enhanced/NotificationCenter';
 import GoalsTracker from '@/components/enhanced/GoalsTracker';
 import { Card } from '@/components/ui/card';
-import { Loader2, Shield, AlertCircle } from 'lucide-react';
+import { Shield } from 'lucide-react';
 
 const Dashboard = () => {
   const { user, profile, loading: authLoading } = useAuth();
-  const { data: kycStatus, isLoading: kycLoading, error: kycError } = useKYCStatus();
 
-  console.log('Dashboard render state:', {
+  console.log('Dashboard render - Demo Mode:', {
     user: !!user,
     profile: !!profile,
     authLoading,
-    kycLoading,
-    kycError,
-    kycStatus
   });
 
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-productivity-blue mx-auto mb-4" />
-          <p className="text-gray-600">Loading authentication...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center">
-        <div className="text-center">
-          <AlertCircle className="w-8 h-8 text-red-500 mx-auto mb-4" />
-          <p className="text-red-600">Authentication required. Please log in.</p>
-        </div>
-      </div>
-    );
-  }
-
-  // If KYC check is loading, show a simple loading message but don't block the dashboard
-  if (kycLoading) {
-    console.log('KYC status loading...');
-  }
-
-  // If there's a KYC error, log it but don't block the dashboard
-  if (kycError) {
-    console.error('KYC status error:', kycError);
-  }
-
-  // Show KYC verification only if we have a clear indication that KYC is incomplete
-  // and the user is not an API user
-  const shouldShowKYC = profile?.role !== 'api' && 
-                        kycStatus?.isKYCComplete === false && 
-                        !kycLoading && 
-                        !kycError;
-
-  if (shouldShowKYC) {
-    return <KYCVerification />;
-  }
-
-  // Show the main dashboard
+  // Show the main dashboard immediately in demo mode
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
       <Header />
       <main className="py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto space-y-8">
-          {/* API User Special Banner */}
-          {profile?.role === 'api' && (
-            <Card className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
-              <div className="flex items-center gap-3">
-                <Shield className="w-5 h-5 text-blue-600" />
-                <div>
-                  <h3 className="font-semibold text-blue-900">API Administrator Access</h3>
-                  <p className="text-sm text-blue-700">Full system privileges enabled • KYC bypassed</p>
-                </div>
+          {/* Demo Mode Banner */}
+          <Card className="p-4 bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-200">
+            <div className="flex items-center gap-3">
+              <Shield className="w-5 h-5 text-yellow-600" />
+              <div>
+                <h3 className="font-semibold text-yellow-900">وضع تجريبي - Demo Mode</h3>
+                <p className="text-sm text-yellow-700">المصادقة معطلة مؤقتاً • البيانات وهمية للتطوير</p>
               </div>
-            </Card>
-          )}
+            </div>
+          </Card>
           
           {/* Welcome Section */}
           <WelcomeSection />
           
           {/* Enhanced Stats Overview */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Today's Overview</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">نظرة عامة على اليوم</h2>
             <EnhancedStats />
           </section>
 

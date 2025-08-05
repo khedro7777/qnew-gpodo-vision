@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -38,87 +39,49 @@ export const useAuth = () => {
   return context;
 };
 
+// Mock user data for development
+const mockUser = {
+  id: 'mock-user-id',
+  email: 'demo@gpodo.com',
+  user_metadata: {},
+  app_metadata: {},
+  aud: 'authenticated',
+  created_at: new Date().toISOString(),
+} as User;
+
+const mockProfile: Profile = {
+  id: 'mock-user-id',
+  email: 'demo@gpodo.com',
+  full_name: 'Demo User',
+  company_name: 'GPODO Demo',
+  role: 'user',
+  country_code: 'SA',
+  industry_sector: 'Technology',
+  phone: '+966501234567',
+  is_verified: true,
+  kyc_status: 'approved',
+};
+
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(mockUser);
+  const [profile, setProfile] = useState<Profile | null>(mockProfile);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('Initial session:', !!session?.user);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchProfile(session.user.id);
-      } else {
-        setLoading(false);
-      }
-    });
-
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state change:', event, !!session?.user);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        await fetchProfile(session.user.id);
-      } else {
-        setProfile(null);
-        setLoading(false);
-      }
-    });
-
-    return () => subscription.unsubscribe();
+    // Set mock data immediately for demo mode
+    console.log('Demo mode: Using mock authentication data');
+    setUser(mockUser);
+    setProfile(mockProfile);
+    setLoading(false);
   }, []);
-
-  const fetchProfile = async (userId: string) => {
-    try {
-      console.log('Fetching profile for user:', userId);
-      
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-
-      if (error) {
-        if (error.code === 'PGRST116') {
-          // Profile doesn't exist, this is ok for new users
-          console.log('Profile not found, new user');
-          setProfile(null);
-        } else {
-          console.error('Error fetching profile:', error);
-          toast.error('Failed to load profile');
-        }
-      } else {
-        console.log('Profile loaded:', data);
-        setProfile(data);
-      }
-    } catch (error) {
-      console.error('Error in fetchProfile:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const signUp = async (email: string, password: string, userData?: any) => {
     try {
       setLoading(true);
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: userData,
-          emailRedirectTo: `${window.location.origin}/`
-        },
-      });
-
-      if (error) throw error;
-      toast.success('Check your email for the confirmation link!');
+      // Mock sign up - just show success message
+      toast.success('تم إنشاء الحساب بنجاح (وضع تجريبي)');
     } catch (error: any) {
-      toast.error(error.message);
-      throw error;
+      toast.error('خطأ في إنشاء الحساب');
     } finally {
       setLoading(false);
     }
@@ -127,22 +90,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signIn = async (email: string, password: string) => {
     try {
       setLoading(true);
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) throw error;
-      
-      // Check if user is API user for special welcome message
-      if (email === 'newkhedro@gmail.com') {
-        toast.success('Welcome API Admin! Full access granted.');
-      } else {
-        toast.success('Welcome back!');
-      }
+      // Mock sign in - just show success message
+      toast.success('تم تسجيل الدخول بنجاح (وضع تجريبي)');
     } catch (error: any) {
-      toast.error(error.message);
-      throw error;
+      toast.error('خطأ في تسجيل الدخول');
     } finally {
       setLoading(false);
     }
@@ -150,29 +101,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signOut = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      toast.success('Signed out successfully');
+      // Mock sign out
+      toast.success('تم تسجيل الخروج بنجاح');
     } catch (error: any) {
-      toast.error(error.message);
+      toast.error('خطأ في تسجيل الخروج');
     }
   };
 
   const updateProfile = async (updates: Partial<Profile>) => {
     try {
-      if (!user) throw new Error('No user logged in');
-
-      const { error } = await supabase
-        .from('profiles')
-        .update(updates)
-        .eq('id', user.id);
-
-      if (error) throw error;
-
       setProfile(prev => prev ? { ...prev, ...updates } : null);
-      toast.success('Profile updated successfully');
+      toast.success('تم تحديث الملف الشخصي بنجاح');
     } catch (error: any) {
-      toast.error(error.message);
+      toast.error('خطأ في تحديث الملف الشخصي');
       throw error;
     }
   };
