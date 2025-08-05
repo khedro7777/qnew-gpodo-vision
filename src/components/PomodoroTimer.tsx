@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { Play, Pause, RotateCcw, Coffee } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -29,7 +28,7 @@ const PomodoroTimer = () => {
   };
 
   useEffect(() => {
-    let interval: number | null = null;
+    let interval: NodeJS.Timeout | null = null;
     if (isActive && (minutes > 0 || seconds > 0)) {
       interval = setInterval(() => {
         if (seconds === 0) {
