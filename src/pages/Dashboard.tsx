@@ -12,7 +12,7 @@ import WelcomeSection from '@/components/dashboard/WelcomeSection';
 import UpcomingEvents from '@/components/dashboard/UpcomingEvents';
 import KYCVerification from '@/components/kyc/KYCVerification';
 import { Card } from '@/components/ui/card';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Shield } from 'lucide-react';
 
 const Dashboard = () => {
   const { user, profile } = useAuth();
@@ -34,17 +34,30 @@ const Dashboard = () => {
     );
   }
 
-  // Show KYC verification if not complete
-  if (!kycStatus?.isKYCComplete) {
+  // Show KYC verification if not complete (unless API user)
+  if (!kycStatus?.isKYCComplete && profile?.role !== 'api') {
     return <KYCVerification />;
   }
 
-  // Show normal dashboard if KYC is complete
+  // Show normal dashboard if KYC is complete or user is API user
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
       <Header />
       <main className="py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto space-y-8">
+          {/* API User Special Banner */}
+          {profile?.role === 'api' && (
+            <Card className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
+              <div className="flex items-center gap-3">
+                <Shield className="w-5 h-5 text-blue-600" />
+                <div>
+                  <h3 className="font-semibold text-blue-900">API Administrator Access</h3>
+                  <p className="text-sm text-blue-700">Full system privileges enabled • KYC bypassed</p>
+                </div>
+              </div>
+            </Card>
+          )}
+          
           {/* Welcome Section */}
           <WelcomeSection />
           

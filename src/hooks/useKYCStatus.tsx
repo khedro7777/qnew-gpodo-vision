@@ -11,9 +11,19 @@ export const useKYCStatus = () => {
     queryFn: async () => {
       if (!user || !profile) return { isKYCComplete: false, requiresTest: false };
 
+      // Check if user is API user with bypass privileges
+      if (profile.role === 'api') {
+        return { 
+          isKYCComplete: true, 
+          requiresTest: false,
+          isAPIUser: true,
+          profile
+        };
+      }
+
       // Check if KYC is already approved
       if (profile.kyc_status === 'approved') {
-        return { isKYCComplete: true, requiresTest: false };
+        return { isKYCComplete: true, requiresTest: false, profile };
       }
 
       // Check documents

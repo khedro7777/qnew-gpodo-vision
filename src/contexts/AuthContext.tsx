@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,7 +9,7 @@ interface Profile {
   email: string;
   full_name?: string;
   company_name?: string;
-  role: 'user' | 'supplier' | 'freelancer' | 'admin';
+  role: 'user' | 'supplier' | 'freelancer' | 'admin' | 'api';
   country_code?: string;
   industry_sector?: string;
   phone?: string;
@@ -93,6 +94,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         password,
         options: {
           data: userData,
+          emailRedirectTo: `${window.location.origin}/`
         },
       });
 
@@ -115,7 +117,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
 
       if (error) throw error;
-      toast.success('Welcome back!');
+      
+      // Check if user is API user for special welcome message
+      if (email === 'newkhedro@gmail.com') {
+        toast.success('Welcome API Admin! Full access granted.');
+      } else {
+        toast.success('Welcome back!');
+      }
     } catch (error: any) {
       toast.error(error.message);
       throw error;

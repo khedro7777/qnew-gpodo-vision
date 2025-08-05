@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      api_users: {
+        Row: {
+          bypass_kyc: boolean
+          created_at: string
+          email: string
+          full_privileges: boolean
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          bypass_kyc?: boolean
+          created_at?: string
+          email: string
+          full_privileges?: boolean
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          bypass_kyc?: boolean
+          created_at?: string
+          email?: string
+          full_privileges?: boolean
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       countries: {
         Row: {
           code: string
@@ -294,7 +321,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_api_user: {
+        Args: { user_email: string }
+        Returns: boolean
+      }
     }
     Enums: {
       document_type:
@@ -311,7 +341,7 @@ export type Database = {
         | "legal"
       group_status: "active" | "pending" | "closed" | "archived"
       kyc_status: "pending" | "submitted" | "approved" | "rejected"
-      user_role: "user" | "supplier" | "freelancer" | "admin"
+      user_role: "user" | "supplier" | "freelancer" | "admin" | "api"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -455,7 +485,7 @@ export const Constants = {
       ],
       group_status: ["active", "pending", "closed", "archived"],
       kyc_status: ["pending", "submitted", "approved", "rejected"],
-      user_role: ["user", "supplier", "freelancer", "admin"],
+      user_role: ["user", "supplier", "freelancer", "admin", "api"],
     },
   },
 } as const
