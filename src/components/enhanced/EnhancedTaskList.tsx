@@ -19,6 +19,19 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
+interface Task {
+  id: string;
+  title: string;
+  description?: string;
+  status: string;
+  priority: string;
+  due_date?: string;
+  created_at: string;
+  created_by: string;
+  assigned_to?: string;
+  group_id?: string;
+}
+
 const EnhancedTaskList = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -29,7 +42,7 @@ const EnhancedTaskList = () => {
 
   const { data: tasks = [], isLoading, error } = useQuery({
     queryKey: ['tasks', user?.id, filter],
-    queryFn: async () => {
+    queryFn: async (): Promise<Task[]> => {
       if (!user?.id) {
         console.log('No user ID, returning mock data');
         // Return mock tasks for demo mode
@@ -42,7 +55,7 @@ const EnhancedTaskList = () => {
             priority: 'high',
             due_date: '2025-08-06',
             created_at: '2025-08-05T10:00:00Z',
-            user_id: 'demo'
+            created_by: 'demo'
           },
           {
             id: '2',
@@ -52,7 +65,7 @@ const EnhancedTaskList = () => {
             priority: 'medium',
             due_date: '2025-08-05',
             created_at: '2025-08-05T09:00:00Z',
-            user_id: 'demo'
+            created_by: 'demo'
           }
         ];
       }
@@ -61,7 +74,7 @@ const EnhancedTaskList = () => {
         let query = supabase
           .from('tasks')
           .select('*')
-          .eq('user_id', user.id)
+          .eq('created_by', user.id)
           .order('created_at', { ascending: false });
 
         if (filter !== 'all') {
@@ -94,7 +107,7 @@ const EnhancedTaskList = () => {
       const { error } = await supabase
         .from('tasks')
         .insert({
-          user_id: user.id,
+          created_by: user.id,
           title: title,
           status: 'pending',
           priority: 'medium'
@@ -224,7 +237,7 @@ const EnhancedTaskList = () => {
             <p className="text-gray-600">Add your first task to get started!</p>
           </div>
         ) : (
-          tasks.map((task: any) => (
+          tasks.map((task) => (
             <div
               key={task.id}
               className="flex items-start gap-3 p-4 border rounded-lg hover:shadow-sm transition-shadow"
