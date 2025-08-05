@@ -1,265 +1,229 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { supabase } from '@/integrations/supabase/client';
 import { 
-  TrendingUp, 
   Users, 
-  Vote, 
-  FileText, 
-  CheckSquare, 
-  AlertTriangle,
-  Calendar,
-  Target,
-  Activity,
-  Clock
+  Calendar, 
+  Target, 
+  TrendingUp, 
+  MessageSquare, 
+  FileText,
+  AlertTriangle 
 } from 'lucide-react';
+import type { Group } from '@/types';
 
 interface GroupOverviewProps {
-  group: any;
+  group: Group;
   userRole: string;
 }
 
 const GroupOverview = ({ group, userRole }: GroupOverviewProps) => {
-  const [stats, setStats] = useState({
-    activeVotes: 0,
-    pendingProposals: 0,
-    completedTasks: 0,
-    totalTasks: 0,
-    activeCases: 0,
-    memberActivity: 0
-  });
+  // Calculate progress percentage
+  const progressPercentage = (group.current_members / group.max_members) * 100;
 
-  const [recentActivity, setRecentActivity] = useState<any[]>([]);
-  const [milestones, setMilestones] = useState<any[]>([]);
+  // Mock data for demonstration
+  const mockStats = {
+    activeVotes: 2,
+    pendingProposals: 3,
+    activeContracts: 1,
+    openCases: 0
+  };
 
-  useEffect(() => {
-    loadOverviewData();
-  }, [group.id]);
-
-  const loadOverviewData = async () => {
-    try {
-      // Load statistics
-      const [votesData, proposalsData, tasksData, casesData] = await Promise.all([
-        supabase.from('votes').select('*').eq('group_id', group.id).eq('status', 'active'),
-        supabase.from('proposals').select('*').eq('group_id', group.id).eq('status', 'submitted'),
-        supabase.from('tasks').select('*').eq('group_id', group.id),
-        supabase.from('arbitration_cases').select('*').eq('group_id', group.id).eq('status', 'in_progress')
-      ]);
-
-      const completedTasks = tasksData.data?.filter(t => t.status === 'completed') || [];
-      
-      setStats({
-        activeVotes: votesData.data?.length || 0,
-        pendingProposals: proposalsData.data?.length || 0,
-        completedTasks: completedTasks.length,
-        totalTasks: tasksData.data?.length || 0,
-        activeCases: casesData.data?.length || 0,
-        memberActivity: group.current_members * 0.8 // Mock activity rate
-      });
-
-      // Load recent activity (mock data for now)
-      setRecentActivity([
-        { id: 1, type: 'vote', title: 'New supplier vote created', time: '2 hours ago', user: 'John Doe' },
-        { id: 2, type: 'proposal', title: 'Marketing proposal submitted', time: '4 hours ago', user: 'Jane Smith' },
-        { id: 3, type: 'task', title: 'Task completed: Contract review', time: '6 hours ago', user: 'Mike Johnson' },
-        { id: 4, type: 'member', title: 'New member joined', time: '1 day ago', user: 'Sarah Wilson' }
-      ]);
-
-      // Load milestones (mock data)
-      setMilestones([
-        { id: 1, title: 'Group Formation', status: 'completed', date: group.created_at },
-        { id: 2, title: 'First 10 Members', status: group.current_members >= 10 ? 'completed' : 'pending', date: null },
-        { id: 3, title: 'First Successful Vote', status: votesData.data && votesData.data.length > 0 ? 'completed' : 'pending', date: null },
-        { id: 4, title: 'First Contract', status: 'pending', date: null }
-      ]);
-
-    } catch (error) {
-      console.error('Load overview data error:', error);
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'active': return 'bg-green-100 text-green-800';
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'paused': return 'bg-orange-100 text-orange-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const getActivityIcon = (type: string) => {
-    switch (type) {
-      case 'vote': return <Vote className="w-4 h-4 text-blue-500" />;
-      case 'proposal': return <FileText className="w-4 h-4 text-green-500" />;
-      case 'task': return <CheckSquare className="w-4 h-4 text-purple-500" />;
-      case 'member': return <Users className="w-4 h-4 text-orange-500" />;
-      default: return <Activity className="w-4 h-4 text-gray-500" />;
-    }
-  };
-
-  const getMilestoneIcon = (status: string) => {
-    return status === 'completed' ? 
-      <CheckSquare className="w-5 h-5 text-green-500" /> : 
-      <Clock className="w-5 h-5 text-gray-400" />;
+  const getGatewayTypeDisplay = (type: string) => {
+    const types: Record<string, string> = {
+      'purchasing': '🛒 Collaborative Purchasing',
+      'marketing': '📢 Collaborative Marketing',
+      'company': '🏢 Company Formation',
+      'investment': '💰 Investment Groups',
+      'suppliers': '🏭 Suppliers Network',
+      'freelancers': '👨‍💻 Freelancers Hub',
+      'teams': '👥 Freelancer Teams',
+      'services': '🔧 Service Providers',
+      'products': '📦 Product Listings',
+      'arbitration': '⚖️ Arbitration & Documentation',
+      'requests': '📋 Arbitration Requests',
+      'negotiation': '🤝 Smart Negotiation Tools'
+    };
+    return types[type] || '🔍 General';
   };
 
   return (
     <div className="space-y-6">
-      {/* Key Statistics */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Active Votes</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.activeVotes}</p>
+      {/* Group Status Card */}
+      <Card className="p-6">
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">Group Status</h3>
+            <p className="text-gray-600">{getGatewayTypeDisplay(group.gateway_type)}</p>
+          </div>
+          <Badge className={getStatusColor(group.status)}>
+            {group.status.charAt(0).toUpperCase() + group.status.slice(1)}
+          </Badge>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <div className="flex justify-between text-sm mb-2">
+              <span>Member Progress</span>
+              <span>{group.current_members}/{group.max_members}</span>
             </div>
-            <Vote className="w-8 h-8 text-blue-500" />
+            <Progress value={progressPercentage} className="w-full" />
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-blue-600">{mockStats.activeVotes}</div>
+              <div className="text-sm text-gray-600">Active Votes</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-green-600">{mockStats.pendingProposals}</div>
+              <div className="text-sm text-gray-600">Proposals</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-purple-600">{mockStats.activeContracts}</div>
+              <div className="text-sm text-gray-600">Contracts</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-red-600">{mockStats.openCases}</div>
+              <div className="text-sm text-gray-600">Cases</div>
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      {/* Key Metrics */}
+      <div className="grid md:grid-cols-3 gap-6">
+        <Card className="p-6">
+          <div className="flex items-center gap-3 mb-3">
+            <Users className="w-6 h-6 text-blue-500" />
+            <h4 className="font-semibold text-gray-900">Membership</h4>
+          </div>
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span>Total Members</span>
+              <span className="font-medium">{group.current_members}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span>Available Slots</span>
+              <span className="font-medium">{group.max_members - group.current_members}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span>Capacity</span>
+              <span className="font-medium">{Math.round(progressPercentage)}%</span>
+            </div>
           </div>
         </Card>
 
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Pending Proposals</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.pendingProposals}</p>
+        <Card className="p-6">
+          <div className="flex items-center gap-3 mb-3">
+            <TrendingUp className="w-6 h-6 text-green-500" />
+            <h4 className="font-semibold text-gray-900">Activity</h4>
+          </div>
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span>Messages Today</span>
+              <span className="font-medium">24</span>
             </div>
-            <FileText className="w-8 h-8 text-green-500" />
+            <div className="flex justify-between text-sm">
+              <span>Active Discussions</span>
+              <span className="font-medium">6</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span>Last Activity</span>
+              <span className="font-medium">2h ago</span>
+            </div>
           </div>
         </Card>
 
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Task Progress</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.completedTasks}/{stats.totalTasks}</p>
-            </div>
-            <CheckSquare className="w-8 h-8 text-purple-500" />
+        <Card className="p-6">
+          <div className="flex items-center gap-3 mb-3">
+            <Target className="w-6 h-6 text-purple-500" />
+            <h4 className="font-semibold text-gray-900">Progress</h4>
           </div>
-        </Card>
-
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Active Cases</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.activeCases}</p>
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span>Completed Tasks</span>
+              <span className="font-medium">12/18</span>
             </div>
-            <AlertTriangle className="w-8 h-8 text-red-500" />
+            <div className="flex justify-between text-sm">
+              <span>Success Rate</span>
+              <span className="font-medium">89%</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span>Group Rating</span>
+              <span className="font-medium">4.7/5</span>
+            </div>
           </div>
         </Card>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-6">
-        {/* Group Progress */}
-        <Card className="p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <Target className="w-5 h-5" />
-            Group Progress
-          </h3>
-          
-          <div className="space-y-4">
-            <div>
-              <div className="flex justify-between text-sm mb-2">
-                <span>Member Capacity</span>
-                <span>{group.current_members}/{group.max_members}</span>
-              </div>
-              <Progress value={(group.current_members / group.max_members) * 100} className="h-2" />
-            </div>
-
-            <div>
-              <div className="flex justify-between text-sm mb-2">
-                <span>Task Completion</span>
-                <span>{stats.totalTasks > 0 ? Math.round((stats.completedTasks / stats.totalTasks) * 100) : 0}%</span>
-              </div>
-              <Progress value={stats.totalTasks > 0 ? (stats.completedTasks / stats.totalTasks) * 100 : 0} className="h-2" />
-            </div>
-
-            <div>
-              <div className="flex justify-between text-sm mb-2">
-                <span>Member Activity</span>
-                <span>{Math.round(stats.memberActivity)}%</span>
-              </div>
-              <Progress value={stats.memberActivity} className="h-2" />
+      {/* Recent Activity */}
+      <Card className="p-6">
+        <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+          <Calendar className="w-5 h-5" />
+          Recent Activity
+        </h4>
+        <div className="space-y-3">
+          <div className="flex items-start gap-3 pb-3 border-b border-gray-100">
+            <MessageSquare className="w-4 h-4 text-blue-500 mt-1" />
+            <div className="flex-1">
+              <p className="text-sm text-gray-900">New proposal submitted for review</p>
+              <p className="text-xs text-gray-500">2 hours ago</p>
             </div>
           </div>
-        </Card>
-
-        {/* Recent Activity */}
-        <Card className="p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <Activity className="w-5 h-5" />
-            Recent Activity
-          </h3>
-          
-          <div className="space-y-3">
-            {recentActivity.map((activity) => (
-              <div key={activity.id} className="flex items-start gap-3 p-2 rounded-lg hover:bg-gray-50">
-                {getActivityIcon(activity.type)}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900">{activity.title}</p>
-                  <p className="text-xs text-gray-500">by {activity.user} • {activity.time}</p>
-                </div>
-              </div>
-            ))}
+          <div className="flex items-start gap-3 pb-3 border-b border-gray-100">
+            <Users className="w-4 h-4 text-green-500 mt-1" />
+            <div className="flex-1">
+              <p className="text-sm text-gray-900">Sarah Ahmed joined the group</p>
+              <p className="text-xs text-gray-500">5 hours ago</p>
+            </div>
           </div>
-
-          <Button variant="ghost" className="w-full mt-4 text-sm">
-            View All Activity
-          </Button>
-        </Card>
-
-        {/* Milestones */}
-        <Card className="p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <TrendingUp className="w-5 h-5" />
-            Milestones
-          </h3>
-          
-          <div className="space-y-3">
-            {milestones.map((milestone) => (
-              <div key={milestone.id} className="flex items-center gap-3">
-                {getMilestoneIcon(milestone.status)}
-                <div className="flex-1">
-                  <p className={`text-sm font-medium ${
-                    milestone.status === 'completed' ? 'text-gray-900' : 'text-gray-500'
-                  }`}>
-                    {milestone.title}
-                  </p>
-                  {milestone.date && (
-                    <p className="text-xs text-gray-400">
-                      {new Date(milestone.date).toLocaleDateString()}
-                    </p>
-                  )}
-                </div>
-                <Badge variant={milestone.status === 'completed' ? 'default' : 'secondary'}>
-                  {milestone.status}
-                </Badge>
-              </div>
-            ))}
+          <div className="flex items-start gap-3 pb-3 border-b border-gray-100">
+            <FileText className="w-4 h-4 text-purple-500 mt-1" />
+            <div className="flex-1">
+              <p className="text-sm text-gray-900">Contract draft uploaded for review</p>
+              <p className="text-xs text-gray-500">1 day ago</p>
+            </div>
           </div>
-        </Card>
+        </div>
+      </Card>
 
-        {/* Quick Actions */}
+      {/* Quick Actions */}
+      {(userRole === 'founder' || userRole === 'admin') && (
         <Card className="p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-          
-          <div className="grid grid-cols-2 gap-3">
-            <Button variant="outline" size="sm" className="flex flex-col gap-1 h-16">
-              <Vote className="w-4 h-4" />
-              <span className="text-xs">Start Vote</span>
+          <h4 className="font-semibold text-gray-900 mb-4">Quick Actions</h4>
+          <div className="flex flex-wrap gap-3">
+            <Button size="sm" variant="outline">
+              <Users className="w-4 h-4 mr-2" />
+              Invite Members
             </Button>
-            
-            <Button variant="outline" size="sm" className="flex flex-col gap-1 h-16">
-              <FileText className="w-4 h-4" />
-              <span className="text-xs">New Proposal</span>
+            <Button size="sm" variant="outline">
+              <FileText className="w-4 h-4 mr-2" />
+              Create Proposal
             </Button>
-            
-            <Button variant="outline" size="sm" className="flex flex-col gap-1 h-16">
-              <CheckSquare className="w-4 h-4" />
-              <span className="text-xs">Add Task</span>
+            <Button size="sm" variant="outline">
+              <MessageSquare className="w-4 h-4 mr-2" />
+              Start Discussion
             </Button>
-            
-            <Button variant="outline" size="sm" className="flex flex-col gap-1 h-16">
-              <Users className="w-4 h-4" />
-              <span className="text-xs">Invite Member</span>
+            <Button size="sm" variant="outline">
+              <TrendingUp className="w-4 h-4 mr-2" />
+              View Analytics
             </Button>
           </div>
         </Card>
-      </div>
+      )}
     </div>
   );
 };

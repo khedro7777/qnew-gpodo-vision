@@ -53,7 +53,7 @@ const GroupCreationWizard = ({ onComplete }: { onComplete: () => void }) => {
     { value: 'arbitration', label: 'Arbitration & Documentation', icon: '⚖️', desc: 'Legal dispute resolution' },
     { value: 'requests', label: 'Arbitration Requests', icon: '📋', desc: 'Submit arbitration requests' },
     { value: 'negotiation', label: 'Smart Negotiation Tools', icon: '🤝', desc: 'AI-powered negotiations' }
-  ];
+  ] as const;
 
   const handleInputChange = (field: keyof GroupCreationData, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -70,10 +70,14 @@ const GroupCreationWizard = ({ onComplete }: { onComplete: () => void }) => {
       const { data, error } = await supabase
         .from('groups')
         .insert({
-          ...formData,
+          name: formData.name,
+          description: formData.description,
+          gateway_type: formData.gateway_type,
           creator_id: user.id,
-          status: 'active',
-          current_members: 1
+          is_public: formData.is_public,
+          max_members: formData.max_members,
+          current_members: 1,
+          status: 'active'
         })
         .select()
         .single();
@@ -86,8 +90,7 @@ const GroupCreationWizard = ({ onComplete }: { onComplete: () => void }) => {
         .insert({
           group_id: data.id,
           user_id: user.id,
-          role: 'founder',
-          status: 'active'
+          role: 'founder'
         });
 
       toast.success('Group created successfully!');

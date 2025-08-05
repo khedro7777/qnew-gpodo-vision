@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useGroupWorkflow } from '@/hooks/useGroupWorkflow';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import { 
   Users, 
   MessageCircle, 
@@ -14,20 +15,12 @@ import {
   FileText, 
   AlertTriangle, 
   CheckSquare,
-  Timeline,
   Settings,
   TrendingUp,
   Calendar,
   Download
 } from 'lucide-react';
 import GroupOverview from './GroupOverview';
-import GroupMembers from './GroupMembers';
-import GroupVoting from './GroupVoting';
-import GroupProposals from './GroupProposals';
-import GroupTasks from './GroupTasks';
-import GroupChat from './GroupChat';
-import GroupContracts from './GroupContracts';
-import GroupArbitration from './GroupArbitration';
 
 interface GroupRoomProps {
   groupId: string;
@@ -65,7 +58,7 @@ const GroupRoomInterface = ({ groupId }: GroupRoomProps) => {
       if (user) {
         const { data: memberData } = await supabase
           .from('group_members')
-          .select('role, status')
+          .select('role')
           .eq('group_id', groupId)
           .eq('user_id', user.id)
           .single();
@@ -230,31 +223,52 @@ const GroupRoomInterface = ({ groupId }: GroupRoomProps) => {
         </TabsContent>
 
         <TabsContent value="members" className="space-y-6">
-          <GroupMembers groupId={groupId} userRole={userRole} />
+          <Card className="p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Group Members</h3>
+            <p className="text-gray-600">Member management functionality coming soon...</p>
+          </Card>
         </TabsContent>
 
         <TabsContent value="voting" className="space-y-6">
-          <GroupVoting groupId={groupId} userRole={userRole} />
+          <Card className="p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Voting & Decisions</h3>
+            <p className="text-gray-600">Voting system coming soon...</p>
+          </Card>
         </TabsContent>
 
         <TabsContent value="proposals" className="space-y-6">
-          <GroupProposals groupId={groupId} userRole={userRole} />
+          <Card className="p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Proposals</h3>
+            <p className="text-gray-600">Proposal system coming soon...</p>
+          </Card>
         </TabsContent>
 
         <TabsContent value="tasks" className="space-y-6">
-          <GroupTasks groupId={groupId} userRole={userRole} />
+          <Card className="p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Task Management</h3>
+            <p className="text-gray-600">Task management coming soon...</p>
+          </Card>
         </TabsContent>
 
         <TabsContent value="chat" className="space-y-6">
-          <GroupChat groupId={groupId} />
+          <Card className="p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Group Chat</h3>
+            <p className="text-gray-600">Chat functionality coming soon...</p>
+          </Card>
         </TabsContent>
 
         <TabsContent value="contracts" className="space-y-6">
-          <GroupContracts groupId={groupId} userRole={userRole} />
+          <Card className="p-6">
+            <h3 className="text-lg font-semibent text-gray-900 mb-4">Contracts</h3>
+            <p className="text-gray-600">Contract management coming soon...</p>
+          </Card>
         </TabsContent>
 
         <TabsContent value="arbitration" className="space-y-6">
-          <GroupArbitration groupId={groupId} userRole={userRole} />
+          <Card className="p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Arbitration</h3>
+            <p className="text-gray-600">Arbitration system coming soon...</p>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

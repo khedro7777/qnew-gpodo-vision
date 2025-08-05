@@ -3,14 +3,17 @@ import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Users, Calendar, MapPin, Building2, ExternalLink } from 'lucide-react';
+import { Users, Calendar, MapPin, Building2, ExternalLink, Plus } from 'lucide-react';
 import { useGroups } from '@/hooks/useSupabaseData';
 import { useAuth } from '@/contexts/AuthContext';
 import { Link } from 'react-router-dom';
+import GroupCreationWizard from '@/components/workflow/GroupCreationWizard';
+import { useState } from 'react';
 
 const MyGroupsTab = () => {
   const { data: groups = [], isLoading } = useGroups();
   const { user } = useAuth();
+  const [showCreateGroup, setShowCreateGroup] = useState(false);
 
   // Filter groups where user is member or creator
   const myGroups = groups.filter(group => 
@@ -26,15 +29,39 @@ const MyGroupsTab = () => {
     return <div className="text-center py-8">Loading groups...</div>;
   }
 
+  if (showCreateGroup) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Button variant="outline" onClick={() => setShowCreateGroup(false)}>
+            ← Back to Groups
+          </Button>
+          <h2 className="text-xl font-semibold text-gray-900">Create New Group</h2>
+        </div>
+        <GroupCreationWizard onComplete={() => {
+          setShowCreateGroup(false);
+          // Refresh groups list
+          window.location.reload();
+        }} />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
       <div>
-        <h3 className="text-xl font-semibold text-gray-900 mb-4">My Created Groups</h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-xl font-semibold text-gray-900">My Created Groups</h3>
+          <Button onClick={() => setShowCreateGroup(true)}>
+            <Plus className="w-4 h-4 mr-2" />
+            Create Group
+          </Button>
+        </div>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {myGroups.length === 0 ? (
             <Card className="p-6 col-span-full text-center">
               <p className="text-gray-600 mb-4">You haven't created any groups yet.</p>
-              <Button>Create Your First Group</Button>
+              <Button onClick={() => setShowCreateGroup(true)}>Create Your First Group</Button>
             </Card>
           ) : (
             myGroups.map((group) => (
