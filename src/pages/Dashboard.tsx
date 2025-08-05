@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useKYCStatus } from '@/hooks/useKYCStatus';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Stats from '@/components/Stats';
@@ -9,15 +10,36 @@ import RecentActivity from '@/components/dashboard/RecentActivity';
 import ProductivitySection from '@/components/dashboard/ProductivitySection';
 import WelcomeSection from '@/components/dashboard/WelcomeSection';
 import UpcomingEvents from '@/components/dashboard/UpcomingEvents';
+import KYCVerification from '@/components/kyc/KYCVerification';
 import { Card } from '@/components/ui/card';
+import { Loader2 } from 'lucide-react';
 
 const Dashboard = () => {
   const { user, profile } = useAuth();
+  const { data: kycStatus, isLoading: kycLoading } = useKYCStatus();
 
   if (!user) {
     return null; // This should be handled by route protection
   }
 
+  // Show loading while checking KYC status
+  if (kycLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin text-productivity-blue mx-auto mb-4" />
+          <p className="text-gray-600">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show KYC verification if not complete
+  if (!kycStatus?.isKYCComplete) {
+    return <KYCVerification />;
+  }
+
+  // Show normal dashboard if KYC is complete
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
       <Header />

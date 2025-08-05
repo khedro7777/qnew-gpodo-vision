@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -15,6 +14,8 @@ interface Profile {
   phone?: string;
   avatar_url?: string;
   is_verified: boolean;
+  kyc_status: 'pending' | 'submitted' | 'approved' | 'rejected';
+  kyc_completed_at?: string;
 }
 
 interface AuthContextType {

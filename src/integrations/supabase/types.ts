@@ -160,6 +160,84 @@ export type Database = {
         }
         Relationships: []
       }
+      kyc_documents: {
+        Row: {
+          created_at: string
+          document_type: Database["public"]["Enums"]["document_type"]
+          file_name: string
+          file_url: string
+          id: string
+          reviewed_at: string | null
+          reviewer_notes: string | null
+          status: Database["public"]["Enums"]["kyc_status"]
+          submitted_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          document_type: Database["public"]["Enums"]["document_type"]
+          file_name: string
+          file_url: string
+          id?: string
+          reviewed_at?: string | null
+          reviewer_notes?: string | null
+          status?: Database["public"]["Enums"]["kyc_status"]
+          submitted_at?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          document_type?: Database["public"]["Enums"]["document_type"]
+          file_name?: string
+          file_url?: string
+          id?: string
+          reviewed_at?: string | null
+          reviewer_notes?: string | null
+          status?: Database["public"]["Enums"]["kyc_status"]
+          submitted_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      mcp_test_results: {
+        Row: {
+          completed_at: string
+          created_at: string
+          id: string
+          reviewed_at: string | null
+          reviewer_notes: string | null
+          status: Database["public"]["Enums"]["kyc_status"]
+          test_data: Json
+          test_score: number
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string
+          created_at?: string
+          id?: string
+          reviewed_at?: string | null
+          reviewer_notes?: string | null
+          status?: Database["public"]["Enums"]["kyc_status"]
+          test_data: Json
+          test_score: number
+          user_id: string
+        }
+        Update: {
+          completed_at?: string
+          created_at?: string
+          id?: string
+          reviewed_at?: string | null
+          reviewer_notes?: string | null
+          status?: Database["public"]["Enums"]["kyc_status"]
+          test_data?: Json
+          test_score?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -171,6 +249,8 @@ export type Database = {
           id: string
           industry_sector: string | null
           is_verified: boolean
+          kyc_completed_at: string | null
+          kyc_status: Database["public"]["Enums"]["kyc_status"]
           phone: string | null
           role: Database["public"]["Enums"]["user_role"]
           updated_at: string
@@ -185,6 +265,8 @@ export type Database = {
           id: string
           industry_sector?: string | null
           is_verified?: boolean
+          kyc_completed_at?: string | null
+          kyc_status?: Database["public"]["Enums"]["kyc_status"]
           phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
@@ -199,6 +281,8 @@ export type Database = {
           id?: string
           industry_sector?: string | null
           is_verified?: boolean
+          kyc_completed_at?: string | null
+          kyc_status?: Database["public"]["Enums"]["kyc_status"]
           phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
@@ -213,6 +297,11 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
+      document_type:
+        | "id_card"
+        | "passport"
+        | "company_registration"
+        | "business_license"
       gateway_type:
         | "purchasing"
         | "marketing"
@@ -221,6 +310,7 @@ export type Database = {
         | "formation"
         | "legal"
       group_status: "active" | "pending" | "closed" | "archived"
+      kyc_status: "pending" | "submitted" | "approved" | "rejected"
       user_role: "user" | "supplier" | "freelancer" | "admin"
     }
     CompositeTypes: {
@@ -349,6 +439,12 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      document_type: [
+        "id_card",
+        "passport",
+        "company_registration",
+        "business_license",
+      ],
       gateway_type: [
         "purchasing",
         "marketing",
@@ -358,6 +454,7 @@ export const Constants = {
         "legal",
       ],
       group_status: ["active", "pending", "closed", "archived"],
+      kyc_status: ["pending", "submitted", "approved", "rejected"],
       user_role: ["user", "supplier", "freelancer", "admin"],
     },
   },
