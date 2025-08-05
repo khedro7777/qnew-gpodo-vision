@@ -14,7 +14,197 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      countries: {
+        Row: {
+          code: string
+          created_at: string
+          currency_code: string | null
+          flag_emoji: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          currency_code?: string | null
+          flag_emoji?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          currency_code?: string | null
+          flag_emoji?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      group_members: {
+        Row: {
+          group_id: string
+          id: string
+          joined_at: string
+          role: string | null
+          user_id: string
+        }
+        Insert: {
+          group_id: string
+          id?: string
+          joined_at?: string
+          role?: string | null
+          user_id: string
+        }
+        Update: {
+          group_id?: string
+          id?: string
+          joined_at?: string
+          role?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_members_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      groups: {
+        Row: {
+          country_id: string | null
+          created_at: string
+          creator_id: string
+          current_members: number | null
+          description: string | null
+          gateway_type: Database["public"]["Enums"]["gateway_type"]
+          id: string
+          industry_sector_id: string | null
+          is_public: boolean
+          max_members: number | null
+          name: string
+          status: Database["public"]["Enums"]["group_status"]
+          updated_at: string
+        }
+        Insert: {
+          country_id?: string | null
+          created_at?: string
+          creator_id: string
+          current_members?: number | null
+          description?: string | null
+          gateway_type: Database["public"]["Enums"]["gateway_type"]
+          id?: string
+          industry_sector_id?: string | null
+          is_public?: boolean
+          max_members?: number | null
+          name: string
+          status?: Database["public"]["Enums"]["group_status"]
+          updated_at?: string
+        }
+        Update: {
+          country_id?: string | null
+          created_at?: string
+          creator_id?: string
+          current_members?: number | null
+          description?: string | null
+          gateway_type?: Database["public"]["Enums"]["gateway_type"]
+          id?: string
+          industry_sector_id?: string | null
+          is_public?: boolean
+          max_members?: number | null
+          name?: string
+          status?: Database["public"]["Enums"]["group_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "groups_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "groups_industry_sector_id_fkey"
+            columns: ["industry_sector_id"]
+            isOneToOne: false
+            referencedRelation: "industry_sectors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      industry_sectors: {
+        Row: {
+          created_at: string
+          description: string | null
+          icon: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          company_name: string | null
+          country_code: string | null
+          created_at: string
+          email: string
+          full_name: string | null
+          id: string
+          industry_sector: string | null
+          is_verified: boolean
+          phone: string | null
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          company_name?: string | null
+          country_code?: string | null
+          created_at?: string
+          email: string
+          full_name?: string | null
+          id: string
+          industry_sector?: string | null
+          is_verified?: boolean
+          phone?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          company_name?: string | null
+          country_code?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string | null
+          id?: string
+          industry_sector?: string | null
+          is_verified?: boolean
+          phone?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +213,15 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      gateway_type:
+        | "purchasing"
+        | "marketing"
+        | "suppliers"
+        | "freelancers"
+        | "formation"
+        | "legal"
+      group_status: "active" | "pending" | "closed" | "archived"
+      user_role: "user" | "supplier" | "freelancer" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +348,17 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      gateway_type: [
+        "purchasing",
+        "marketing",
+        "suppliers",
+        "freelancers",
+        "formation",
+        "legal",
+      ],
+      group_status: ["active", "pending", "closed", "archived"],
+      user_role: ["user", "supplier", "freelancer", "admin"],
+    },
   },
 } as const

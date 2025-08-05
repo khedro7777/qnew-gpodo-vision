@@ -1,17 +1,23 @@
 
 import React, { useState, useEffect } from 'react';
-import { Clock, Globe, MapPin, DollarSign, Calendar, User, Menu, X } from 'lucide-react';
+import { Clock, Globe, MapPin, DollarSign, Calendar, User, Menu, X, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
   DropdownMenuItem, 
+  DropdownMenuSeparator,
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useAuth } from '@/contexts/AuthContext';
+import AuthModal from '@/components/auth/AuthModal';
 
 const Header = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const { user, profile, signOut } = useAuth();
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -35,6 +41,11 @@ const Header = () => {
       month: 'short', 
       day: 'numeric' 
     });
+  };
+
+  const getInitials = (name?: string) => {
+    if (!name) return 'U';
+    return name.split(' ').map(n => n[0]).join('').toUpperCase();
   };
 
   return (
@@ -126,12 +137,51 @@ const Header = () => {
               <a href="#support" className="text-gray-600 hover:text-gray-900 transition-colors">Help & Support</a>
             </nav>
 
-            {/* Auth Buttons */}
+            {/* Auth Section */}
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm">Login</Button>
-              <Button size="sm" className="bg-productivity-blue hover:bg-productivity-blue/90">
-                Create Account
-              </Button>
+              {user ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={profile?.avatar_url} alt={profile?.full_name} />
+                        <AvatarFallback>{getInitials(profile?.full_name)}</AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56" align="end" forceMount>
+                    <div className="flex items-center justify-start gap-2 p-2">
+                      <div className="flex flex-col space-y-1 leading-none">
+                        {profile?.full_name && (
+                          <p className="font-medium">{profile.full_name}</p>
+                        )}
+                        <p className="w-[200px] truncate text-sm text-muted-foreground">
+                          {profile?.email}
+                        </p>
+                      </div>
+                    </div>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem>
+                      <User className="mr-2 h-4 w-4" />
+                      Profile
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={signOut}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Sign out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <>
+                  <Button variant="ghost" size="sm" onClick={() => setShowAuthModal(true)}>
+                    Login
+                  </Button>
+                  <Button size="sm" className="bg-productivity-blue hover:bg-productivity-blue/90" onClick={() => setShowAuthModal(true)}>
+                    Create Account
+                  </Button>
+                </>
+              )}
             </div>
           </div>
 
@@ -156,16 +206,22 @@ const Header = () => {
                 <a href="#how-it-works" className="text-sm text-gray-600 hover:text-gray-900">How It Works</a>
                 <a href="#support" className="text-sm text-gray-600 hover:text-gray-900">Help & Support</a>
               </div>
-              <div className="flex gap-2">
-                <Button variant="ghost" size="sm">Login</Button>
-                <Button size="sm" className="bg-productivity-blue hover:bg-productivity-blue/90">
-                  Create Account
-                </Button>
-              </div>
+              {!user && (
+                <div className="flex gap-2">
+                  <Button variant="ghost" size="sm" onClick={() => setShowAuthModal(true)}>
+                    Login
+                  </Button>
+                  <Button size="sm" className="bg-productivity-blue hover:bg-productivity-blue/90" onClick={() => setShowAuthModal(true)}>
+                    Create Account
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         )}
       </div>
+
+      <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
     </header>
   );
 };

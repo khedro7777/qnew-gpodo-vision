@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import { Search, ArrowRight, Users, Building, Briefcase } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { 
   Select, 
   SelectContent, 
@@ -10,6 +9,8 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select';
+import { useCountries, useIndustrySectors } from '@/hooks/useSupabaseData';
+import { useAuth } from '@/contexts/AuthContext';
 
 const HeroSection = () => {
   const [searchFilters, setSearchFilters] = useState({
@@ -17,6 +18,15 @@ const HeroSection = () => {
     sector: '',
     country: ''
   });
+
+  const { data: countries } = useCountries();
+  const { data: sectors } = useIndustrySectors();
+  const { user } = useAuth();
+
+  const handleSearch = () => {
+    console.log('Search filters:', searchFilters);
+    // TODO: Implement search functionality
+  };
 
   return (
     <section className="py-16 px-4 sm:px-6 lg:px-8">
@@ -35,7 +45,7 @@ const HeroSection = () => {
           </p>
 
           <Button size="lg" className="mb-12 bg-productivity-blue hover:bg-productivity-blue/90 text-lg px-8 py-6">
-            Start Now
+            {user ? 'Create Group' : 'Get Started'}
             <ArrowRight className="w-5 h-5 ml-2" />
           </Button>
         </div>
@@ -95,12 +105,11 @@ const HeroSection = () => {
                 <SelectValue placeholder="Industry Sector" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="technology">Technology</SelectItem>
-                <SelectItem value="healthcare">Healthcare</SelectItem>
-                <SelectItem value="finance">Finance</SelectItem>
-                <SelectItem value="manufacturing">Manufacturing</SelectItem>
-                <SelectItem value="retail">Retail</SelectItem>
-                <SelectItem value="education">Education</SelectItem>
+                {sectors?.map((sector) => (
+                  <SelectItem key={sector.id} value={sector.id}>
+                    {sector.icon} {sector.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
 
@@ -109,15 +118,15 @@ const HeroSection = () => {
                 <SelectValue placeholder="Country" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="us">United States</SelectItem>
-                <SelectItem value="uk">United Kingdom</SelectItem>
-                <SelectItem value="ca">Canada</SelectItem>
-                <SelectItem value="au">Australia</SelectItem>
-                <SelectItem value="de">Germany</SelectItem>
+                {countries?.map((country) => (
+                  <SelectItem key={country.id} value={country.id}>
+                    {country.flag_emoji} {country.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
 
-            <Button className="bg-productivity-blue hover:bg-productivity-blue/90">
+            <Button className="bg-productivity-blue hover:bg-productivity-blue/90" onClick={handleSearch}>
               <Search className="w-4 h-4 mr-2" />
               Search Groups
             </Button>
