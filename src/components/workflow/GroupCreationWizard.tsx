@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -18,7 +17,6 @@ interface GroupCreationData {
   gateway_type: GatewayType;
   is_public: boolean;
   max_members: number;
-  entry_points: number;
   requires_kyc: boolean;
   requires_mcp_test: boolean;
   industry_sector?: string;
@@ -35,7 +33,6 @@ const GroupCreationWizard = ({ onComplete }: { onComplete: () => void }) => {
     gateway_type: 'purchasing',
     is_public: true,
     max_members: 50,
-    entry_points: 0,
     requires_kyc: false,
     requires_mcp_test: false
   });
@@ -43,16 +40,10 @@ const GroupCreationWizard = ({ onComplete }: { onComplete: () => void }) => {
   const gatewayOptions = [
     { value: 'purchasing', label: 'Cooperative Purchasing', icon: '🛒', desc: 'Group buying for better prices' },
     { value: 'marketing', label: 'Cooperative Marketing', icon: '📢', desc: 'Joint marketing campaigns' },
-    { value: 'company', label: 'Company Formation', icon: '🏢', desc: 'Start a company together' },
-    { value: 'investment', label: 'Investment Groups', icon: '💰', desc: 'Pool resources for investments' },
+    { value: 'formation', label: 'Company Formation', icon: '🏢', desc: 'Start a company together' },
     { value: 'suppliers', label: 'Suppliers', icon: '🏭', desc: 'Connect with suppliers' },
     { value: 'freelancers', label: 'Freelancers', icon: '👨‍💻', desc: 'Find skilled freelancers' },
-    { value: 'teams', label: 'Freelancer Teams', icon: '👥', desc: 'Collaborate in teams' },
-    { value: 'services', label: 'Service Providers', icon: '🔧', desc: 'Professional services' },
-    { value: 'products', label: 'Product Listings', icon: '📦', desc: 'Marketplace for products' },
-    { value: 'arbitration', label: 'Arbitration & Documentation', icon: '⚖️', desc: 'Legal dispute resolution' },
-    { value: 'requests', label: 'Arbitration Requests', icon: '📋', desc: 'Submit arbitration requests' },
-    { value: 'negotiation', label: 'Smart Negotiation Tools', icon: '🤝', desc: 'AI-powered negotiations' }
+    { value: 'legal', label: 'Legal & Documentation', icon: '⚖️', desc: 'Legal dispute resolution' }
   ] as const;
 
   const handleInputChange = (field: keyof GroupCreationData, value: any) => {
@@ -200,17 +191,6 @@ const GroupCreationWizard = ({ onComplete }: { onComplete: () => void }) => {
                   max={1000}
                 />
               </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Entry Points Required</label>
-                <Input
-                  type="number"
-                  value={formData.entry_points}
-                  onChange={(e) => handleInputChange('entry_points', parseInt(e.target.value))}
-                  min={0}
-                />
-                <p className="text-xs text-gray-500 mt-1">Points required for members to join this group</p>
-              </div>
             </div>
           </div>
         );
@@ -261,7 +241,6 @@ const GroupCreationWizard = ({ onComplete }: { onComplete: () => void }) => {
                   <div><strong>Type:</strong> {gatewayOptions.find(g => g.value === formData.gateway_type)?.label}</div>
                   <div><strong>Visibility:</strong> {formData.is_public ? 'Public' : 'Private'}</div>
                   <div><strong>Max Members:</strong> {formData.max_members}</div>
-                  <div><strong>Entry Points:</strong> {formData.entry_points}</div>
                   <div className="flex gap-2 mt-2">
                     {formData.requires_kyc && <Badge variant="secondary">KYC Required</Badge>}
                     {formData.requires_mcp_test && <Badge variant="secondary">MCP Test Required</Badge>}

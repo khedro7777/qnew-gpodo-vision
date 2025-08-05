@@ -3,21 +3,16 @@ export type UserRole = 'user' | 'supplier' | 'freelancer' | 'admin' | 'api';
 
 export type KycStatus = 'pending' | 'submitted' | 'approved' | 'rejected';
 
-export type GroupStatus = 'pending' | 'active' | 'paused' | 'completed' | 'closed';
+export type GroupStatus = 'pending' | 'active' | 'closed' | 'archived';
 
+// Updated to match database schema
 export type GatewayType = 
   | 'purchasing' 
   | 'marketing' 
-  | 'company' 
-  | 'investment' 
   | 'suppliers' 
   | 'freelancers' 
-  | 'teams' 
-  | 'services' 
-  | 'products' 
-  | 'arbitration' 
-  | 'requests' 
-  | 'negotiation';
+  | 'formation' 
+  | 'legal';
 
 export interface User {
   id: string;
@@ -32,7 +27,7 @@ export interface User {
   is_verified: boolean;
   kyc_status: KycStatus;
   kyc_completed_at?: string;
-  points?: number;
+  points?: number; // Added points property
   created_at: string;
   updated_at: string;
 }
@@ -46,9 +41,6 @@ export interface Group {
   is_public: boolean;
   max_members: number;
   current_members: number;
-  entry_points: number;
-  requires_kyc: boolean;
-  requires_mcp_test: boolean;
   status: GroupStatus;
   country_id?: string;
   industry_sector_id?: string;

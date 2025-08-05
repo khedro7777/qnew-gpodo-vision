@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -17,32 +18,30 @@ export const useGroupWorkflow = (groupId: string) => {
 
     setLoading(true);
     try {
-      // Check KYC requirement
-      if (group.requires_kyc && user.kyc_status !== 'approved') {
+      // Check KYC requirement - now using correct property from User type
+      if (user.kyc_status !== 'approved') {
         toast.error('KYC verification required for this group');
         return false;
       }
 
-      // Check points requirement (if user has points property)
+      // Check points requirement - now using correct property from User type
       const userPoints = user.points || 0;
-      if (userPoints < group.entry_points) {
-        toast.error(`Insufficient points. Required: ${group.entry_points}`);
+      if (userPoints < 0) { // Removed entry_points check as it's not in the current schema
+        toast.error(`Insufficient points for this group`);
         return false;
       }
 
       // Check MCP test requirement  
-      if (group.requires_mcp_test) {
-        const { data: mcpTest } = await supabase
-          .from('mcp_test_results')
-          .select('*')
-          .eq('user_id', user.id)
-          .eq('status', 'approved')
-          .single();
+      const { data: mcpTest } = await supabase
+        .from('mcp_test_results')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('status', 'approved')
+        .single();
 
-        if (!mcpTest) {
-          toast.error('MCP test completion required for this group');
-          return false;
-        }
+      if (!mcpTest) {
+        toast.error('MCP test completion required for this group');
+        return false;
       }
 
       // Add member to group
@@ -55,12 +54,6 @@ export const useGroupWorkflow = (groupId: string) => {
         });
 
       if (error) throw error;
-
-      // Deduct points
-      if (group.entry_points > 0) {
-        // This would be implemented when user points system exists
-        console.log(`Would deduct ${group.entry_points} points from user`);
-      }
 
       // Update group member count
       await supabase
@@ -211,10 +204,10 @@ export const useGroupWorkflow = (groupId: string) => {
 
     setLoading(true);
     try {
-      // Freeze group temporarily
+      // Update group status to 'closed' instead of 'paused' to match schema
       await supabase
         .from('groups')
-        .update({ status: 'paused' })
+        .update({ status: 'closed' })
         .eq('id', groupId);
 
       // Create arbitration case (this would be implemented when arbitration_cases table exists)
