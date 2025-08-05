@@ -4,13 +4,16 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useKYCStatus } from '@/hooks/useKYCStatus';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import Stats from '@/components/Stats';
+import EnhancedStats from '@/components/enhanced/EnhancedStats';
 import QuickActions from '@/components/dashboard/QuickActions';
 import RecentActivity from '@/components/dashboard/RecentActivity';
-import ProductivitySection from '@/components/dashboard/ProductivitySection';
 import WelcomeSection from '@/components/dashboard/WelcomeSection';
 import UpcomingEvents from '@/components/dashboard/UpcomingEvents';
 import KYCVerification from '@/components/kyc/KYCVerification';
+import EnhancedPomodoroTimer from '@/components/enhanced/EnhancedPomodoroTimer';
+import EnhancedTaskList from '@/components/enhanced/EnhancedTaskList';
+import NotificationCenter from '@/components/enhanced/NotificationCenter';
+import GoalsTracker from '@/components/enhanced/GoalsTracker';
 import { Card } from '@/components/ui/card';
 import { Loader2, Shield } from 'lucide-react';
 
@@ -39,7 +42,7 @@ const Dashboard = () => {
     return <KYCVerification />;
   }
 
-  // Show normal dashboard if KYC is complete or user is API user
+  // Show enhanced dashboard if KYC is complete or user is API user
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
       <Header />
@@ -61,23 +64,38 @@ const Dashboard = () => {
           {/* Welcome Section */}
           <WelcomeSection />
           
-          {/* Stats Overview */}
+          {/* Enhanced Stats Overview */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Your Overview</h2>
-            <Stats />
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Today's Overview</h2>
+            <EnhancedStats />
           </section>
 
           {/* Main Dashboard Grid */}
-          <div className="grid lg:grid-cols-3 gap-8">
-            {/* Left Column */}
-            <div className="lg:col-span-2 space-y-8">
+          <div className="grid lg:grid-cols-12 gap-8">
+            {/* Left Column - Main Content */}
+            <div className="lg:col-span-8 space-y-8">
+              {/* Quick Actions */}
               <QuickActions />
+              
+              {/* Enhanced Task Management */}
+              <EnhancedTaskList />
+              
+              {/* Recent Activity */}
               <RecentActivity />
             </div>
             
-            {/* Right Column */}
-            <div className="space-y-8">
-              <ProductivitySection />
+            {/* Right Column - Sidebar */}
+            <div className="lg:col-span-4 space-y-8">
+              {/* Enhanced Pomodoro Timer */}
+              <EnhancedPomodoroTimer />
+              
+              {/* Goals Tracker */}
+              <GoalsTracker />
+              
+              {/* Notifications */}
+              <NotificationCenter />
+              
+              {/* Upcoming Events */}
               <UpcomingEvents />
             </div>
           </div>

@@ -52,3 +52,6 @@ export const useGroups = () => {
     },
   });
 };
+
+// Re-export productivity hooks for convenience
+export * from './useProductivityData';
