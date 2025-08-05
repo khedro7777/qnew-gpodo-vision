@@ -52,6 +52,10 @@ const EnhancedTaskList = () => {
     }
   };
 
+  const handlePriorityChange = (value: string) => {
+    setNewTaskPriority(value as 'low' | 'medium' | 'high' | 'urgent');
+  };
+
   if (isLoading) {
     return <Card className="p-6"><div className="animate-pulse">Loading tasks...</div></Card>;
   }
@@ -79,7 +83,7 @@ const EnhancedTaskList = () => {
               onKeyPress={(e) => e.key === 'Enter' && addTask()}
               className="flex-1"
             />
-            <Select value={newTaskPriority} onValueChange={setNewTaskPriority}>
+            <Select value={newTaskPriority} onValueChange={handlePriorityChange}>
               <SelectTrigger className="w-32">
                 <SelectValue />
               </SelectTrigger>

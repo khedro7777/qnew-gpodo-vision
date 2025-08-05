@@ -43,6 +43,10 @@ const GoalsTracker = () => {
     }
   };
 
+  const handleGoalTypeChange = (value: string) => {
+    setNewGoalType(value as 'daily' | 'weekly' | 'monthly' | 'custom');
+  };
+
   if (isLoading) {
     return <Card className="p-6"><div className="animate-pulse">Loading goals...</div></Card>;
   }
@@ -70,7 +74,7 @@ const GoalsTracker = () => {
               value={newGoalTarget}
               onChange={(e) => setNewGoalTarget(e.target.value)}
             />
-            <Select value={newGoalType} onValueChange={setNewGoalType}>
+            <Select value={newGoalType} onValueChange={handleGoalTypeChange}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
