@@ -13,7 +13,11 @@ import {
   Eye,
   UserPlus,
   Settings,
-  Activity
+  Activity,
+  Shield,
+  Crown,
+  CheckCircle,
+  AlertTriangle
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -29,8 +33,10 @@ const MCPGroupManager = ({ mcpAgent, onLogActivity }: MCPGroupManagerProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedGroup, setSelectedGroup] = useState<any>(null);
   const [showInviteModal, setShowInviteModal] = useState(false);
+  const [showManagerApprovalModal, setShowManagerApprovalModal] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('member');
+  const [pendingAction, setPendingAction] = useState<any>(null);
   const ipfs = useIPFS();
 
   useEffect(() => {
@@ -39,7 +45,7 @@ const MCPGroupManager = ({ mcpAgent, onLogActivity }: MCPGroupManagerProps) => {
 
   const loadGroups = async () => {
     try {
-      // Load groups with member counts and performance data
+      // Load groups with manager status and MCP control info
       const mockGroups = [
         {
           id: '1',
@@ -53,7 +59,18 @@ const MCPGroupManager = ({ mcpAgent, onLogActivity }: MCPGroupManagerProps) => {
           performance_score: 89,
           total_savings: 45000,
           countries: { name: 'Saudi Arabia', flag_emoji: '🇸🇦' },
-          industry_sectors: { name: 'Healthcare', icon: '🏥' }
+          industry_sectors: { name: 'Healthcare', icon: '🏥' },
+          elected_manager: {
+            id: 'manager-1',
+            name: 'أحمد محمد',
+            role: 'honorary', // Honorary/Supervisory role
+            approval_required: true
+          },
+          mcp_control: {
+            active: true,
+            last_action: '2 hours ago',
+            pending_approvals: 1
+          }
         },
         {
           id: '2',
@@ -67,7 +84,18 @@ const MCPGroupManager = ({ mcpAgent, onLogActivity }: MCPGroupManagerProps) => {
           performance_score: 76,
           total_savings: 125000,
           countries: { name: 'UAE', flag_emoji: '🇦🇪' },
-          industry_sectors: { name: 'Technology', icon: '💻' }
+          industry_sectors: { name: 'Technology', icon: '💻' },
+          elected_manager: {
+            id: 'manager-2',
+            name: 'سارة أحمد',
+            role: 'honorary',
+            approval_required: false
+          },
+          mcp_control: {
+            active: true,
+            last_action: '5 minutes ago',
+            pending_approvals: 0
+          }
         }
       ];
 
@@ -78,19 +106,85 @@ const MCPGroupManager = ({ mcpAgent, onLogActivity }: MCPGroupManagerProps) => {
     }
   };
 
+  const executeManagementAction = async (action: string, groupId: string, data: any) => {
+    const group = groups.find(g => g.id === groupId);
+    
+    // Check if manager approval is required for this action
+    const requiresApproval = group?.elected_manager?.approval_required && 
+      ['invite_member', 'remove_member', 'change_settings'].includes(action);
+
+    if (requiresApproval) {
+      setPendingAction({ action, groupId, data, group });
+      setShowManagerApprovalModal(true);
+      return;
+    }
+
+    // Execute action directly
+    await performAction(action, groupId, data);
+  };
+
+  const performAction = async (action: string, groupId: string, data: any) => {
+    try {
+      switch (action) {
+        case 'invite_member':
+          toast.success(`MCP Agent: Invitation sent to ${data.email} for group ${data.groupName}`);
+          onLogActivity('mcp_member_invited', `MCP Agent invited ${data.email} to ${data.groupName}`, groupId);
+          break;
+        
+        case 'manage_voting':
+          toast.success(`MCP Agent: Voting process managed for ${data.groupName}`);
+          onLogActivity('mcp_voting_managed', `MCP Agent managed voting in ${data.groupName}`, groupId);
+          break;
+        
+        case 'approve_offer':
+          toast.success(`MCP Agent: Offer approved for ${data.groupName}`);
+          onLogActivity('mcp_offer_approved', `MCP Agent approved offer in ${data.groupName}`, groupId);
+          break;
+        
+        case 'manage_contracts':
+          toast.success(`MCP Agent: Contract managed for ${data.groupName}`);
+          onLogActivity('mcp_contract_managed', `MCP Agent managed contract in ${data.groupName}`, groupId);
+          break;
+        
+        default:
+          toast.success(`MCP Agent: Action ${action} executed successfully`);
+      }
+    } catch (error) {
+      console.error('Error performing action:', error);
+      toast.error('Failed to execute management action');
+    }
+  };
+
+  const requestManagerApproval = async () => {
+    try {
+      if (!pendingAction) return;
+
+      // In real implementation, this would notify the manager
+      toast.success(`Approval request sent to ${pendingAction.group.elected_manager.name}`);
+      
+      // Simulate manager approval after 3 seconds
+      setTimeout(async () => {
+        toast.success(`${pendingAction.group.elected_manager.name} approved the action`);
+        await performAction(pendingAction.action, pendingAction.groupId, pendingAction.data);
+        setShowManagerApprovalModal(false);
+        setPendingAction(null);
+      }, 3000);
+
+    } catch (error) {
+      console.error('Error requesting approval:', error);
+      toast.error('Failed to request manager approval');
+    }
+  };
+
   const inviteMember = async () => {
     try {
       if (!selectedGroup || !inviteEmail) return;
 
-      // In real implementation, this would send an invitation
-      toast.success(`Invitation sent to ${inviteEmail} for ${selectedGroup.name}`);
-      
-      onLogActivity(
-        'member_invited',
-        `Invited ${inviteEmail} to join ${selectedGroup.name} as ${inviteRole}`,
-        selectedGroup.id,
-        { email: inviteEmail, role: inviteRole }
-      );
+      await executeManagementAction('invite_member', selectedGroup.id, {
+        email: inviteEmail,
+        role: inviteRole,
+        groupName: selectedGroup.name
+      });
 
       setInviteEmail('');
       setShowInviteModal(false);
@@ -106,16 +200,16 @@ const MCPGroupManager = ({ mcpAgent, onLogActivity }: MCPGroupManagerProps) => {
       const stats = ipfs.getStorageStats(groupId);
       
       onLogActivity(
-        'ipfs_managed',
-        `Accessed IPFS storage for group ${groupId}`,
+        'mcp_ipfs_managed',
+        `MCP Agent managed IPFS storage for group ${groupId}`,
         groupId,
         { totalFiles: files.length, storageStats: stats }
       );
 
-      toast.success('IPFS storage accessed successfully');
+      toast.success('MCP Agent: IPFS storage managed successfully');
     } catch (error) {
       console.error('Error managing IPFS:', error);
-      toast.error('Failed to access IPFS storage');
+      toast.error('Failed to manage IPFS storage');
     }
   };
 
@@ -136,7 +230,12 @@ const MCPGroupManager = ({ mcpAgent, onLogActivity }: MCPGroupManagerProps) => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Group Management Center</h2>
+        <div>
+          <h2 className="text-2xl font-bold">MCP Agent Control Center</h2>
+          <p className="text-sm text-gray-600 mt-1">
+            Full administrative control • Elected managers are honorary supervisors
+          </p>
+        </div>
         <div className="flex gap-2">
           <div className="relative">
             <Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
@@ -165,18 +264,40 @@ const MCPGroupManager = ({ mcpAgent, onLogActivity }: MCPGroupManagerProps) => {
                     <Badge className={getStatusColor(group.status)}>
                       {group.status}
                     </Badge>
+                    <Badge className="bg-purple-100 text-purple-800">
+                      <Shield className="w-3 h-3 mr-1" />
+                      MCP Controlled
+                    </Badge>
                   </div>
                   
-                  <div className="flex items-center gap-4 text-sm text-gray-500">
+                  <div className="flex items-center gap-4 text-sm text-gray-500 mb-2">
                     <span>{group.countries?.flag_emoji} {group.countries?.name}</span>
                     <span>{group.industry_sectors?.icon} {group.industry_sectors?.name}</span>
                     <span>Created: {new Date(group.created_at).toLocaleDateString()}</span>
                   </div>
+
+                  {/* Manager Status */}
+                  {group.elected_manager && (
+                    <div className="flex items-center gap-2 text-sm bg-gray-50 p-2 rounded">
+                      <Crown className="w-4 h-4 text-yellow-600" />
+                      <span className="font-medium">Honorary Manager:</span>
+                      <span>{group.elected_manager.name}</span>
+                      {group.elected_manager.approval_required ? (
+                        <Badge className="bg-orange-100 text-orange-800 text-xs">
+                          Approval Required
+                        </Badge>
+                      ) : (
+                        <Badge className="bg-green-100 text-green-800 text-xs">
+                          Supervisory Only
+                        </Badge>
+                      )}
+                    </div>
+                  )}
                 </div>
                 
                 <div className="flex gap-2">
                   <Button 
-                    variant="outline" 
+                    variant="default" 
                     size="sm"
                     onClick={() => {
                       setSelectedGroup(group);
@@ -184,7 +305,7 @@ const MCPGroupManager = ({ mcpAgent, onLogActivity }: MCPGroupManagerProps) => {
                     }}
                   >
                     <UserPlus className="w-4 h-4 mr-1" />
-                    Invite
+                    MCP Invite
                   </Button>
                   <Button 
                     variant="outline" 
@@ -192,18 +313,22 @@ const MCPGroupManager = ({ mcpAgent, onLogActivity }: MCPGroupManagerProps) => {
                     onClick={() => manageIPFSStorage(group.id)}
                   >
                     <Database className="w-4 h-4 mr-1" />
-                    IPFS
+                    Manage IPFS
                   </Button>
-                  <Button variant="outline" size="sm">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => executeManagementAction('manage_voting', group.id, { groupName: group.name })}
+                  >
                     <Eye className="w-4 h-4 mr-1" />
-                    View
+                    Manage Voting
                   </Button>
                 </div>
               </div>
             </CardHeader>
 
             <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                 <div>
                   <p className="text-sm text-gray-500">Members</p>
                   <p className="text-lg font-semibold">
@@ -232,31 +357,40 @@ const MCPGroupManager = ({ mcpAgent, onLogActivity }: MCPGroupManagerProps) => {
                 </div>
                 
                 <div>
-                  <p className="text-sm text-gray-500">Gateway Type</p>
-                  <p className="text-lg font-semibold capitalize">
-                    {group.gateway_type}
-                  </p>
+                  <p className="text-sm text-gray-500">MCP Status</p>
+                  <div className="flex items-center gap-1">
+                    <CheckCircle className="w-4 h-4 text-green-500" />
+                    <p className="text-sm font-semibold text-green-600">Active Control</p>
+                  </div>
                 </div>
               </div>
 
-              <div className="flex justify-between items-center mt-4 pt-4 border-t">
-                <div className="flex items-center gap-2 text-sm text-gray-500">
-                  <Activity className="w-4 h-4" />
-                  <span>Last activity: 2 hours ago</span>
+              {/* MCP Control Status */}
+              <div className="flex justify-between items-center pt-4 border-t">
+                <div className="flex items-center gap-4 text-sm">
+                  <div className="flex items-center gap-2">
+                    <Activity className="w-4 h-4 text-blue-500" />
+                    <span className="text-gray-600">Last MCP action: {group.mcp_control.last_action}</span>
+                  </div>
+                  {group.mcp_control.pending_approvals > 0 && (
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle className="w-4 h-4 text-orange-500" />
+                      <span className="text-orange-600">
+                        {group.mcp_control.pending_approvals} pending approval(s)
+                      </span>
+                    </div>
+                  )}
                 </div>
-                <Button 
-                  size="sm"
-                  onClick={() => {
-                    onLogActivity(
-                      'group_managed',
-                      `Accessed management panel for ${group.name}`,
-                      group.id
-                    );
-                  }}
-                >
-                  <Settings className="w-4 h-4 mr-1" />
-                  Manage
-                </Button>
+                
+                <div className="flex gap-2">
+                  <Button 
+                    size="sm"
+                    onClick={() => executeManagementAction('approve_offer', group.id, { groupName: group.name })}
+                  >
+                    <Settings className="w-4 h-4 mr-1" />
+                    Full Control Panel
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -268,7 +402,10 @@ const MCPGroupManager = ({ mcpAgent, onLogActivity }: MCPGroupManagerProps) => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <Card className="w-96">
             <CardHeader>
-              <CardTitle>Invite New Member</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="w-5 h-5 text-blue-500" />
+                MCP Agent: Invite New Member
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
@@ -294,18 +431,66 @@ const MCPGroupManager = ({ mcpAgent, onLogActivity }: MCPGroupManagerProps) => {
                   className="w-full p-2 border rounded-md"
                 >
                   <option value="member">Member</option>
-                  <option value="admin">Admin</option>
                   <option value="observer">Observer</option>
                 </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  Note: Administrative roles are MCP Agent controlled
+                </p>
               </div>
               
               <div className="flex gap-2 pt-4">
                 <Button onClick={inviteMember} className="flex-1">
-                  Send Invitation
+                  Send MCP Invitation
                 </Button>
                 <Button 
                   variant="outline" 
                   onClick={() => setShowInviteModal(false)}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Manager Approval Modal */}
+      {showManagerApprovalModal && pendingAction && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <Card className="w-96">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Crown className="w-5 h-5 text-yellow-600" />
+                Manager Approval Required
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <p className="text-sm text-gray-600 mb-2">
+                  This action requires approval from the honorary manager:
+                </p>
+                <div className="bg-gray-50 p-3 rounded">
+                  <p className="font-medium">{pendingAction.group.elected_manager.name}</p>
+                  <p className="text-sm text-gray-600">Honorary Group Manager</p>
+                </div>
+              </div>
+              
+              <div>
+                <label className="text-sm font-medium">Action Details</label>
+                <p className="text-gray-600 text-sm">{pendingAction.action} in {pendingAction.group.name}</p>
+              </div>
+              
+              <div className="flex gap-2 pt-4">
+                <Button onClick={requestManagerApproval} className="flex-1">
+                  Request Approval
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setShowManagerApprovalModal(false);
+                    setPendingAction(null);
+                  }}
                   className="flex-1"
                 >
                   Cancel

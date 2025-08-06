@@ -3,18 +3,16 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
   Crown, 
-  Settings, 
+  Shield, 
+  Eye, 
+  Calendar, 
   Users, 
-  FileText, 
-  MessageSquare,
-  TrendingUp,
-  AlertCircle,
   CheckCircle,
-  Plus
+  AlertCircle,
+  Info
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -24,244 +22,312 @@ interface GroupManagersTabProps {
 }
 
 const GroupManagersTab = ({ groupId }: GroupManagersTabProps) => {
-  const [managerData, setManagerData] = useState({
-    notifications: 3,
-    pendingDecisions: 5,
-    groupPerformance: 92,
-    recentActivity: []
-  });
-  const [showDecisionForm, setShowDecisionForm] = useState(false);
-  const [decisionTitle, setDecisionTitle] = useState('');
-  const [decisionDescription, setDecisionDescription] = useState('');
+  const [managers, setManagers] = useState<any[]>([]);
+  const [mcpAgent, setMcpAgent] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  const createDecision = async () => {
-    if (!decisionTitle.trim()) {
-      toast.error('يرجى إدخال عنوان القرار');
-      return;
-    }
+  useEffect(() => {
+    loadManagersData();
+  }, [groupId]);
 
+  const loadManagersData = async () => {
     try {
-      const { error } = await supabase
-        .from('group_proposals')
-        .insert({
-          group_id: groupId,
-          title: decisionTitle,
-          description: decisionDescription,
+      // Mock data showing the new management structure
+      const mockManagers = [
+        {
+          id: 'manager-1',
+          user_id: 'user-1',
+          name: 'أحمد محمد السالم',
+          email: 'ahmed.salem@example.com',
+          role: 'honorary_manager', // New role type
+          elected_at: '2024-01-20',
+          vote_count: 45,
           status: 'active',
-          created_by: (await supabase.auth.getUser()).data.user?.id
-        });
+          avatar_url: null,
+          responsibilities: [
+            'Supervisory oversight',
+            'Approve major decisions',
+            'Member dispute resolution',
+            'Group representation'
+          ],
+          actual_permissions: [
+            'View all activities',
+            'Approve/Reject MCP actions',
+            'Access reports',
+            'Communicate with members'
+          ],
+          mcp_override: false // Cannot override MCP decisions
+        }
+      ];
 
-      if (error) throw error;
+      const mockMcpAgent = {
+        id: 'mcp-agent-1',
+        agent_code: 'MCP-2024-001',
+        full_name: 'GPODO MCP Agent',
+        specialization: 'Group Management',
+        responsibilities: [
+          'Day-to-day operations',
+          'Member invitations',
+          'Offer management',
+          'Voting coordination',
+          'Contract execution',
+          'IPFS management',
+          'Performance monitoring'
+        ],
+        authority_level: 'full_control',
+        manager_approval_required: true // For major decisions
+      };
 
-      toast.success('تم إنشاء القرار بنجاح');
-      setDecisionTitle('');
-      setDecisionDescription('');
-      setShowDecisionForm(false);
+      setManagers(mockManagers);
+      setMcpAgent(mockMcpAgent);
     } catch (error) {
-      toast.error('فشل في إنشاء القرار');
+      console.error('Error loading managers data:', error);
+      toast.error('Failed to load managers information');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const contactMCP = async () => {
-    toast.success('تم إرسال طلب للتواصل مع MCP');
-  };
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      {/* Manager Welcome */}
-      <Card className="bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-200">
-        <CardContent className="p-6">
-          <div className="flex items-center gap-3">
-            <Crown className="w-8 h-8 text-purple-600" />
-            <div>
-              <h2 className="text-xl font-bold text-purple-900">مرحباً بك في لوحة المديرين</h2>
-              <p className="text-purple-700">أنت مدير منتخب لهذه المجموعة - استخدم صلاحياتك بحكمة</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold">Group Management Structure</h2>
+          <p className="text-gray-600 mt-1">
+            MCP Agent handles operations • Elected managers provide oversight
+          </p>
+        </div>
+      </div>
+
+      {/* Management Structure Overview */}
+      <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Info className="w-5 h-5 text-blue-600" />
+            Management Structure Explanation
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="space-y-3">
+              <div className="flex items-start gap-3">
+                <Shield className="w-5 h-5 text-blue-600 mt-0.5" />
+                <div>
+                  <h4 className="font-semibold text-blue-900">MCP Agent (Executive)</h4>
+                  <p className="text-sm text-blue-700">
+                    Handles all day-to-day operations, member management, and decision execution
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="space-y-3">
+              <div className="flex items-start gap-3">
+                <Crown className="w-5 h-5 text-yellow-600 mt-0.5" />
+                <div>
+                  <h4 className="font-semibold text-yellow-900">Elected Manager (Supervisory)</h4>
+                  <p className="text-sm text-yellow-700">
+                    Provides oversight, approves major decisions, and represents the group
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Manager Statistics */}
-      <div className="grid md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4 text-center">
-            <AlertCircle className="w-8 h-8 text-red-500 mx-auto mb-2" />
-            <h3 className="font-semibold">إشعارات MCP</h3>
-            <p className="text-2xl font-bold text-red-600">{managerData.notifications}</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4 text-center">
-            <FileText className="w-8 h-8 text-yellow-500 mx-auto mb-2" />
-            <h3 className="font-semibold">قرارات معلقة</h3>
-            <p className="text-2xl font-bold text-yellow-600">{managerData.pendingDecisions}</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4 text-center">
-            <TrendingUp className="w-8 h-8 text-green-500 mx-auto mb-2" />
-            <h3 className="font-semibold">أداء المجموعة</h3>
-            <p className="text-2xl font-bold text-green-600">{managerData.groupPerformance}%</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4 text-center">
-            <CheckCircle className="w-8 h-8 text-blue-500 mx-auto mb-2" />
-            <h3 className="font-semibold">العروض المقبولة</h3>
-            <p className="text-2xl font-bold text-blue-600">12</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Manager Actions */}
-      <div className="grid md:grid-cols-2 gap-6">
-        <Card>
+      {/* MCP Agent Section */}
+      {mcpAgent && (
+        <Card className="border-blue-200">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="w-5 h-5" />
-              إنشاء قرار جديد
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {!showDecisionForm ? (
-              <div className="text-center py-8">
-                <Button onClick={() => setShowDecisionForm(true)}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  إنشاء قرار
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <Input
-                  placeholder="عنوان القرار"
-                  value={decisionTitle}
-                  onChange={(e) => setDecisionTitle(e.target.value)}
-                />
-                <Textarea
-                  placeholder="تفاصيل القرار"
-                  value={decisionDescription}
-                  onChange={(e) => setDecisionDescription(e.target.value)}
-                  rows={3}
-                />
-                <div className="flex gap-2">
-                  <Button onClick={createDecision} className="flex-1">
-                    نشر القرار
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setShowDecisionForm(false)}
-                    className="flex-1"
-                  >
-                    إلغاء
-                  </Button>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MessageSquare className="w-5 h-5" />
-              التواصل مع MCP
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="w-5 h-5 text-blue-600" />
+                MCP Agent (Executive Control)
+              </CardTitle>
+              <Badge className="bg-blue-100 text-blue-800">
+                Active Control
+              </Badge>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <p className="text-gray-600">تواصل مع منسق المشروع الرئيسي (MCP) لأي استفسارات أو طلبات خاصة.</p>
-              <Button onClick={contactMCP} className="w-full">
-                <MessageSquare className="w-4 h-4 mr-2" />
-                إرسال رسالة للـ MCP
-              </Button>
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                  <Shield className="w-6 h-6 text-blue-600" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold">{mcpAgent.full_name}</h3>
+                  <p className="text-sm text-gray-600">{mcpAgent.agent_code}</p>
+                  <p className="text-sm text-gray-600">Specialization: {mcpAgent.specialization}</p>
+                  <Badge className="mt-2 bg-green-100 text-green-800">
+                    <CheckCircle className="w-3 h-3 mr-1" />
+                    Full Administrative Authority
+                  </Badge>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="font-medium mb-2">Executive Responsibilities:</h4>
+                <div className="grid md:grid-cols-2 gap-2">
+                  {mcpAgent.responsibilities.map((responsibility: string, index: number) => (
+                    <div key={index} className="flex items-center gap-2 text-sm">
+                      <CheckCircle className="w-4 h-4 text-green-500" />
+                      <span>{responsibility}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {mcpAgent.manager_approval_required && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 text-yellow-600 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium text-yellow-800">
+                        Manager Approval Required
+                      </p>
+                      <p className="text-xs text-yellow-700">
+                        Major decisions require honorary manager approval for transparency
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
-      </div>
+      )}
 
-      {/* Pending Approvals */}
+      {/* Honorary Managers Section */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <CheckCircle className="w-5 h-5" />
-            العروض المعلقة للموافقة
+            <Crown className="w-5 h-5 text-yellow-600" />
+            Honorary Managers (Supervisory Role)
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {[
-              { id: 1, title: 'عرض أسعار للمعدات الطبية', company: 'شركة التقنيات الطبية', amount: '150,000 ريال' },
-              { id: 2, title: 'خدمات النقل واللوجستيات', company: 'مجموعة النقل السريع', amount: '75,000 ريال' },
-              { id: 3, title: 'استشارات قانونية', company: 'مكتب الاستشارات القانونية', amount: '25,000 ريال' }
-            ].map((offer) => (
-              <div key={offer.id} className="flex items-center justify-between p-4 border rounded-lg">
-                <div>
-                  <h4 className="font-medium">{offer.title}</h4>
-                  <p className="text-sm text-gray-500">{offer.company}</p>
-                  <p className="text-sm font-medium text-green-600">{offer.amount}</p>
+          <div className="space-y-6">
+            {managers.map((manager) => (
+              <div key={manager.id} className="border rounded-lg p-4">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-start gap-4">
+                    <Avatar className="w-12 h-12">
+                      <AvatarImage src={manager.avatar_url} />
+                      <AvatarFallback>
+                        {manager.name.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <h3 className="font-semibold">{manager.name}</h3>
+                      <p className="text-sm text-gray-600">{manager.email}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Badge className="bg-yellow-100 text-yellow-800">
+                          <Crown className="w-3 h-3 mr-1" />
+                          Honorary Manager
+                        </Badge>
+                        <Badge className={manager.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
+                          {manager.status}
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="text-right text-sm text-gray-600">
+                    <div className="flex items-center gap-1 mb-1">
+                      <Users className="w-4 h-4" />
+                      <span>{manager.vote_count} votes</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Calendar className="w-4 h-4" />
+                      <span>Since {new Date(manager.elected_at).toLocaleDateString()}</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm">
-                    مراجعة
-                  </Button>
-                  <Button size="sm" className="bg-green-600 hover:bg-green-700">
-                    موافقة
-                  </Button>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <h4 className="font-medium mb-2 text-sm">Supervisory Responsibilities:</h4>
+                    <div className="space-y-1">
+                      {manager.responsibilities.map((responsibility: string, index: number) => (
+                        <div key={index} className="flex items-center gap-2 text-sm">
+                          <Eye className="w-3 h-3 text-gray-400" />
+                          <span className="text-gray-600">{responsibility}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="font-medium mb-2 text-sm">Actual Permissions:</h4>
+                    <div className="space-y-1">
+                      {manager.actual_permissions.map((permission: string, index: number) => (
+                        <div key={index} className="flex items-center gap-2 text-sm">
+                          <CheckCircle className="w-3 h-3 text-green-500" />
+                          <span className="text-gray-600">{permission}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-4 pt-4 border-t">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <AlertCircle className="w-4 h-4" />
+                      <span>Cannot override MCP Agent decisions</span>
+                    </div>
+                    <Button variant="outline" size="sm">
+                      <Eye className="w-4 h-4 mr-1" />
+                      View Activity Log
+                    </Button>
+                  </div>
                 </div>
               </div>
             ))}
           </div>
+
+          {managers.length === 0 && (
+            <div className="text-center py-8 text-gray-500">
+              <Crown className="w-12 h-12 mx-auto text-gray-300 mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No Elected Managers</h3>
+              <p className="text-sm">
+                Group is fully managed by MCP Agent. Elections can be arranged if needed.
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* Manager Reports */}
+      {/* Management Actions */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="w-5 h-5" />
-            تقارير الأداء
-          </CardTitle>
+          <CardTitle>Management Actions</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid md:grid-cols-2 gap-6">
-            <div>
-              <h4 className="font-medium mb-3">نشاط الأعضاء</h4>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span>المشاركة في التصويت</span>
-                  <span className="font-medium">87%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>مشاركة الرسائل</span>
-                  <span className="font-medium">92%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>حضور الاجتماعات</span>
-                  <span className="font-medium">78%</span>
-                </div>
+          <div className="grid md:grid-cols-2 gap-4">
+            <Button variant="outline" className="h-auto p-4">
+              <div className="text-center">
+                <Crown className="w-6 h-6 mx-auto mb-2 text-yellow-600" />
+                <p className="font-medium">Arrange Manager Election</p>
+                <p className="text-xs text-gray-600">Start election for honorary manager</p>
               </div>
-            </div>
-            
-            <div>
-              <h4 className="font-medium mb-3">إنجازات المجموعة</h4>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span>المشاريع المكتملة</span>
-                  <span className="font-medium">8</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>الوفورات المحققة</span>
-                  <span className="font-medium">340,000 ريال</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>رضا الأعضاء</span>
-                  <span className="font-medium">4.8/5</span>
-                </div>
+            </Button>
+            <Button variant="outline" className="h-auto p-4">
+              <div className="text-center">
+                <Eye className="w-6 h-6 mx-auto mb-2 text-blue-600" />
+                <p className="font-medium">View MCP Activities</p>
+                <p className="text-xs text-gray-600">See all management actions</p>
               </div>
-            </div>
+            </Button>
           </div>
         </CardContent>
       </Card>
