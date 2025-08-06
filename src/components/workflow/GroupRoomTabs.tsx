@@ -14,7 +14,8 @@ import {
   Settings,
   AlertTriangle,
   Crown,
-  ExternalLink
+  ExternalLink,
+  Inbox
 } from 'lucide-react';
 import GroupOverview from './GroupOverview';
 import GroupMembersTab from './GroupMembersTab';
@@ -25,6 +26,7 @@ import GroupContractsTab from './GroupContractsTab';
 import GroupComplaints from './GroupComplaints';
 import GroupManagersTab from './GroupManagersTab';
 import GroupExternalTab from './GroupExternalTab';
+import GroupInbox from './GroupInbox';
 
 interface GroupRoomTabsProps {
   group: any;
@@ -38,6 +40,7 @@ const GroupRoomTabs = ({ group, userRole, isManager, groupId }: GroupRoomTabsPro
 
   const tabs = [
     { id: 'overview', label: 'نظرة عامة', icon: TrendingUp, show: true },
+    { id: 'inbox', label: 'صندوق الوارد', icon: Inbox, show: isManager || userRole === 'founder' },
     { id: 'members', label: 'الأعضاء', icon: Users, show: true },
     { id: 'voting', label: 'القرارات والتصويت', icon: Vote, show: true },
     { id: 'decisions', label: 'الصادر/الوارد', icon: FileText, show: true },
@@ -64,6 +67,9 @@ const GroupRoomTabs = ({ group, userRole, isManager, groupId }: GroupRoomTabsPro
             {tab.id === 'managers' && isManager && (
               <Badge className="bg-yellow-100 text-yellow-800 text-xs">منتخب</Badge>
             )}
+            {tab.id === 'inbox' && (
+              <Badge className="bg-red-100 text-red-800 text-xs">1</Badge>
+            )}
           </TabsTrigger>
         ))}
       </TabsList>
@@ -71,6 +77,12 @@ const GroupRoomTabs = ({ group, userRole, isManager, groupId }: GroupRoomTabsPro
       <TabsContent value="overview">
         <GroupOverview group={group} userRole={userRole} />
       </TabsContent>
+
+      {(isManager || userRole === 'founder') && (
+        <TabsContent value="inbox">
+          <GroupInbox groupId={groupId} userRole={userRole} />
+        </TabsContent>
+      )}
 
       <TabsContent value="members">
         <GroupMembersTab groupId={groupId} userRole={userRole} />
