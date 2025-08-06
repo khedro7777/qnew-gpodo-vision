@@ -9,11 +9,35 @@ import GroupInfo from '@/components/group/GroupInfo';
 import GroupDocuments from '@/components/group/GroupDocuments';
 import GroupActivity from '@/components/group/GroupActivity';
 import GroupActions from '@/components/group/GroupActions';
+import MCPPresentationManager from '@/components/group/MCPPresentationManager';
 import { useAuth } from '@/contexts/AuthContext';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 const GroupProfile = () => {
   const { groupId } = useParams<{ groupId: string }>();
   const { user } = useAuth();
+
+  const { data: group, isLoading } = useQuery({
+    queryKey: ['group', groupId],
+    queryFn: async () => {
+      if (!groupId) return null;
+      
+      const { data, error } = await supabase
+        .from('groups')
+        .select(`
+          *,
+          industry_sectors(name, icon),
+          countries(name, flag_emoji)
+        `)
+        .eq('id', groupId)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!groupId,
+  });
 
   if (!groupId) {
     return (
@@ -54,6 +78,15 @@ const GroupProfile = () => {
             {/* Main Content */}
             <div className="lg:col-span-2 space-y-8">
               <GroupInfo groupId={groupId} />
+              
+              {/* MCP Presentations Section */}
+              {group && (
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-4">Group Presentations</h2>
+                  <MCPPresentationManager groupId={groupId} group={group} />
+                </div>
+              )}
+              
               <GroupDocuments groupId={groupId} />
               <GroupActivity groupId={groupId} />
             </div>
