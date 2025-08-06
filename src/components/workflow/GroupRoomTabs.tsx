@@ -27,9 +27,12 @@ import { useAuth } from '@/contexts/AuthContext';
 
 interface GroupRoomTabsProps {
   groupId: string;
+  group?: any;
+  userRole?: string;
+  isManager?: boolean;
 }
 
-const GroupRoomTabs = ({ groupId }: GroupRoomTabsProps) => {
+const GroupRoomTabs = ({ groupId, group, userRole = 'member', isManager = false }: GroupRoomTabsProps) => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
 
@@ -70,11 +73,11 @@ const GroupRoomTabs = ({ groupId }: GroupRoomTabsProps) => {
         </TabsList>
 
         <TabsContent value="overview">
-          <GroupOverview groupId={groupId} />
+          <GroupOverview group={group} />
         </TabsContent>
 
         <TabsContent value="members">
-          <GroupMembersTab groupId={groupId} />
+          <GroupMembersTab groupId={groupId} userRole={userRole} />
         </TabsContent>
 
         <TabsContent value="managers">
@@ -82,31 +85,31 @@ const GroupRoomTabs = ({ groupId }: GroupRoomTabsProps) => {
         </TabsContent>
 
         <TabsContent value="decisions">
-          <GroupDecisionsTab groupId={groupId} />
+          <GroupDecisionsTab groupId={groupId} userRole={userRole} />
         </TabsContent>
 
         <TabsContent value="voting">
-          <GroupVotingTab groupId={groupId} />
+          <GroupVotingTab groupId={groupId} userRole={userRole} isManager={isManager} />
         </TabsContent>
 
         <TabsContent value="offers">
-          <GroupOffersTab groupId={groupId} />
+          <GroupOffersTab groupId={groupId} userRole={userRole} isManager={isManager} />
         </TabsContent>
 
         <TabsContent value="contracts">
-          <GroupContractsTab groupId={groupId} />
+          <GroupContractsTab groupId={groupId} userRole={userRole} />
         </TabsContent>
 
         <TabsContent value="inbox">
-          <GroupInbox groupId={groupId} />
+          <GroupInbox groupId={groupId} userRole={userRole} />
         </TabsContent>
 
         <TabsContent value="outbox">
-          <GroupOutbox groupId={groupId} />
+          <GroupOutbox groupId={groupId} userRole={userRole} />
         </TabsContent>
 
         <TabsContent value="external">
-          <GroupExternalTab groupId={groupId} />
+          <GroupExternalTab groupId={groupId} userRole={userRole} />
         </TabsContent>
 
         {isMCPAgent && (

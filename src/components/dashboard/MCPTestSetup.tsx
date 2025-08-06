@@ -15,6 +15,7 @@ import {
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import type { GatewayType } from '@/types';
 
 const MCPTestSetup = () => {
   const { user } = useAuth();
@@ -51,21 +52,21 @@ const MCPTestSetup = () => {
 
   const createSampleGroups = async () => {
     try {
-      // Create sample groups with proper numbering
+      // Create sample groups with proper typing
       const sampleGroups = [
         {
           name: 'Medical Equipment Purchasing',
-          gateway_type: 'purchasing',
+          gateway_type: 'purchasing' as GatewayType,
           description: 'Group focused on purchasing medical equipment',
-          creator_id: user?.id,
+          creator_id: user?.id!,
           country_id: null,
           industry_sector_id: null
         },
         {
           name: 'Tech Startup Investment',
-          gateway_type: 'investment', 
+          gateway_type: 'formation' as GatewayType, 
           description: 'Investment opportunities in tech startups',
-          creator_id: user?.id,
+          creator_id: user?.id!,
           country_id: null,
           industry_sector_id: null
         }

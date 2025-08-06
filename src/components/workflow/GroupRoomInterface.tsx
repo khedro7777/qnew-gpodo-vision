@@ -234,10 +234,10 @@ const GroupRoomInterface = ({ groupId }: GroupRoomProps) => {
 
       {/* Group Room Tabs */}
       <GroupRoomTabs 
+        groupId={groupId}
         group={group} 
         userRole={userRole} 
         isManager={isManager}
-        groupId={groupId}
       />
     </div>
   );
