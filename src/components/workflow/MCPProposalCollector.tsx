@@ -1,23 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { 
-  Plus, 
+  Bot, 
+  FileText, 
   Send, 
-  Users, 
-  MessageSquare, 
-  Vote, 
-  Shield,
-  Clock,
-  CheckCircle,
-  AlertTriangle,
-  Globe
+  Clock, 
+  CheckCircle, 
+  MessageSquare,
+  Vote,
+  User,
+  RefreshCw
 } from 'lucide-react';
-import { toast } from 'sonner';
 import { useTranslation } from '@/hooks/useTranslation';
+
+interface MCPProposalCollectorProps {
+  groupId: string;
+}
 
 interface ProposalSubmission {
   id: string;
@@ -26,371 +28,180 @@ interface ProposalSubmission {
   title: string;
   description: string;
   category: string;
-  submitted_at: string;
   status: 'collected' | 'sent_to_voting' | 'sent_to_discussion' | 'final_decision';
-  mcp_notes?: string;
+  mcp_notes: string;
+  submitted_at: string;
 }
 
-interface MCPProposalCollectorProps {
-  groupId: string;
-  userRole: string;
-}
-
-const MCPProposalCollector = ({ groupId, userRole }: MCPProposalCollectorProps) => {
-  const [proposals, setProposals] = useState<ProposalSubmission[]>([
+const MCPProposalCollector = ({ groupId }: MCPProposalCollectorProps) => {
+  const { t, isRTL } = useTranslation();
+  
+  const [submissions, setSubmissions] = useState<ProposalSubmission[]>([
     {
       id: '1',
       member_id: 'member-1',
-      member_name: 'أحمد محمد',
-      title: 'اقتراح تحسين عملية الشراء',
-      description: 'اقترح تطوير نظام جديد لتحسين عملية الشراء الجماعي وتوفير المزيد من الخيارات',
-      category: 'operations',
-      submitted_at: new Date().toISOString(),
+      member_name: 'Ahmed Al-Saudi',
+      title: 'Equipment Bulk Purchase Program',
+      description: 'Propose a structured program for bulk purchasing medical equipment to achieve 25-30% cost savings',
+      category: 'purchasing',
       status: 'collected',
-      mcp_notes: 'تم استلام الاقتراح وجاري المراجعة الأولية'
-    },
-    {
-      id: '2',
-      member_id: 'member-2',
-      member_name: 'فاطمة أحمد',
-      title: 'اقتراح برنامج تدريبي',
-      description: 'اقتراح تنظيم برنامج تدريبي للأعضاء الجدد لتعريفهم بآلية عمل المجموعة',
-      category: 'training',
-      submitted_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-      status: 'sent_to_discussion',
-      mcp_notes: 'تم إرسال الاقتراح للنقاش في قاعة المجموعة'
+      mcp_notes: 'Excellent proposal with clear financial benefits. Recommend proceeding to voting.',
+      submitted_at: '2024-01-15T10:00:00Z'
     }
   ]);
 
-  const [newProposal, setNewProposal] = useState({
-    title: '',
-    description: '',
-    category: 'general'
-  });
-  const [showSubmissionForm, setShowSubmissionForm] = useState(false);
-  const [isTranslating, setIsTranslating] = useState(false);
-  const [translatedTexts, setTranslatedTexts] = useState<Record<string, string>>({});
-  const { translate } = useTranslation();
+  const [processing, setProcessing] = useState(false);
 
-  // Translation function
-  const handleTranslation = async () => {
-    setIsTranslating(true);
-    try {
-      const textsToTranslate = {
-        'collector_title': 'جامع اقتراحات الأعضاء',
-        'collector_desc': 'يقوم MCP Agent بجمع الاقتراحات وإرسالها للتصويت أو النقاش',
-        'new_proposal': 'اقتراح جديد',
-        'mcp_process_title': 'عملية MCP Agent لمعالجة الاقتراحات',
-        'collect_step': 'جمع الاقتراحات',
-        'from_members': 'من الأعضاء',
-        'mcp_review': 'مراجعة MCP',
-        'analyze_classify': 'تحليل وتصنيف',
-        'send_voting': 'إرسال للتصويت',
-        'or_discussion': 'أو النقاش',
-        'final_decision': 'القرار النهائي',
-        'based_results': 'بناءً على النتائج'
-      };
-
-      const translated: Record<string, string> = {};
-      for (const [key, text] of Object.entries(textsToTranslate)) {
-        try {
-          translated[key] = await translate(text, 'EN');
-        } catch (error) {
-          console.error(`Translation failed for ${key}:`, error);
-          translated[key] = text;
-        }
-      }
-      setTranslatedTexts(translated);
-    } catch (error) {
-      console.error('Translation error:', error);
-    } finally {
-      setIsTranslating(false);
-    }
-  };
-
-  const getDisplayText = (key: string, fallback: string) => {
-    return translatedTexts[key] || fallback;
-  };
-
-  const submitProposal = async () => {
-    if (!newProposal.title.trim() || !newProposal.description.trim()) {
-      toast.error('يرجى ملء جميع الحقول المطلوبة');
-      return;
-    }
-
-    const proposal: ProposalSubmission = {
-      id: Date.now().toString(),
-      member_id: 'current-user',
-      member_name: 'المستخدم الحالي',
-      title: newProposal.title,
-      description: newProposal.description,
-      category: newProposal.category,
-      submitted_at: new Date().toISOString(),
-      status: 'collected',
-      mcp_notes: 'تم استلام الاقتراح من العضو وجاري المراجعة بواسطة MCP Agent'
-    };
-
-    setProposals([proposal, ...proposals]);
-    setNewProposal({ title: '', description: '', category: 'general' });
-    setShowSubmissionForm(false);
+  const processMCPAnalysis = async (submissionId: string) => {
+    setProcessing(true);
     
-    toast.success('تم إرسال الاقتراح بنجاح! سيقوم MCP Agent بمراجعته');
+    // Simulate MCP processing
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    setSubmissions(prev => prev.map(sub => 
+      sub.id === submissionId 
+        ? {
+            ...sub,
+            status: 'sent_to_voting' as const,
+            mcp_notes: 'MCP has analyzed this proposal and recommends proceeding to group voting. The proposal shows strong merit and alignment with group objectives.'
+          }
+        : sub
+    ));
+    
+    setProcessing(false);
   };
 
-  const mcpProcessProposal = (proposalId: string, action: 'sent_to_voting' | 'sent_to_discussion') => {
-    setProposals(prev => prev.map(p => {
-      if (p.id === proposalId) {
-        return {
-          ...p,
-          status: action,
-          mcp_notes: action === 'sent_to_voting' 
-            ? 'تم إرسال الاقتراح للتصويت بناءً على تحليل MCP Agent'
-            : 'تم إرسال الاقتراح للنقاش في قاعة المجموعة لجمع المزيد من الآراء'
-        };
-      }
-      return p;
-    }));
-
-    const actionText = action === 'sent_to_voting' ? 'التصويت' : 'النقاش';
-    toast.success(`تم إرسال الاقتراح إلى ${actionText} بواسطة MCP Agent`);
-  };
-
-  const getStatusBadge = (status: string) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
-      case 'collected':
-        return <Badge className="bg-blue-100 text-blue-800"><Clock className="w-3 h-3 mr-1" />تم الجمع</Badge>;
-      case 'sent_to_voting':
-        return <Badge className="bg-green-100 text-green-800"><Vote className="w-3 h-3 mr-1" />في التصويت</Badge>;
-      case 'sent_to_discussion':
-        return <Badge className="bg-purple-100 text-purple-800"><MessageSquare className="w-3 h-3 mr-1" />في النقاش</Badge>;
-      case 'final_decision':
-        return <Badge className="bg-gray-100 text-gray-800"><CheckCircle className="w-3 h-3 mr-1" />قرار نهائي</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
+      case 'collected': return 'bg-blue-100 text-blue-800';
+      case 'sent_to_voting': return 'bg-green-100 text-green-800';
+      case 'sent_to_discussion': return 'bg-yellow-100 text-yellow-800';
+      case 'final_decision': return 'bg-purple-100 text-purple-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const getCategoryText = (category: string) => {
-    const categories = {
-      'general': 'عام',
-      'operations': 'العمليات',
-      'training': 'التدريب',
-      'finance': 'المالية',
-      'governance': 'الحوكمة'
-    };
-    return categories[category as keyof typeof categories] || category;
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'collected': return Clock;
+      case 'sent_to_voting': return Vote;
+      case 'sent_to_discussion': return MessageSquare;
+      case 'final_decision': return CheckCircle;
+      default: return FileText;
+    }
   };
 
   return (
-    <div className="space-y-6" dir="rtl">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="flex items-center gap-3">
-            <h2 className="text-2xl font-bold">
-              {getDisplayText('collector_title', 'جامع اقتراحات الأعضاء')}
-            </h2>
-            <Button
-              onClick={handleTranslation}
-              size="sm"
-              variant="outline"
-              disabled={isTranslating}
-              className="flex items-center gap-2"
-            >
-              <Globe className="w-4 h-4" />
-              {isTranslating ? 'جاري الترجمة...' : 'ترجمة'}
-            </Button>
+    <div className="space-y-6" dir={isRTL ? 'rtl' : 'ltr'}>
+      {/* MCP Assistant Header */}
+      <Card className="bg-gradient-to-r from-blue-500 to-purple-600 text-white">
+        <CardContent className="p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+              <Bot className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold">{t('MCP Assistant')}</h3>
+              <p className="text-white/80">Automated Proposal Collection & Analysis</p>
+            </div>
           </div>
-          <p className="text-gray-600">
-            {getDisplayText('collector_desc', 'يقوم MCP Agent بجمع الاقتراحات وإرسالها للتصويت أو النقاش')}
+          <p className="text-white/90 text-sm">
+            MCP Assistant collects member proposals, analyzes them for feasibility and impact, 
+            then routes them to appropriate workflows (voting or discussion) before making final decisions.
           </p>
-        </div>
-        <Button onClick={() => setShowSubmissionForm(true)}>
-          <Plus className="w-4 h-4 mr-2" />
-          {getDisplayText('new_proposal', 'اقتراح جديد')}
-        </Button>
-      </div>
-
-      {/* MCP Process Flow */}
-      <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="w-5 h-5 text-blue-500" />
-            {getDisplayText('mcp_process_title', 'عملية MCP Agent لمعالجة الاقتراحات')}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid md:grid-cols-4 gap-4">
-            <div className="text-center">
-              <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-2">
-                <Users className="w-6 h-6 text-white" />
-              </div>
-              <h4 className="font-semibold">1. {getDisplayText('collect_step', 'جمع الاقتراحات')}</h4>
-              <p className="text-sm text-gray-600">{getDisplayText('from_members', 'من الأعضاء')}</p>
-            </div>
-            
-            <div className="text-center">
-              <div className="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center mx-auto mb-2">
-                <Shield className="w-6 h-6 text-white" />
-              </div>
-              <h4 className="font-semibold">2. {getDisplayText('mcp_review', 'مراجعة MCP')}</h4>
-              <p className="text-sm text-gray-600">{getDisplayText('analyze_classify', 'تحليل وتصنيف')}</p>
-            </div>
-            
-            <div className="text-center">
-              <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-2">
-                <Vote className="w-6 h-6 text-white" />
-              </div>
-              <h4 className="font-semibold">3. {getDisplayText('send_voting', 'إرسال للتصويت')}</h4>
-              <p className="text-sm text-gray-600">{getDisplayText('or_discussion', 'أو النقاش')}</p>
-            </div>
-            
-            <div className="text-center">
-              <div className="w-12 h-12 bg-gray-500 rounded-full flex items-center justify-center mx-auto mb-2">
-                <CheckCircle className="w-6 h-6 text-white" />
-              </div>
-              <h4 className="font-semibold">4. {getDisplayText('final_decision', 'القرار النهائي')}</h4>
-              <p className="text-sm text-gray-600">{getDisplayText('based_results', 'بناءً على النتائج')}</p>
-            </div>
-          </div>
         </CardContent>
       </Card>
 
-      {/* Proposals List */}
+      {/* Collected Proposals */}
       <div className="space-y-4">
-        {proposals.map((proposal) => (
-          <Card key={proposal.id}>
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <CardTitle className="text-lg">{proposal.title}</CardTitle>
-                    {getStatusBadge(proposal.status)}
+        <h3 className="text-lg font-semibold text-gray-900">Collected Member Proposals</h3>
+        
+        {submissions.map((submission) => {
+          const StatusIcon = getStatusIcon(submission.status);
+          return (
+            <Card key={submission.id}>
+              <CardContent className="p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <h4 className="text-lg font-semibold text-gray-900">
+                        {submission.title}
+                      </h4>
+                      <Badge className={getStatusColor(submission.status)}>
+                        <StatusIcon className="w-3 h-3 mr-1" />
+                        {t(submission.status)}
+                      </Badge>
+                    </div>
+                    
+                    <p className="text-gray-600 mb-3">{submission.description}</p>
+                    
+                    <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
+                      <div className="flex items-center gap-1">
+                        <User className="w-4 h-4" />
+                        <span>{submission.member_name}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Clock className="w-4 h-4" />
+                        <span>{new Date(submission.submitted_at).toLocaleDateString()}</span>
+                      </div>
+                    </div>
+
+                    {/* MCP Analysis */}
+                    {submission.mcp_notes && (
+                      <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4">
+                        <div className="flex items-start gap-3">
+                          <Bot className="w-5 h-5 text-purple-600 mt-0.5" />
+                          <div>
+                            <p className="text-purple-900 font-medium mb-1">{t('MCP Recommendation')}</p>
+                            <p className="text-purple-800 text-sm">{submission.mcp_notes}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <div className="flex items-center gap-4 text-sm text-gray-500 mb-2">
-                    <span>بواسطة: {proposal.member_name}</span>
-                    <span>التصنيف: {getCategoryText(proposal.category)}</span>
-                    <span>تاريخ الإرسال: {new Date(proposal.submitted_at).toLocaleDateString('ar')}</span>
-                  </div>
                 </div>
-              </div>
-            </CardHeader>
 
-            <CardContent>
-              <p className="text-gray-700 mb-4">{proposal.description}</p>
-              
-              {proposal.mcp_notes && (
-                <div className="bg-blue-50 p-3 rounded-lg mb-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Shield className="w-4 h-4 text-blue-500" />
-                    <span className="font-medium text-blue-800">ملاحظات MCP Agent</span>
-                  </div>
-                  <p className="text-sm text-blue-700">{proposal.mcp_notes}</p>
+                <div className="flex gap-2">
+                  {submission.status === 'collected' && (
+                    <Button 
+                      size="sm"
+                      onClick={() => processMCPAnalysis(submission.id)}
+                      disabled={processing}
+                    >
+                      {processing ? (
+                        <RefreshCw className="w-4 h-4 mr-1 animate-spin" />
+                      ) : (
+                        <Send className="w-4 h-4 mr-1" />
+                      )}
+                      {t('Submit to MCP')}
+                    </Button>
+                  )}
+                  
+                  {submission.status === 'sent_to_voting' && (
+                    <Button size="sm" variant="outline">
+                      <Vote className="w-4 h-4 mr-1" />
+                      {t('Go to Voting')}
+                    </Button>
+                  )}
                 </div>
-              )}
-
-              {/* MCP Actions - Only show if status is 'collected' and user has MCP privileges */}
-              {proposal.status === 'collected' && userRole === 'admin' && (
-                <div className="flex gap-2 pt-4 border-t">
-                  <Button 
-                    size="sm"
-                    onClick={() => mcpProcessProposal(proposal.id, 'sent_to_voting')}
-                    className="bg-green-600 hover:bg-green-700"
-                  >
-                    <Vote className="w-4 h-4 mr-1" />
-                    إرسال للتصويت
-                  </Button>
-                  <Button 
-                    size="sm"
-                    variant="outline"
-                    onClick={() => mcpProcessProposal(proposal.id, 'sent_to_discussion')}
-                  >
-                    <MessageSquare className="w-4 h-4 mr-1" />
-                    إرسال للنقاش
-                  </Button>
-                </div>
-              )}
-
-              {/* Status Actions */}
-              {proposal.status === 'sent_to_voting' && (
-                <div className="flex items-center gap-2 pt-4 border-t text-sm text-green-600">
-                  <CheckCircle className="w-4 h-4" />
-                  <span>تم إرسال هذا الاقتراح للتصويت في تبويب "التصويت"</span>
-                </div>
-              )}
-
-              {proposal.status === 'sent_to_discussion' && (
-                <div className="flex items-center gap-2 pt-4 border-t text-sm text-purple-600">
-                  <MessageSquare className="w-4 h-4" />
-                  <span>جاري النقاش حول هذا الاقتراح في قاعة المجموعة</span>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
-      {/* New Proposal Submission Modal */}
-      {showSubmissionForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <Card className="w-full max-w-2xl">
-            <CardHeader>
-              <CardTitle>إرسال اقتراح جديد</CardTitle>
-              <p className="text-sm text-gray-600">
-                سيقوم MCP Agent بمراجعة اقتراحك وإرساله للتصويت أو النقاش حسب المناسب
-              </p>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label className="text-sm font-medium">عنوان الاقتراح</label>
-                <Input
-                  value={newProposal.title}
-                  onChange={(e) => setNewProposal({ ...newProposal, title: e.target.value })}
-                  placeholder="اكتب عنوان مختصر للاقتراح"
-                />
-              </div>
-              
-              <div>
-                <label className="text-sm font-medium">تصنيف الاقتراح</label>
-                <select
-                  value={newProposal.category}
-                  onChange={(e) => setNewProposal({ ...newProposal, category: e.target.value })}
-                  className="w-full p-2 border rounded-md"
-                >
-                  <option value="general">عام</option>
-                  <option value="operations">العمليات</option>
-                  <option value="training">التدريب</option>
-                  <option value="finance">المالية</option>
-                  <option value="governance">الحوكمة</option>
-                </select>
-              </div>
-              
-              <div>
-                <label className="text-sm font-medium">وصف تفصيلي للاقتراح</label>
-                <Textarea
-                  value={newProposal.description}
-                  onChange={(e) => setNewProposal({ ...newProposal, description: e.target.value })}
-                  placeholder="اشرح اقتراحك بالتفصيل وفوائده للمجموعة"
-                  rows={4}
-                />
-              </div>
-              
-              <div className="flex gap-2 pt-4">
-                <Button onClick={submitProposal} className="flex-1">
-                  <Send className="w-4 h-4 mr-2" />
-                  إرسال الاقتراح
-                </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={() => setShowSubmissionForm(false)}
-                  className="flex-1"
-                >
-                  إلغاء
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+      {submissions.length === 0 && (
+        <Card>
+          <CardContent className="p-8 text-center">
+            <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              No proposals collected yet
+            </h3>
+            <p className="text-gray-600">
+              MCP Assistant is waiting for member proposals to analyze and process.
+            </p>
+          </CardContent>
+        </Card>
       )}
     </div>
   );
