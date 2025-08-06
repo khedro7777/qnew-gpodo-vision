@@ -1,4 +1,3 @@
-
 import { create as createIPFS, IPFSHTTPClient } from 'ipfs-http-client';
 
 interface IPFSDocument {
@@ -279,4 +278,26 @@ class IPFSService {
 }
 
 export const ipfsService = new IPFSService();
+
+// Export individual functions for use in hooks
+export const uploadFile = async (file: File, groupId: string, progressCallback?: (progress: number) => void) => {
+  return await ipfsService.uploadFile(file, groupId);
+};
+
+export const retrieveFile = async (cid: string) => {
+  return await ipfsService.retrieveFile(cid);
+};
+
+export const pinFile = async (cid: string) => {
+  return await ipfsService.pinFile(cid);
+};
+
+export const unpinFile = async (cid: string) => {
+  return await ipfsService.unpinFile(cid);
+};
+
+export const getFileUrl = (cid: string) => {
+  return `https://ipfs.io/ipfs/${cid}`;
+};
+
 export type { IPFSDocument, IPFSUploadResult, IPFSMetadata };

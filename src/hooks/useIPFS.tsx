@@ -1,6 +1,6 @@
 
 import { useState, useCallback } from 'react';
-import { uploadFile, retrieveFile, pinFile, unpinFile, getFileUrl } from '@/services/ipfsService';
+import { ipfsService } from '@/services/ipfsService';
 
 interface UseIPFSOptions {
   onProgress?: (progress: number) => void;
@@ -22,6 +22,7 @@ interface StorageStats {
   totalSize: number;
   pinnedFiles: number;
   recentUploads: FileMetadata[];
+  types: Record<string, number>;
 }
 
 export const useIPFS = () => {
@@ -42,14 +43,14 @@ export const useIPFS = () => {
         options?.onProgress?.(p);
       };
 
-      const hash = await uploadFile(file, groupId, progressCallback);
+      const result = await ipfsService.uploadFile(file, groupId);
       
       // Store metadata
       const metadata: FileMetadata = {
         name: file.name,
         size: file.size,
         type: file.type,
-        hash,
+        hash: result.cid,
         uploadedAt: new Date().toISOString()
       };
 
@@ -58,7 +59,7 @@ export const useIPFS = () => {
       files.push(metadata);
       localStorage.setItem(`ipfs_files_${groupId}`, JSON.stringify(files));
 
-      return hash;
+      return result.cid;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Upload failed';
       options?.onError?.(errorMessage);
@@ -72,7 +73,7 @@ export const useIPFS = () => {
   const retrieve = useCallback(async (hash: string, options?: UseIPFSOptions) => {
     setLoading(true);
     try {
-      return await retrieveFile(hash);
+      return await ipfsService.retrieveFile(hash);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Retrieval failed';
       options?.onError?.(errorMessage);
@@ -85,7 +86,7 @@ export const useIPFS = () => {
   const pin = useCallback(async (hash: string, options?: UseIPFSOptions) => {
     setLoading(true);
     try {
-      return await pinFile(hash);
+      return await ipfsService.pinFile(hash);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Pin failed';
       options?.onError?.(errorMessage);
@@ -98,7 +99,7 @@ export const useIPFS = () => {
   const unpin = useCallback(async (hash: string, options?: UseIPFSOptions) => {
     setLoading(true);
     try {
-      return await unpinFile(hash);
+      return await ipfsService.unpinFile(hash);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unpin failed';
       options?.onError?.(errorMessage);
@@ -108,8 +109,8 @@ export const useIPFS = () => {
     }
   }, []);
 
-  const getUrl = useCallback((hash: string) => {
-    return getFileUrl(hash);
+  const getUrl = useCallback(async (hash: string) => {
+    return await ipfsService.getFileUrl(hash);
   }, []);
 
   const getFiles = useCallback((groupId: string): FileMetadata[] => {
@@ -118,12 +119,16 @@ export const useIPFS = () => {
   }, []);
 
   const getStorageStats = useCallback((groupId: string) => {
+    const files = getFiles(groupId);
+    const serviceStats = ipfsService.getStorageStats(groupId);
+    
     return {
       data: {
-        totalFiles: getFiles(groupId).length,
-        totalSize: getFiles(groupId).reduce((sum, file) => sum + file.size, 0),
-        pinnedFiles: getFiles(groupId).length, // Simplified for demo
-        recentUploads: getFiles(groupId).slice(-5)
+        totalFiles: files.length,
+        totalSize: files.reduce((sum, file) => sum + file.size, 0),
+        pinnedFiles: files.length, // Simplified for demo
+        recentUploads: files.slice(-5),
+        types: serviceStats.types
       } as StorageStats
     };
   }, [getFiles]);
