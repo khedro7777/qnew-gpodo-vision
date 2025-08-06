@@ -88,13 +88,13 @@ const Header = () => {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
                   <DropdownMenuItem>🇺🇸 English</DropdownMenuItem>
-                  <DropdownMenuItem>🇸🇦 العربية</DropdownMenuItem>
-                  <DropdownMenuItem>🇫🇷 Français</DropdownMenuItem>
-                  <DropdownMenuItem>🇨🇳 中文</DropdownMenuItem>
-                  <DropdownMenuItem>🇪🇸 Español</DropdownMenuItem>
-                  <DropdownMenuItem>🇮🇳 हिन्दी</DropdownMenuItem>
-                  <DropdownMenuItem>🇯🇵 日本語</DropdownMenuItem>
-                  <DropdownMenuItem>🇰🇷 한국어</DropdownMenuItem>
+                  <DropdownMenuItem>🇸🇦 Arabic</DropdownMenuItem>
+                  <DropdownMenuItem>🇫🇷 French</DropdownMenuItem>
+                  <DropdownMenuItem>🇨🇳 Chinese</DropdownMenuItem>
+                  <DropdownMenuItem>🇪🇸 Spanish</DropdownMenuItem>
+                  <DropdownMenuItem>🇮🇳 Hindi</DropdownMenuItem>
+                  <DropdownMenuItem>🇯🇵 Japanese</DropdownMenuItem>
+                  <DropdownMenuItem>🇰🇷 Korean</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
 
