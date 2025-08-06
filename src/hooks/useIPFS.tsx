@@ -109,8 +109,8 @@ export const useIPFS = () => {
     }
   }, []);
 
-  const getUrl = useCallback(async (hash: string) => {
-    return await ipfsService.getFileUrl(hash);
+  const getUrl = useCallback((hash: string): string => {
+    return `https://ipfs.io/ipfs/${hash}`;
   }, []);
 
   const getFiles = useCallback((groupId: string): FileMetadata[] => {

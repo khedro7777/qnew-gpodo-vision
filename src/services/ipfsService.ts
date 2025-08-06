@@ -166,7 +166,7 @@ class IPFSService {
     }
   }
 
-  async getFileUrl(cid: string): Promise<string> {
+  getFileUrl(cid: string): string {
     // Return IPFS gateway URL for file access
     return `https://ipfs.io/ipfs/${cid}`;
   }
