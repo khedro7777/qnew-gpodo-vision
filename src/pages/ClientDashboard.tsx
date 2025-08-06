@@ -14,6 +14,8 @@ import ArchiveTab from '@/components/dashboard/ArchiveTab';
 import StoreTab from '@/components/dashboard/StoreTab';
 import CompanyFormationTab from '@/components/dashboard/CompanyFormationTab';
 import NotificationsTab from '@/components/dashboard/NotificationsTab';
+import MarketInsightsTab from '@/components/dashboard/MarketInsightsTab';
+import RiskManagementTab from '@/components/dashboard/RiskManagementTab';
 import { Card } from '@/components/ui/card';
 import { Shield } from 'lucide-react';
 
@@ -39,11 +41,11 @@ const ClientDashboard = () => {
 
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Client Dashboard</h1>
-            <p className="text-gray-600">Welcome, {profile?.full_name || profile?.email}</p>
+            <p className="text-gray-600">Welcome, {profile?.full_name || user?.email}</p>
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-5 lg:grid-cols-10 mb-8">
+            <TabsList className="grid w-full grid-cols-6 lg:grid-cols-12 mb-8">
               <TabsTrigger value="my-groups">My Groups</TabsTrigger>
               <TabsTrigger value="group-rooms">Group Rooms</TabsTrigger>
               <TabsTrigger value="wallet">Wallet</TabsTrigger>
@@ -54,6 +56,8 @@ const ClientDashboard = () => {
               <TabsTrigger value="store">Store</TabsTrigger>
               <TabsTrigger value="company-formation">Company Formation</TabsTrigger>
               <TabsTrigger value="notifications">Notifications</TabsTrigger>
+              <TabsTrigger value="market-insights">Market Insights</TabsTrigger>
+              <TabsTrigger value="risk-management">Risk Management</TabsTrigger>
             </TabsList>
 
             <TabsContent value="my-groups">
@@ -94,6 +98,14 @@ const ClientDashboard = () => {
 
             <TabsContent value="notifications">
               <NotificationsTab />
+            </TabsContent>
+
+            <TabsContent value="market-insights">
+              <MarketInsightsTab />
+            </TabsContent>
+
+            <TabsContent value="risk-management">
+              <RiskManagementTab />
             </TabsContent>
           </Tabs>
         </div>

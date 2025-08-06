@@ -7,6 +7,7 @@ import type { User, UserRole, KycStatus } from '@/types';
 
 interface AuthContextType {
   user: User | null;
+  profile: User | null; // Add profile property
   loading: boolean;
   signUp: (email: string, password: string, userData?: any) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
@@ -36,7 +37,8 @@ const mockUser: User = {
   phone: '+966501234567',
   is_verified: true,
   kyc_status: 'approved' as KycStatus,
-  points: 1000, // Added points property
+  kyc_completed_at: new Date().toISOString(),
+  points: 1000,
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
 };
@@ -97,6 +99,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const value = {
     user,
+    profile: user, // Set profile to be same as user for now
     loading,
     signUp,
     signIn,

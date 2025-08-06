@@ -27,7 +27,7 @@ export interface User {
   is_verified: boolean;
   kyc_status: KycStatus;
   kyc_completed_at?: string;
-  points?: number; // Added points property
+  points?: number;
   created_at: string;
   updated_at: string;
 }
