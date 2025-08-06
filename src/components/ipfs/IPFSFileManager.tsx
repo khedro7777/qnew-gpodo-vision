@@ -15,9 +15,11 @@ import {
   Video, 
   Music,
   Archive,
-  Trash2,
   Copy,
-  ExternalLink
+  ExternalLink,
+  Search,
+  Filter,
+  Share
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -27,7 +29,9 @@ interface IPFSFileManagerProps {
 
 const IPFSFileManager = ({ groupId }: IPFSFileManagerProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterType, setFilterType] = useState<string>('all');
+  
   const { 
     uploadFile, 
     uploadProgress, 
@@ -42,6 +46,12 @@ const IPFSFileManager = ({ groupId }: IPFSFileManagerProps) => {
   } = useIPFS();
 
   const { data: files = [], isLoading } = getGroupFiles(groupId || 'default');
+
+  const filteredFiles = files.filter(file => {
+    const matchesSearch = file.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesType = filterType === 'all' || file.type.startsWith(filterType);
+    return matchesSearch && matchesType;
+  });
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -69,6 +79,20 @@ const IPFSFileManager = ({ groupId }: IPFSFileManagerProps) => {
     toast.success('Copied to clipboard');
   };
 
+  const shareFile = (cid: string, fileName: string) => {
+    const shareUrl = `https://ipfs.io/ipfs/${cid}`;
+    if (navigator.share) {
+      navigator.share({
+        title: fileName,
+        text: `Check out this file on IPFS: ${fileName}`,
+        url: shareUrl
+      });
+    } else {
+      copyToClipboard(shareUrl);
+      toast.success('Share URL copied to clipboard');
+    }
+  };
+
   const getFileIcon = (type: string) => {
     if (type.startsWith('image/')) return <Image className="w-4 h-4" />;
     if (type.startsWith('video/')) return <Video className="w-4 h-4" />;
@@ -85,9 +109,14 @@ const IPFSFileManager = ({ groupId }: IPFSFileManagerProps) => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
+  const getFileTypeFilter = () => {
+    const types = new Set(files.map(file => file.type.split('/')[0]));
+    return Array.from(types);
+  };
+
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Header with Search and Filters */}
       <Card className="p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
@@ -97,6 +126,30 @@ const IPFSFileManager = ({ groupId }: IPFSFileManagerProps) => {
           <Badge variant="outline" className="font-mono text-xs">
             {didKey.substring(0, 20)}...
           </Badge>
+        </div>
+
+        {/* Search and Filter Controls */}
+        <div className="flex gap-4 mb-6">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Input
+              placeholder="Search files..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <select
+            value={filterType}
+            onChange={(e) => setFilterType(e.target.value)}
+            className="px-3 py-2 border rounded-md text-sm"
+          >
+            <option value="all">All Types</option>
+            <option value="image">Images</option>
+            <option value="video">Videos</option>
+            <option value="audio">Audio</option>
+            <option value="application">Documents</option>
+          </select>
         </div>
 
         {/* Upload Section */}
@@ -132,30 +185,37 @@ const IPFSFileManager = ({ groupId }: IPFSFileManagerProps) => {
 
       {/* Files List */}
       <Card className="p-6">
-        <h4 className="text-lg font-semibold text-gray-900 mb-4">Stored Documents</h4>
+        <div className="flex items-center justify-between mb-4">
+          <h4 className="text-lg font-semibold text-gray-900">Stored Documents</h4>
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <span>{filteredFiles.length} files found</span>
+          </div>
+        </div>
         
         {isLoading ? (
           <div className="text-center py-8">
             <div className="animate-spin w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
             <p className="text-gray-600">Loading documents...</p>
           </div>
-        ) : files.length === 0 ? (
+        ) : filteredFiles.length === 0 ? (
           <div className="text-center py-8">
             <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600">No documents uploaded yet</p>
+            <p className="text-gray-600">
+              {searchTerm || filterType !== 'all' ? 'No documents match your search' : 'No documents uploaded yet'}
+            </p>
           </div>
         ) : (
-          <div className="space-y-3">
-            {files.map((file) => (
+          <div className="grid gap-3">
+            {filteredFiles.map((file) => (
               <div
                 key={file.cid}
-                className="flex items-center justify-between p-4 border rounded-lg hover:shadow-sm transition-shadow"
+                className="flex items-center justify-between p-4 border rounded-lg hover:shadow-sm transition-shadow bg-white"
               >
                 <div className="flex items-center gap-3 flex-1 min-w-0">
                   {getFileIcon(file.type)}
                   <div className="min-w-0 flex-1">
                     <p className="font-medium text-gray-900 truncate">{file.name}</p>
-                    <div className="flex items-center gap-4 text-xs text-gray-500">
+                    <div className="flex items-center gap-4 text-xs text-gray-500 mt-1">
                       <span>{formatFileSize(file.size)}</span>
                       <span>Uploaded: {new Date(file.uploadedAt).toLocaleDateString()}</span>
                       <span className="font-mono">CID: {file.cid.substring(0, 12)}...</span>
@@ -167,7 +227,17 @@ const IPFSFileManager = ({ groupId }: IPFSFileManagerProps) => {
                   <Button
                     size="sm"
                     variant="outline"
+                    onClick={() => shareFile(file.cid, file.name)}
+                    title="Share file"
+                  >
+                    <Share className="w-4 h-4" />
+                  </Button>
+                  
+                  <Button
+                    size="sm"
+                    variant="outline"
                     onClick={() => copyToClipboard(file.cid)}
+                    title="Copy CID"
                   >
                     <Copy className="w-4 h-4" />
                   </Button>
@@ -176,6 +246,7 @@ const IPFSFileManager = ({ groupId }: IPFSFileManagerProps) => {
                     size="sm"
                     variant="outline"
                     onClick={() => handleDownload(file.cid, file.name)}
+                    title="Download file"
                   >
                     <Download className="w-4 h-4" />
                   </Button>
@@ -185,6 +256,7 @@ const IPFSFileManager = ({ groupId }: IPFSFileManagerProps) => {
                     variant="outline"
                     onClick={() => pinFile(file.cid)}
                     disabled={isPinning}
+                    title="Pin file"
                   >
                     <Pin className="w-4 h-4" />
                   </Button>
@@ -196,6 +268,7 @@ const IPFSFileManager = ({ groupId }: IPFSFileManagerProps) => {
                       const url = await getFileUrl(file.cid);
                       window.open(url, '_blank');
                     }}
+                    title="Open in new tab"
                   >
                     <ExternalLink className="w-4 h-4" />
                   </Button>
@@ -206,30 +279,40 @@ const IPFSFileManager = ({ groupId }: IPFSFileManagerProps) => {
         )}
       </Card>
 
-      {/* IPFS Info */}
-      <Card className="p-6">
-        <h4 className="text-lg font-semibold text-gray-900 mb-4">IPFS Information</h4>
-        <div className="grid md:grid-cols-2 gap-4 text-sm">
-          <div>
-            <p className="font-medium text-gray-900">DID Key:</p>
-            <p className="font-mono text-gray-600 break-all">{didKey}</p>
+      {/* IPFS Statistics and Info */}
+      <div className="grid md:grid-cols-2 gap-4">
+        <Card className="p-6">
+          <h4 className="text-lg font-semibold text-gray-900 mb-4">Storage Statistics</h4>
+          <div className="space-y-3 text-sm">
+            <div className="flex justify-between">
+              <span className="text-gray-600">Total Files:</span>
+              <span className="font-medium">{files.length}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Storage Used:</span>
+              <span className="font-medium">
+                {formatFileSize(files.reduce((total, file) => total + file.size, 0))}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Network:</span>
+              <span className="font-medium text-green-600">IPFS Mainnet</span>
+            </div>
           </div>
-          <div>
-            <p className="font-medium text-gray-900">Network:</p>
-            <p className="text-gray-600">IPFS Mainnet</p>
+        </Card>
+
+        <Card className="p-6">
+          <h4 className="text-lg font-semibold text-gray-900 mb-4">DID Authentication</h4>
+          <div className="text-sm">
+            <p className="text-gray-600 mb-2">Your DID Key:</p>
+            <p className="font-mono text-xs bg-gray-100 p-2 rounded break-all">{didKey}</p>
+            <div className="mt-3 flex items-center gap-2">
+              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              <span className="text-green-600 text-sm">Authenticated & Verified</span>
+            </div>
           </div>
-          <div>
-            <p className="font-medium text-gray-900">Total Files:</p>
-            <p className="text-gray-600">{files.length}</p>
-          </div>
-          <div>
-            <p className="font-medium text-gray-900">Storage Used:</p>
-            <p className="text-gray-600">
-              {formatFileSize(files.reduce((total, file) => total + file.size, 0))}
-            </p>
-          </div>
-        </div>
-      </Card>
+        </Card>
+      </div>
     </div>
   );
 };
