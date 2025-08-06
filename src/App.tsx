@@ -9,6 +9,8 @@ import { AuthProvider } from "@/contexts/AuthContext";
 const Index = lazy(() => import("@/pages/Index"));
 const Dashboard = lazy(() => import("@/pages/Dashboard"));
 const ClientDashboard = lazy(() => import("@/pages/ClientDashboard"));
+const UserProfile = lazy(() => import("@/pages/UserProfile"));
+const AccountSettings = lazy(() => import("@/pages/AccountSettings"));
 const GroupRoom = lazy(() => import("@/pages/GroupRoom"));
 const GatewayLanding = lazy(() => import("@/pages/GatewayLanding"));
 const GroupProfile = lazy(() => import("@/pages/GroupProfile"));
@@ -29,6 +31,8 @@ function App() {
                 <Route path="/" element={<Index />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/client-dashboard" element={<ClientDashboard />} />
+                <Route path="/profile" element={<UserProfile />} />
+                <Route path="/settings" element={<AccountSettings />} />
                 <Route path="/group-room/:groupId" element={<GroupRoom />} />
                 <Route path="/gateway/:gatewayType" element={<GatewayLanding />} />
                 <Route path="/group/:groupId/profile" element={<GroupProfile />} />

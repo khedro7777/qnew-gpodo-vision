@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { Clock, Globe, MapPin, DollarSign, Calendar, User, Menu, X, LogOut } from 'lucide-react';
+import { Clock, Globe, MapPin, DollarSign, Calendar, User, Menu, X, LogOut, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { 
   DropdownMenu, 
@@ -12,12 +11,14 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import AuthModal from '@/components/auth/AuthModal';
+import { useNavigate } from 'react-router-dom';
 
 const Header = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const { user, profile, signOut } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -46,6 +47,10 @@ const Header = () => {
   const getInitials = (name?: string) => {
     if (!name) return 'U';
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
+  };
+
+  const handleNavigation = (path: string) => {
+    navigate(path);
   };
 
   return (
@@ -166,13 +171,17 @@ const Header = () => {
                       </div>
                     </div>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleNavigation('/client-dashboard')}>
                       <User className="mr-2 h-4 w-4" />
                       Dashboard
                     </DropdownMenuItem>
-                    <DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleNavigation('/profile')}>
                       <User className="mr-2 h-4 w-4" />
                       Profile
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleNavigation('/settings')}>
+                      <Settings className="mr-2 h-4 w-4" />
+                      Settings
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={signOut}>
@@ -234,6 +243,21 @@ const Header = () => {
                   </Button>
                 </div>
               </div>
+              
+              {user && (
+                <div className="flex flex-col gap-2">
+                  <span className="text-sm font-medium text-gray-700">Account</span>
+                  <Button variant="ghost" size="sm" onClick={() => handleNavigation('/client-dashboard')} className="justify-start">
+                    Dashboard
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => handleNavigation('/profile')} className="justify-start">
+                    Profile
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => handleNavigation('/settings')} className="justify-start">
+                    Settings
+                  </Button>
+                </div>
+              )}
               
               {!user && (
                 <div className="flex gap-2">
