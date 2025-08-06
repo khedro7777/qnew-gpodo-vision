@@ -1,17 +1,50 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Wallet, CreditCard, History, Plus, TrendingUp } from 'lucide-react';
+import PayPalRechargeButton from '@/components/wallet/PayPalRechargeButton';
+import { usePayPalPayment } from '@/hooks/usePayPalPayment';
+import { toast } from 'sonner';
 
 const WalletTab = () => {
+  const { capturePayment } = usePayPalPayment();
+
+  // Handle PayPal return from approval
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const paymentStatus = urlParams.get('payment');
+    const token = urlParams.get('token');
+
+    if (paymentStatus === 'success' && token) {
+      // Capture the payment
+      capturePayment(token).then((result) => {
+        if (result.success) {
+          toast.success(`Payment successful! ${result.amount} points added to your wallet.`);
+        } else {
+          toast.error('Payment capture failed');
+        }
+      }).catch((error) => {
+        console.error('Payment capture error:', error);
+        toast.error('Payment processing failed');
+      });
+
+      // Clean up URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (paymentStatus === 'cancelled') {
+      toast.info('Payment was cancelled');
+      // Clean up URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, [capturePayment]);
+
   const walletData = {
     balance: 2500,
     currency: 'Points',
     monthlySpending: 890,
     rechargeHistory: [
-      { id: '1', amount: 1000, date: '2025-08-01', method: 'Credit Card', status: 'completed' },
+      { id: '1', amount: 1000, date: '2025-08-01', method: 'PayPal', status: 'completed' },
       { id: '2', amount: 500, date: '2025-07-28', method: 'PayPal', status: 'completed' },
       { id: '3', amount: 2000, date: '2025-07-15', method: 'Bank Transfer', status: 'completed' },
     ],
@@ -59,13 +92,14 @@ const WalletTab = () => {
               Recharge
             </Button>
           </div>
-          <div>
+          <div className="space-y-3">
             <p className="text-gray-600 text-sm">Quick Actions</p>
-            <div className="flex gap-2 mt-2">
+            <div className="flex gap-2">
               <Button size="sm" variant="outline">+100</Button>
               <Button size="sm" variant="outline">+500</Button>
               <Button size="sm" variant="outline">+1000</Button>
             </div>
+            <PayPalRechargeButton onSuccess={() => window.location.reload()} />
           </div>
         </Card>
       </div>
