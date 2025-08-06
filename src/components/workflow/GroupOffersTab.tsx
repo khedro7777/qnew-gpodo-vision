@@ -28,58 +28,58 @@ const GroupOffersTab = ({ groupId, userRole, isManager }: GroupOffersTabProps) =
   const offers = [
     {
       id: '1',
-      title: 'أجهزة كمبيوتر مكتبية - HP EliteDesk',
-      company: 'شركة التقنيات المتطورة',
-      price: '2,500 ريال/جهاز',
-      quantity: '50 جهاز',
+      title: 'Desktop Computers - HP EliteDesk',
+      company: 'Advanced Technology Company',
+      price: '$650/unit',
+      quantity: '50 units',
       status: 'pending',
       submittedDate: '2024-01-15',
       validUntil: '2024-01-30',
-      description: 'أجهزة كمبيوتر مكتبية عالية الأداء مع ضمان 3 سنوات'
+      description: 'High-performance desktop computers with 3-year warranty'
     },
     {
       id: '2',
-      title: 'خدمات التسويق الرقمي',
-      company: 'وكالة الإبداع الرقمي',
-      price: '15,000 ريال/شهر',
-      quantity: '6 أشهر',
+      title: 'Digital Marketing Services',
+      company: 'Digital Creative Agency',
+      price: '$3,900/month',
+      quantity: '6 months',
       status: 'approved',
       submittedDate: '2024-01-10',
       validUntil: '2024-01-25',
-      description: 'حملة تسويق رقمي شاملة تشمل السوشيال ميديا و Google Ads'
+      description: 'Comprehensive digital marketing campaign including social media and Google Ads'
     },
     {
       id: '3',
-      title: 'استشارات قانونية متخصصة',
-      company: 'مكتب المحاماة المتميز',
-      price: '500 ريال/ساعة',
-      quantity: '20 ساعة',
+      title: 'Specialized Legal Consulting',
+      company: 'Distinguished Law Firm',
+      price: '$130/hour',
+      quantity: '20 hours',
       status: 'rejected',
       submittedDate: '2024-01-08',
       validUntil: '2024-01-20',
-      description: 'استشارات قانونية في مجال الشركات والعقود التجارية'
+      description: 'Legal consulting in corporate and commercial contracts'
     }
   ];
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending':
-        return <Badge className="bg-yellow-100 text-yellow-800">قيد المراجعة</Badge>;
+        return <Badge className="bg-yellow-100 text-yellow-800">Under Review</Badge>;
       case 'approved':
-        return <Badge className="bg-green-100 text-green-800">مُوافق عليه</Badge>;
+        return <Badge className="bg-green-100 text-green-800">Approved</Badge>;
       case 'rejected':
-        return <Badge className="bg-red-100 text-red-800">مرفوض</Badge>;
+        return <Badge className="bg-red-100 text-red-800">Rejected</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
   };
 
   const handleApproveOffer = (offerId: string) => {
-    toast.success('تم قبول العرض بنجاح');
+    toast.success('Offer approved successfully');
   };
 
   const handleRejectOffer = (offerId: string) => {
-    toast.success('تم رفض العرض');
+    toast.success('Offer rejected');
   };
 
   const filteredOffers = offers.filter(offer =>
@@ -92,13 +92,13 @@ const GroupOffersTab = ({ groupId, userRole, isManager }: GroupOffersTabProps) =
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">العروض المقدمة</h2>
-          <p className="text-gray-600">مراجعة وإدارة العروض المقدمة للمجموعة</p>
+          <h2 className="text-2xl font-bold">Submitted Offers</h2>
+          <p className="text-gray-600">Review and manage group offers</p>
         </div>
         {isManager && (
           <Button>
             <Plus className="w-4 h-4 mr-2" />
-            طلب عرض جديد
+            Request New Offer
           </Button>
         )}
       </div>
@@ -107,16 +107,16 @@ const GroupOffersTab = ({ groupId, userRole, isManager }: GroupOffersTabProps) =
       <div className="flex gap-4">
         <div className="flex-1">
           <Input
-            placeholder="البحث في العروض..."
+            placeholder="Search offers..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
         <select className="px-3 py-2 border rounded-md">
-          <option value="">جميع الحالات</option>
-          <option value="pending">قيد المراجعة</option>
-          <option value="approved">مُوافق عليه</option>
-          <option value="rejected">مرفوض</option>
+          <option value="">All Status</option>
+          <option value="pending">Under Review</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
         </select>
       </div>
 
@@ -135,7 +135,7 @@ const GroupOffersTab = ({ groupId, userRole, isManager }: GroupOffersTabProps) =
                     </div>
                     <div className="flex items-center gap-1">
                       <Clock className="w-4 h-4" />
-                      <span>صالح حتى {new Date(offer.validUntil).toLocaleDateString('ar')}</span>
+                      <span>Valid until {new Date(offer.validUntil).toLocaleDateString()}</span>
                     </div>
                   </div>
                 </div>
@@ -151,7 +151,7 @@ const GroupOffersTab = ({ groupId, userRole, isManager }: GroupOffersTabProps) =
                   <div className="flex items-center gap-2">
                     <DollarSign className="w-4 h-4 text-green-500" />
                     <div>
-                      <p className="text-sm text-gray-500">السعر</p>
+                      <p className="text-sm text-gray-500">Price</p>
                       <p className="font-medium">{offer.price}</p>
                     </div>
                   </div>
@@ -159,7 +159,7 @@ const GroupOffersTab = ({ groupId, userRole, isManager }: GroupOffersTabProps) =
                   <div className="flex items-center gap-2">
                     <Package className="w-4 h-4 text-blue-500" />
                     <div>
-                      <p className="text-sm text-gray-500">الكمية</p>
+                      <p className="text-sm text-gray-500">Quantity</p>
                       <p className="font-medium">{offer.quantity}</p>
                     </div>
                   </div>
@@ -167,8 +167,8 @@ const GroupOffersTab = ({ groupId, userRole, isManager }: GroupOffersTabProps) =
                   <div className="flex items-center gap-2">
                     <Clock className="w-4 h-4 text-gray-500" />
                     <div>
-                      <p className="text-sm text-gray-500">تاريخ التقديم</p>
-                      <p className="font-medium">{new Date(offer.submittedDate).toLocaleDateString('ar')}</p>
+                      <p className="text-sm text-gray-500">Submission Date</p>
+                      <p className="font-medium">{new Date(offer.submittedDate).toLocaleDateString()}</p>
                     </div>
                   </div>
                 </div>
@@ -177,7 +177,7 @@ const GroupOffersTab = ({ groupId, userRole, isManager }: GroupOffersTabProps) =
                 <div className="flex gap-3 pt-4 border-t">
                   <Button variant="outline" className="flex-1">
                     <Eye className="w-4 h-4 mr-2" />
-                    عرض التفاصيل
+                    View Details
                   </Button>
                   
                   {isManager && offer.status === 'pending' && (
@@ -187,7 +187,7 @@ const GroupOffersTab = ({ groupId, userRole, isManager }: GroupOffersTabProps) =
                         className="bg-green-600 hover:bg-green-700"
                       >
                         <CheckCircle className="w-4 h-4 mr-2" />
-                        موافقة
+                        Approve
                       </Button>
                       <Button 
                         variant="outline"
@@ -195,7 +195,7 @@ const GroupOffersTab = ({ groupId, userRole, isManager }: GroupOffersTabProps) =
                         className="text-red-600 border-red-300 hover:bg-red-50"
                       >
                         <XCircle className="w-4 h-4 mr-2" />
-                        رفض
+                        Reject
                       </Button>
                     </>
                   )}
@@ -211,7 +211,7 @@ const GroupOffersTab = ({ groupId, userRole, isManager }: GroupOffersTabProps) =
         <Card>
           <CardContent className="p-4 text-center">
             <Package className="w-8 h-8 text-blue-500 mx-auto mb-2" />
-            <h3 className="font-semibold">إجمالي العروض</h3>
+            <h3 className="font-semibold">Total Offers</h3>
             <p className="text-2xl font-bold text-blue-600">{offers.length}</p>
           </CardContent>
         </Card>
@@ -219,7 +219,7 @@ const GroupOffersTab = ({ groupId, userRole, isManager }: GroupOffersTabProps) =
         <Card>
           <CardContent className="p-4 text-center">
             <Clock className="w-8 h-8 text-yellow-500 mx-auto mb-2" />
-            <h3 className="font-semibold">قيد المراجعة</h3>
+            <h3 className="font-semibold">Under Review</h3>
             <p className="text-2xl font-bold text-yellow-600">
               {offers.filter(o => o.status === 'pending').length}
             </p>
@@ -229,7 +229,7 @@ const GroupOffersTab = ({ groupId, userRole, isManager }: GroupOffersTabProps) =
         <Card>
           <CardContent className="p-4 text-center">
             <CheckCircle className="w-8 h-8 text-green-500 mx-auto mb-2" />
-            <h3 className="font-semibold">مُوافق عليها</h3>
+            <h3 className="font-semibold">Approved</h3>
             <p className="text-2xl font-bold text-green-600">
               {offers.filter(o => o.status === 'approved').length}
             </p>
@@ -239,8 +239,8 @@ const GroupOffersTab = ({ groupId, userRole, isManager }: GroupOffersTabProps) =
         <Card>
           <CardContent className="p-4 text-center">
             <DollarSign className="w-8 h-8 text-purple-500 mx-auto mb-2" />
-            <h3 className="font-semibold">إجمالي القيمة</h3>
-            <p className="text-2xl font-bold text-purple-600">180,000 ريال</p>
+            <h3 className="font-semibold">Total Value</h3>
+            <p className="text-2xl font-bold text-purple-600">$47,000</p>
           </CardContent>
         </Card>
       </div>

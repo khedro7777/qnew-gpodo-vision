@@ -128,13 +128,13 @@ const GroupDiscountOffer = ({ offer, variant = 'card' }: GroupDiscountOfferProps
               <div>
                 <p className="text-sm text-gray-500">Current Price</p>
                 <p className="text-2xl font-bold text-blue-600">
-                  {currentPrice.toFixed(2)} {offer.pricing.currency}
+                  ${currentPrice.toFixed(2)}
                 </p>
               </div>
               <div className="text-right">
                 <p className="text-sm text-gray-500">Potential Price</p>
                 <p className="text-xl font-bold text-green-600">
-                  {potentialPrice.toFixed(2)} {offer.pricing.currency}
+                  ${potentialPrice.toFixed(2)}
                 </p>
               </div>
             </div>
@@ -242,7 +242,7 @@ const GroupDiscountOffer = ({ offer, variant = 'card' }: GroupDiscountOfferProps
           <div>
             <p className="text-sm text-gray-500">Current Price</p>
             <p className="text-xl font-bold text-blue-600">
-              {currentPrice.toFixed(2)} {offer.pricing.currency}
+              ${currentPrice.toFixed(2)}
             </p>
           </div>
           <div className="text-right">
