@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { FileUpload } from '@/components/ui/file-upload';
+import FileUpload from '@/components/ui/file-upload';
 import { 
   Send,
   Paperclip,
@@ -177,10 +177,10 @@ const ReplyModal = ({ isOpen, onClose, message, groupId, onReply }: ReplyModalPr
               Attachments (Optional)
             </label>
             <FileUpload
-              onFileChange={handleFileChange}
+              onFilesChange={handleFileChange}
               maxFiles={5}
-              maxSizeMB={10}
-              acceptedTypes={['image/jpeg', 'image/png', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']}
+              acceptedTypes={['.jpg', '.jpeg', '.png', '.pdf', '.doc', '.docx', '.xls', '.xlsx']}
+              maxSizeInMB={10}
             />
           </div>
 
