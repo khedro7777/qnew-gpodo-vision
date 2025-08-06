@@ -1,182 +1,142 @@
 
-import { useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ipfsService, IPFSDocument, IPFSUploadResult } from '@/services/ipfsService';
-import { toast } from 'sonner';
+import { useState, useCallback } from 'react';
+import { uploadFile, retrieveFile, pinFile, unpinFile, getFileUrl } from '@/services/ipfsService';
+
+interface UseIPFSOptions {
+  onProgress?: (progress: number) => void;
+  onError?: (error: string) => void;
+}
+
+interface FileMetadata {
+  name: string;
+  size: number;
+  type: string;
+  hash: string;
+  uploadedAt: string;
+  tags?: string[];
+  description?: string;
+}
+
+interface StorageStats {
+  totalFiles: number;
+  totalSize: number;
+  pinnedFiles: number;
+  recentUploads: FileMetadata[];
+}
 
 export const useIPFS = () => {
-  const queryClient = useQueryClient();
-  const [uploadProgress, setUploadProgress] = useState<number>(0);
+  const [loading, setLoading] = useState(false);
+  const [progress, setProgress] = useState(0);
 
-  const uploadFileMutation = useMutation({
-    mutationFn: async ({ 
-      file, 
-      groupId, 
-      metadata 
-    }: { 
-      file: File; 
-      groupId?: string; 
-      metadata?: { tags?: string[]; description?: string; }
-    }) => {
-      setUploadProgress(0);
+  const upload = useCallback(async (
+    file: File, 
+    groupId: string, 
+    options?: UseIPFSOptions
+  ) => {
+    setLoading(true);
+    setProgress(0);
+    
+    try {
+      const progressCallback = (p: number) => {
+        setProgress(p);
+        options?.onProgress?.(p);
+      };
+
+      const hash = await uploadFile(file, groupId, progressCallback);
       
-      // Simulate upload progress
-      const progressInterval = setInterval(() => {
-        setUploadProgress(prev => {
-          if (prev >= 90) {
-            clearInterval(progressInterval);
-            return prev;
-          }
-          return prev + Math.random() * 20;
-        });
-      }, 200);
-      
-      const result = await ipfsService.uploadFile(file, groupId, metadata);
-      
-      clearInterval(progressInterval);
-      setUploadProgress(100);
-      
-      return result;
-    },
-    onSuccess: (result: IPFSUploadResult) => {
-      toast.success(`File uploaded to IPFS: ${result.cid.substring(0, 12)}...`, {
-        description: 'Your file is now available on the decentralized network'
-      });
-      queryClient.invalidateQueries({ queryKey: ['ipfs-files'] });
-      setTimeout(() => setUploadProgress(0), 1000);
-    },
-    onError: (error: Error) => {
-      toast.error(`Upload failed: ${error.message}`);
-      setUploadProgress(0);
-    },
-  });
+      // Store metadata
+      const metadata: FileMetadata = {
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        hash,
+        uploadedAt: new Date().toISOString()
+      };
 
-  const retrieveFileMutation = useMutation({
-    mutationFn: async (cid: string) => {
-      const data = await ipfsService.retrieveFile(cid);
-      return { cid, data };
-    },
-    onSuccess: (result) => {
-      toast.success(`File retrieved: ${result.cid.substring(0, 12)}...`);
-    },
-    onError: (error: Error) => {
-      toast.error(`Retrieval failed: ${error.message}`);
-    },
-  });
+      const existing = localStorage.getItem(`ipfs_files_${groupId}`);
+      const files = existing ? JSON.parse(existing) : [];
+      files.push(metadata);
+      localStorage.setItem(`ipfs_files_${groupId}`, JSON.stringify(files));
 
-  const pinFileMutation = useMutation({
-    mutationFn: ipfsService.pinFile.bind(ipfsService),
-    onSuccess: (_, cid) => {
-      toast.success(`File pinned: ${cid.substring(0, 12)}...`, {
-        description: 'File is now permanently available on IPFS'
-      });
-    },
-    onError: (error: Error) => {
-      toast.error(`Pin failed: ${error.message}`);
-    },
-  });
+      return hash;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Upload failed';
+      options?.onError?.(errorMessage);
+      throw error;
+    } finally {
+      setLoading(false);
+      setProgress(0);
+    }
+  }, []);
 
-  const unpinFileMutation = useMutation({
-    mutationFn: ipfsService.unpinFile.bind(ipfsService),
-    onSuccess: (_, cid) => {
-      toast.success(`File unpinned: ${cid.substring(0, 12)}...`);
-    },
-    onError: (error: Error) => {
-      toast.error(`Unpin failed: ${error.message}`);
-    },
-  });
+  const retrieve = useCallback(async (hash: string, options?: UseIPFSOptions) => {
+    setLoading(true);
+    try {
+      return await retrieveFile(hash);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Retrieval failed';
+      options?.onError?.(errorMessage);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  const deleteFileMutation = useMutation({
-    mutationFn: async ({ cid, groupId }: { cid: string; groupId: string }) => {
-      return await ipfsService.deleteFile(cid, groupId);
-    },
-    onSuccess: (success, { cid }) => {
-      if (success) {
-        toast.success(`File deleted: ${cid.substring(0, 12)}...`);
-        queryClient.invalidateQueries({ queryKey: ['ipfs-files'] });
-      } else {
-        toast.error('Failed to delete file');
-      }
-    },
-    onError: (error: Error) => {
-      toast.error(`Delete failed: ${error.message}`);
-    },
-  });
+  const pin = useCallback(async (hash: string, options?: UseIPFSOptions) => {
+    setLoading(true);
+    try {
+      return await pinFile(hash);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Pin failed';
+      options?.onError?.(errorMessage);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  const addTagsMutation = useMutation({
-    mutationFn: async ({ cid, groupId, tags }: { cid: string; groupId: string; tags: string[] }) => {
-      return await ipfsService.addFileTags(cid, groupId, tags);
-    },
-    onSuccess: (success, { cid }) => {
-      if (success) {
-        toast.success(`Tags added to ${cid.substring(0, 12)}...`);
-        queryClient.invalidateQueries({ queryKey: ['ipfs-files'] });
-      } else {
-        toast.error('Failed to add tags');
-      }
-    },
-    onError: (error: Error) => {
-      toast.error(`Add tags failed: ${error.message}`);
-    },
-  });
+  const unpin = useCallback(async (hash: string, options?: UseIPFSOptions) => {
+    setLoading(true);
+    try {
+      return await unpinFile(hash);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unpin failed';
+      options?.onError?.(errorMessage);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  const getGroupFiles = (groupId: string) => {
-    return useQuery({
-      queryKey: ['ipfs-files', groupId],
-      queryFn: () => ipfsService.listGroupFiles(groupId),
-      enabled: !!groupId,
-      refetchInterval: 30000, // Refresh every 30 seconds
-    });
-  };
+  const getUrl = useCallback((hash: string) => {
+    return getFileUrl(hash);
+  }, []);
 
-  const getStorageStats = (groupId: string) => {
-    return useQuery({
-      queryKey: ['ipfs-stats', groupId],
-      queryFn: () => ipfsService.getStorageStats(groupId),
-      enabled: !!groupId,
-    });
-  };
+  const getFiles = useCallback((groupId: string): FileMetadata[] => {
+    const stored = localStorage.getItem(`ipfs_files_${groupId}`);
+    return stored ? JSON.parse(stored) : [];
+  }, []);
 
-  const searchFiles = useMutation({
-    mutationFn: async ({ groupId, query }: { groupId: string; query: string }) => {
-      return await ipfsService.searchFiles(groupId, query);
-    },
-  });
+  const getStorageStats = useCallback((groupId: string) => {
+    return {
+      data: {
+        totalFiles: getFiles(groupId).length,
+        totalSize: getFiles(groupId).reduce((sum, file) => sum + file.size, 0),
+        pinnedFiles: getFiles(groupId).length, // Simplified for demo
+        recentUploads: getFiles(groupId).slice(-5)
+      } as StorageStats
+    };
+  }, [getFiles]);
 
   return {
-    // Upload functionality
-    uploadFile: uploadFileMutation.mutate,
-    uploadProgress,
-    isUploading: uploadFileMutation.isPending,
-    
-    // File operations
-    retrieveFile: retrieveFileMutation.mutate,
-    isRetrieving: retrieveFileMutation.isPending,
-    deleteFile: deleteFileMutation.mutate,
-    isDeleting: deleteFileMutation.isPending,
-    
-    // Pinning operations
-    pinFile: pinFileMutation.mutate,
-    isPinning: pinFileMutation.isPending,
-    unpinFile: unpinFileMutation.mutate,
-    isUnpinning: unpinFileMutation.isPending,
-    
-    // Metadata operations
-    addTags: addTagsMutation.mutate,
-    isAddingTags: addTagsMutation.isPending,
-    
-    // Search functionality
-    searchFiles: searchFiles.mutate,
-    isSearching: searchFiles.isPending,
-    searchResults: searchFiles.data,
-    
-    // Data queries
-    getGroupFiles,
+    upload,
+    retrieve,
+    pin,
+    unpin,
+    getUrl,
+    getFiles,
     getStorageStats,
-    
-    // Utility functions
-    didKey: ipfsService.getDIDKey(),
-    getFileUrl: ipfsService.getFileUrl.bind(ipfsService),
-    verifyDIDKey: ipfsService.verifyDIDKey.bind(ipfsService),
+    loading,
+    progress
   };
 };
