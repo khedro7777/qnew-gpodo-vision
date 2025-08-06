@@ -37,8 +37,8 @@ const GroupRoomInterface = ({ groupId }: GroupRoomProps) => {
       // Load group details with mock data for demo
       const mockGroup = {
         id: groupId,
-        name: 'مجموعة الشراء الجماعي للمعدات الطبية',
-        description: 'مجموعة متخصصة في الشراء الجماعي للمعدات الطبية بأسعار تنافسية',
+        name: 'Medical Equipment Group Purchasing',
+        description: 'Specialized group for bulk purchasing of medical equipment at competitive prices',
         gateway_type: 'purchasing',
         status: 'active',
         current_members: 12,
@@ -47,11 +47,11 @@ const GroupRoomInterface = ({ groupId }: GroupRoomProps) => {
         created_at: new Date().toISOString(),
         creator_id: 'mock-creator-id',
         countries: {
-          name: 'المملكة العربية السعودية',
+          name: 'Saudi Arabia',
           flag_emoji: '🇸🇦'
         },
         industry_sectors: {
-          name: 'الرعاية الصحية',
+          name: 'Healthcare',
           icon: '🏥'
         }
       };
@@ -67,7 +67,7 @@ const GroupRoomInterface = ({ groupId }: GroupRoomProps) => {
       setIsManager(mockIsManager);
 
       if (mockIsManager && mockUserRole !== 'founder') {
-        toast.success('مرحباً بك في لوحة المديرين! أنت مدير منتخب لهذه المجموعة');
+        toast.success('Welcome to the managers panel! You are an elected manager of this group');
       }
 
     } catch (error) {
@@ -79,7 +79,7 @@ const GroupRoomInterface = ({ groupId }: GroupRoomProps) => {
 
   const exportGroupData = async () => {
     try {
-      toast.success('تم تصدير تقرير المجموعة بنجاح');
+      toast.success('Group report exported successfully');
     } catch (error) {
       console.error('Export error:', error);
     }
@@ -97,20 +97,20 @@ const GroupRoomInterface = ({ groupId }: GroupRoomProps) => {
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'active': return 'نشطة';
-      case 'pending': return 'قيد المراجعة';
-      case 'closed': return 'مغلقة';
-      case 'archived': return 'مؤرشفة';
+      case 'active': return 'Active';
+      case 'pending': return 'Under Review';
+      case 'closed': return 'Closed';
+      case 'archived': return 'Archived';
       default: return status;
     }
   };
 
   const getGatewayTypeText = (type: string) => {
     switch (type) {
-      case 'purchasing': return '🛒 الشراء الجماعي';
-      case 'marketing': return '📢 التسويق التعاوني';
-      case 'formation': return '🏢 تأسيس الشركات';
-      case 'freelancers': return '👨‍💻 الفرق المستقلة';
+      case 'purchasing': return '🛒 Group Purchasing';
+      case 'marketing': return '📢 Cooperative Marketing';
+      case 'formation': return '🏢 Company Formation';
+      case 'freelancers': return '👨‍💻 Freelance Teams';
       default: return type;
     }
   };
@@ -126,14 +126,14 @@ const GroupRoomInterface = ({ groupId }: GroupRoomProps) => {
   if (!group) {
     return (
       <div className="text-center py-12">
-        <h2 className="text-xl font-semibold text-gray-900">المجموعة غير موجودة</h2>
-        <p className="text-gray-600 mt-2">المجموعة التي تبحث عنها غير موجودة أو ليس لديك صلاحية للوصول إليها.</p>
+        <h2 className="text-xl font-semibold text-gray-900">Group Not Found</h2>
+        <p className="text-gray-600 mt-2">The group you're looking for doesn't exist or you don't have access to it.</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" dir="rtl">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Group Header */}
       <div className="mb-8">
         <div className="flex items-start justify-between">
@@ -144,12 +144,12 @@ const GroupRoomInterface = ({ groupId }: GroupRoomProps) => {
                 {getStatusText(group.status)}
               </Badge>
               {userRole === 'founder' && (
-                <Badge className="bg-purple-100 text-purple-800">مؤسس</Badge>
+                <Badge className="bg-purple-100 text-purple-800">Founder</Badge>
               )}
               {isManager && userRole !== 'founder' && (
                 <Badge className="bg-yellow-100 text-yellow-800">
                   <Crown className="w-3 h-3 mr-1" />
-                  مدير منتخب
+                  Elected Manager
                 </Badge>
               )}
             </div>
@@ -163,12 +163,12 @@ const GroupRoomInterface = ({ groupId }: GroupRoomProps) => {
             <div className="flex items-center gap-6 text-sm text-gray-500">
               <div className="flex items-center gap-1">
                 <Users className="w-4 h-4" />
-                <span>{group.current_members}/{group.max_members} عضو</span>
+                <span>{group.current_members}/{group.max_members} members</span>
               </div>
               
               <div className="flex items-center gap-1">
                 <Calendar className="w-4 h-4" />
-                <span>تم الإنشاء {new Date(group.created_at).toLocaleDateString('ar')}</span>
+                <span>Created {new Date(group.created_at).toLocaleDateString('en-US')}</span>
               </div>
 
               {group.countries && (
@@ -190,13 +190,13 @@ const GroupRoomInterface = ({ groupId }: GroupRoomProps) => {
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={exportGroupData}>
               <Download className="w-4 h-4 mr-2" />
-              تصدير PDF
+              Export PDF
             </Button>
             
             {(userRole === 'founder' || isManager) && (
               <Button variant="outline" size="sm">
                 <Settings className="w-4 h-4 mr-2" />
-                الإعدادات
+                Settings
               </Button>
             )}
           </div>
@@ -205,7 +205,7 @@ const GroupRoomInterface = ({ groupId }: GroupRoomProps) => {
         {/* Progress Bar */}
         <div className="mt-4">
           <div className="flex justify-between items-center mb-2">
-            <span className="text-sm font-medium text-gray-700">سعة المجموعة</span>
+            <span className="text-sm font-medium text-gray-700">Group Capacity</span>
             <span className="text-sm text-gray-500">
               {Math.round((group.current_members / group.max_members) * 100)}%
             </span>
@@ -225,8 +225,8 @@ const GroupRoomInterface = ({ groupId }: GroupRoomProps) => {
           <div className="flex items-center gap-3">
             <Crown className="w-6 h-6 text-yellow-600" />
             <div>
-              <h3 className="font-semibold text-yellow-900">أنت الآن مدير منتخب لهذه المجموعة</h3>
-              <p className="text-sm text-yellow-700">يمكنك الآن الوصول إلى لوحة المديرين وإنشاء القرارات والموافقة على العروض</p>
+              <h3 className="font-semibold text-yellow-900">You are now an elected manager of this group</h3>
+              <p className="text-sm text-yellow-700">You can now access the managers panel and create decisions and approve offers</p>
             </div>
           </div>
         </Card>

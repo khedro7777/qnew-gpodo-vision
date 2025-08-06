@@ -41,23 +41,23 @@ const GroupRoomTabs = ({ group, userRole, isManager, groupId }: GroupRoomTabsPro
   const [activeTab, setActiveTab] = useState('overview');
 
   const tabs = [
-    { id: 'overview', label: 'نظرة عامة', icon: TrendingUp, show: true },
-    { id: 'inbox', label: 'صندوق الوارد', icon: Inbox, show: isManager || userRole === 'founder' },
-    { id: 'outbox', label: 'صندوق الصادر', icon: Send, show: isManager || userRole === 'founder' },
-    { id: 'members', label: 'الأعضاء', icon: Users, show: true },
-    { id: 'voting', label: 'القرارات والتصويت', icon: Vote, show: true },
-    { id: 'decisions', label: 'الصادر/الوارد', icon: FileText, show: true },
-    { id: 'offers', label: 'العروض', icon: CheckSquare, show: userRole !== 'external' },
-    { id: 'contracts', label: 'العقود', icon: MessageCircle, show: userRole !== 'external' },
-    { id: 'complaints', label: 'الشكاوى', icon: AlertTriangle, show: true },
-    { id: 'managers', label: 'المديرين', icon: Crown, show: isManager },
-    { id: 'external', label: 'الأطراف الخارجية', icon: ExternalLink, show: userRole !== 'external' }
+    { id: 'overview', label: 'Overview', icon: TrendingUp, show: true },
+    { id: 'inbox', label: 'Inbox', icon: Inbox, show: isManager || userRole === 'founder' },
+    { id: 'outbox', label: 'Outbox', icon: Send, show: isManager || userRole === 'founder' },
+    { id: 'members', label: 'Members', icon: Users, show: true },
+    { id: 'voting', label: 'Voting & Decisions', icon: Vote, show: true },
+    { id: 'decisions', label: 'Inbox/Outbox', icon: FileText, show: true },
+    { id: 'offers', label: 'Offers', icon: CheckSquare, show: userRole !== 'external' },
+    { id: 'contracts', label: 'Contracts', icon: MessageCircle, show: userRole !== 'external' },
+    { id: 'complaints', label: 'Complaints', icon: AlertTriangle, show: true },
+    { id: 'managers', label: 'Managers', icon: Crown, show: isManager },
+    { id: 'external', label: 'External Parties', icon: ExternalLink, show: userRole !== 'external' }
   ];
 
   const visibleTabs = tabs.filter(tab => tab.show);
 
   return (
-    <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6" dir="rtl">
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
       <TabsList className={`grid gap-2 h-auto p-2 grid-cols-${Math.min(visibleTabs.length, 4)}`}>
         {visibleTabs.map((tab) => (
           <TabsTrigger 
@@ -68,7 +68,7 @@ const GroupRoomTabs = ({ group, userRole, isManager, groupId }: GroupRoomTabsPro
             <tab.icon className="w-4 h-4" />
             <span>{tab.label}</span>
             {tab.id === 'managers' && isManager && (
-              <Badge className="bg-yellow-100 text-yellow-800 text-xs">منتخب</Badge>
+              <Badge className="bg-yellow-100 text-yellow-800 text-xs">Elected</Badge>
             )}
             {tab.id === 'inbox' && (
               <Badge className="bg-red-100 text-red-800 text-xs">1</Badge>

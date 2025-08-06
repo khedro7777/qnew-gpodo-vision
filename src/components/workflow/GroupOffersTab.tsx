@@ -79,10 +79,10 @@ const GroupOffersTab = ({ groupId, userRole, isManager }: GroupOffersTabProps) =
 
   const getStatusBadge = (status: string) => {
     const configs = {
-      pending: { label: 'معلق', className: 'bg-yellow-100 text-yellow-800' },
-      approved: { label: 'موافق عليه', className: 'bg-green-100 text-green-800' },
-      under_review: { label: 'قيد المراجعة', className: 'bg-blue-100 text-blue-800' },
-      rejected: { label: 'مرفوض', className: 'bg-red-100 text-red-800' }
+      pending: { label: 'Pending', className: 'bg-yellow-100 text-yellow-800' },
+      approved: { label: 'Approved', className: 'bg-green-100 text-green-800' },
+      under_review: { label: 'Under Review', className: 'bg-blue-100 text-blue-800' },
+      rejected: { label: 'Rejected', className: 'bg-red-100 text-red-800' }
     };
     
     const config = configs[status as keyof typeof configs] || configs.pending;
@@ -107,30 +107,30 @@ const GroupOffersTab = ({ groupId, userRole, isManager }: GroupOffersTabProps) =
   };
 
   return (
-    <div className="space-y-6" dir="rtl">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Building className="w-6 h-6" />
           <div>
-            <h2 className="text-2xl font-bold">عروض الموردين</h2>
-            <p className="text-gray-600">إدارة عروض الموردين المقدمة للمجموعة</p>
+            <h2 className="text-2xl font-bold">Supplier Offers</h2>
+            <p className="text-gray-600">Manage supplier offers submitted to the group</p>
           </div>
         </div>
         <Badge variant="outline" className="bg-blue-50">
-          {filteredOffers.length} عرض
+          {filteredOffers.length} offers
         </Badge>
       </div>
 
       {/* Search and Filter */}
       <div className="flex gap-4">
         <div className="flex-1 relative">
-          <Search className="w-4 h-4 absolute right-3 top-3 text-gray-400" />
+          <Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
           <Input
-            placeholder="البحث في العروض..."
+            placeholder="Search offers..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pr-10"
+            className="pl-10"
           />
         </div>
         <select 
@@ -138,11 +138,11 @@ const GroupOffersTab = ({ groupId, userRole, isManager }: GroupOffersTabProps) =
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
         >
-          <option value="all">جميع العروض</option>
-          <option value="pending">معلقة</option>
-          <option value="under_review">قيد المراجعة</option>
-          <option value="approved">موافق عليها</option>
-          <option value="rejected">مرفوضة</option>
+          <option value="all">All Offers</option>
+          <option value="pending">Pending</option>
+          <option value="under_review">Under Review</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
         </select>
       </div>
 
@@ -161,7 +161,7 @@ const GroupOffersTab = ({ groupId, userRole, isManager }: GroupOffersTabProps) =
                   
                   <div className="space-y-2 text-sm text-gray-600">
                     <div className="flex items-center gap-4">
-                      <span className="font-medium">الشركة: {offer.companyName}</span>
+                      <span className="font-medium">Company: {offer.companyName}</span>
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="flex items-center gap-1">
@@ -176,29 +176,29 @@ const GroupOffersTab = ({ groupId, userRole, isManager }: GroupOffersTabProps) =
                     <div className="flex items-center gap-4">
                       <div className="flex items-center gap-1">
                         <DollarSign className="w-3 h-3 text-green-600" />
-                        <span className="text-green-600 font-medium">السعر: {offer.price}</span>
+                        <span className="text-green-600 font-medium">Price: {offer.price}</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <Clock className="w-3 h-3 text-blue-600" />
-                        <span className="text-blue-600">وقت التسليم: {offer.deliveryTime}</span>
+                        <span className="text-blue-600">Delivery: {offer.deliveryTime}</span>
                       </div>
                     </div>
                     <div className="flex items-center gap-1">
                       <Calendar className="w-3 h-3" />
-                      <span>تاريخ التقديم: {new Date(offer.submittedAt).toLocaleDateString('ar-AE')}</span>
+                      <span>Submitted: {new Date(offer.submittedAt).toLocaleDateString('en-US')}</span>
                     </div>
                   </div>
                 </div>
                 
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm">
-                    <Eye className="w-4 h-4 ml-1" />
-                    عرض
+                    <Eye className="w-4 h-4 mr-1" />
+                    View
                   </Button>
                   {offer.attachments.length > 0 && (
                     <Button variant="outline" size="sm">
-                      <Download className="w-4 h-4 ml-1" />
-                      الملفات ({offer.attachments.length})
+                      <Download className="w-4 h-4 mr-1" />
+                      Files ({offer.attachments.length})
                     </Button>
                   )}
                 </div>
@@ -216,7 +216,7 @@ const GroupOffersTab = ({ groupId, userRole, isManager }: GroupOffersTabProps) =
                     className="bg-green-600 hover:bg-green-700"
                     size="sm"
                   >
-                    الموافقة على العرض
+                    Approve Offer
                   </Button>
                   <Button 
                     onClick={() => handleRejectOffer(offer.id)}
@@ -224,7 +224,7 @@ const GroupOffersTab = ({ groupId, userRole, isManager }: GroupOffersTabProps) =
                     className="text-red-600 border-red-600 hover:bg-red-50"
                     size="sm"
                   >
-                    رفض العرض
+                    Reject Offer
                   </Button>
                 </div>
               )}
@@ -232,7 +232,7 @@ const GroupOffersTab = ({ groupId, userRole, isManager }: GroupOffersTabProps) =
               {/* Attachments List */}
               {offer.attachments.length > 0 && (
                 <div className="mt-4 pt-4 border-t">
-                  <h4 className="text-sm font-medium mb-2">الملفات المرفقة:</h4>
+                  <h4 className="text-sm font-medium mb-2">Attachments:</h4>
                   <div className="space-y-1">
                     {offer.attachments.map((attachment, index) => (
                       <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
@@ -256,9 +256,9 @@ const GroupOffersTab = ({ groupId, userRole, isManager }: GroupOffersTabProps) =
       {filteredOffers.length === 0 && (
         <div className="text-center py-12">
           <Building className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-          <h3 className="text-lg font-semibold text-gray-600 mb-2">لا توجد عروض</h3>
+          <h3 className="text-lg font-semibold text-gray-600 mb-2">No Offers Found</h3>
           <p className="text-gray-500">
-            {searchTerm ? 'جرب تعديل مصطلحات البحث' : 'لم يتم تقديم أي عروض من الموردين بعد'}
+            {searchTerm ? 'Try adjusting your search terms' : 'No supplier offers have been submitted yet'}
           </p>
         </div>
       )}

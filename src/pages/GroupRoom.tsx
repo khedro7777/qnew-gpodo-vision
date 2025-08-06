@@ -15,7 +15,7 @@ const GroupRoom = () => {
         <main className="py-8 px-4 sm:px-6 lg:px-8">
           <div className="max-w-7xl mx-auto">
             <div className="text-center py-12">
-              <h1 className="text-2xl font-bold text-gray-900">Group not found</h1>
+              <h1 className="text-2xl font-bold text-gray-900">Group Not Found</h1>
               <p className="text-gray-600 mt-2">The group ID is missing or invalid.</p>
             </div>
           </div>

@@ -30,13 +30,13 @@ const GroupExternalTab = ({ groupId, userRole }: GroupExternalTabProps) => {
   const freelancerApplications = [
     {
       id: '1',
-      applicantName: 'أحمد محمد علي',
+      applicantName: 'Ahmed Mohamed Ali',
       applicantEmail: 'ahmed.ali@email.com',
       skills: 'Web Development, React, Node.js, MongoDB',
       experience: '4-5 years',
       hourlyRate: '$35/hour',
       availability: 'Full-time',
-      coverLetter: 'أنا مطور ويب خبير بخبرة 5 سنوات في تطوير التطبيقات الحديثة. لدي خبرة واسعة في React و Node.js ومهتم بالعمل مع فريقكم...',
+      coverLetter: 'I am an experienced web developer with 5 years of experience in developing modern applications. I have extensive experience in React and Node.js and am interested in working with your team...',
       status: 'pending',
       submittedAt: '2024-01-20T10:30:00Z',
       rating: 4.8,
@@ -48,13 +48,13 @@ const GroupExternalTab = ({ groupId, userRole }: GroupExternalTabProps) => {
     },
     {
       id: '2',
-      applicantName: 'سارة أحمد',
+      applicantName: 'Sarah Ahmed',
       applicantEmail: 'sara.ahmed@email.com',
       skills: 'Graphic Design, UI/UX, Adobe Creative Suite',
       experience: '2-3 years',
       hourlyRate: '$25/hour',
       availability: 'Part-time',
-      coverLetter: 'مصممة جرافيك ومتخصصة في تصميم واجهات المستخدم. لدي شغف بالتصميم الحديث والإبداعي...',
+      coverLetter: 'Graphic designer specializing in user interface design. I have a passion for modern and creative design...',
       status: 'approved',
       submittedAt: '2024-01-18T14:15:00Z',
       rating: 4.9,
@@ -66,13 +66,13 @@ const GroupExternalTab = ({ groupId, userRole }: GroupExternalTabProps) => {
     },
     {
       id: '3',
-      applicantName: 'محمد حسن',
+      applicantName: 'Mohamed Hassan',
       applicantEmail: 'mohamed.hassan@email.com',
       skills: 'Digital Marketing, SEO, Social Media Management',
       experience: '6-10 years',
       hourlyRate: '$30/hour',
       availability: 'Project-based',
-      coverLetter: 'خبير تسويق رقمي بخبرة 8 سنوات في إدارة الحملات التسويقية وتحسين محركات البحث...',
+      coverLetter: 'Digital marketing expert with 8 years of experience in managing marketing campaigns and search engine optimization...',
       status: 'under_review',
       submittedAt: '2024-01-19T09:45:00Z',
       rating: 4.7,
@@ -85,10 +85,10 @@ const GroupExternalTab = ({ groupId, userRole }: GroupExternalTabProps) => {
 
   const getStatusBadge = (status: string) => {
     const configs = {
-      pending: { label: 'معلق', className: 'bg-yellow-100 text-yellow-800' },
-      approved: { label: 'موافق عليه', className: 'bg-green-100 text-green-800' },
-      under_review: { label: 'قيد المراجعة', className: 'bg-blue-100 text-blue-800' },
-      rejected: { label: 'مرفوض', className: 'bg-red-100 text-red-800' }
+      pending: { label: 'Pending', className: 'bg-yellow-100 text-yellow-800' },
+      approved: { label: 'Approved', className: 'bg-green-100 text-green-800' },
+      under_review: { label: 'Under Review', className: 'bg-blue-100 text-blue-800' },
+      rejected: { label: 'Rejected', className: 'bg-red-100 text-red-800' }
     };
     
     const config = configs[status as keyof typeof configs] || configs.pending;
@@ -113,30 +113,30 @@ const GroupExternalTab = ({ groupId, userRole }: GroupExternalTabProps) => {
   };
 
   return (
-    <div className="space-y-6" dir="rtl">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Users className="w-6 h-6" />
           <div>
-            <h2 className="text-2xl font-bold">الأطراف الخارجية</h2>
-            <p className="text-gray-600">طلبات العمل الحر والمتعاونين الخارجيين</p>
+            <h2 className="text-2xl font-bold">External Parties</h2>
+            <p className="text-gray-600">Freelance applications and external collaborators</p>
           </div>
         </div>
         <Badge variant="outline" className="bg-blue-50">
-          {filteredApplications.length} طلب
+          {filteredApplications.length} applications
         </Badge>
       </div>
 
       {/* Search and Filter */}
       <div className="flex gap-4">
         <div className="flex-1 relative">
-          <Search className="w-4 h-4 absolute right-3 top-3 text-gray-400" />
+          <Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
           <Input
-            placeholder="البحث في الطلبات..."
+            placeholder="Search applications..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pr-10"
+            className="pl-10"
           />
         </div>
         <select 
@@ -144,11 +144,11 @@ const GroupExternalTab = ({ groupId, userRole }: GroupExternalTabProps) => {
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
         >
-          <option value="all">جميع الطلبات</option>
-          <option value="pending">معلقة</option>
-          <option value="under_review">قيد المراجعة</option>
-          <option value="approved">موافق عليها</option>
-          <option value="rejected">مرفوضة</option>
+          <option value="all">All Applications</option>
+          <option value="pending">Pending</option>
+          <option value="under_review">Under Review</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
         </select>
       </div>
 
@@ -175,38 +175,38 @@ const GroupExternalTab = ({ groupId, userRole }: GroupExternalTabProps) => {
                         <Star className="w-3 h-3 text-yellow-500" />
                         <span>{application.rating}/5</span>
                       </div>
-                      <span>المشاريع المكتملة: {application.completedProjects}</span>
+                      <span>Completed Projects: {application.completedProjects}</span>
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="flex items-center gap-1">
                         <DollarSign className="w-3 h-3 text-green-600" />
-                        <span className="text-green-600 font-medium">الأجر: {application.hourlyRate}</span>
+                        <span className="text-green-600 font-medium">Rate: {application.hourlyRate}</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <Clock className="w-3 h-3 text-blue-600" />
-                        <span className="text-blue-600">التفرغ: {application.availability}</span>
+                        <span className="text-blue-600">Availability: {application.availability}</span>
                       </div>
                     </div>
                     <div>
-                      <span className="font-medium">الخبرة: </span>
+                      <span className="font-medium">Experience: </span>
                       <span>{application.experience}</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <Calendar className="w-3 h-3" />
-                      <span>تاريخ التقديم: {new Date(application.submittedAt).toLocaleDateString('ar-AE')}</span>
+                      <span>Submitted: {new Date(application.submittedAt).toLocaleDateString('en-US')}</span>
                     </div>
                   </div>
                 </div>
                 
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm">
-                    <Eye className="w-4 h-4 ml-1" />
-                    عرض
+                    <Eye className="w-4 h-4 mr-1" />
+                    View
                   </Button>
                   {application.attachments.length > 0 && (
                     <Button variant="outline" size="sm">
-                      <Download className="w-4 h-4 ml-1" />
-                      الملفات ({application.attachments.length})
+                      <Download className="w-4 h-4 mr-1" />
+                      Files ({application.attachments.length})
                     </Button>
                   )}
                 </div>
@@ -217,7 +217,7 @@ const GroupExternalTab = ({ groupId, userRole }: GroupExternalTabProps) => {
               <div className="space-y-4">
                 {/* Skills */}
                 <div>
-                  <h4 className="font-medium mb-2">المهارات والخبرات:</h4>
+                  <h4 className="font-medium mb-2">Skills & Experience:</h4>
                   <div className="flex flex-wrap gap-2">
                     {application.skills.split(', ').map((skill, index) => (
                       <Badge key={index} variant="outline" className="bg-blue-50">
@@ -229,7 +229,7 @@ const GroupExternalTab = ({ groupId, userRole }: GroupExternalTabProps) => {
 
                 {/* Cover Letter */}
                 <div>
-                  <h4 className="font-medium mb-2">خطاب التقديم:</h4>
+                  <h4 className="font-medium mb-2">Cover Letter:</h4>
                   <p className="text-gray-600 text-sm">{application.coverLetter}</p>
                 </div>
 
@@ -241,7 +241,7 @@ const GroupExternalTab = ({ groupId, userRole }: GroupExternalTabProps) => {
                       className="bg-green-600 hover:bg-green-700"
                       size="sm"
                     >
-                      الموافقة على الطلب
+                      Approve Application
                     </Button>
                     <Button 
                       onClick={() => handleRejectApplication(application.id)}
@@ -249,7 +249,7 @@ const GroupExternalTab = ({ groupId, userRole }: GroupExternalTabProps) => {
                       className="text-red-600 border-red-600 hover:bg-red-50"
                       size="sm"
                     >
-                      رفض الطلب
+                      Reject Application
                     </Button>
                   </div>
                 )}
@@ -257,7 +257,7 @@ const GroupExternalTab = ({ groupId, userRole }: GroupExternalTabProps) => {
                 {/* Attachments List */}
                 {application.attachments.length > 0 && (
                   <div className="pt-4 border-t">
-                    <h4 className="text-sm font-medium mb-2">الملفات المرفقة:</h4>
+                    <h4 className="text-sm font-medium mb-2">Attachments:</h4>
                     <div className="space-y-1">
                       {application.attachments.map((attachment, index) => (
                         <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
@@ -282,9 +282,9 @@ const GroupExternalTab = ({ groupId, userRole }: GroupExternalTabProps) => {
       {filteredApplications.length === 0 && (
         <div className="text-center py-12">
           <Users className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-          <h3 className="text-lg font-semibold text-gray-600 mb-2">لا توجد طلبات</h3>
+          <h3 className="text-lg font-semibold text-gray-600 mb-2">No Applications Found</h3>
           <p className="text-gray-500">
-            {searchTerm ? 'جرب تعديل مصطلحات البحث' : 'لم يتم تقديم أي طلبات للعمل الحر بعد'}
+            {searchTerm ? 'Try adjusting your search terms' : 'No freelance applications have been submitted yet'}
           </p>
         </div>
       )}
