@@ -68,6 +68,83 @@ export type Database = {
         }
         Relationships: []
       }
+      election_candidates: {
+        Row: {
+          campaign_message: string | null
+          election_id: string | null
+          id: string
+          level_position: number | null
+          nominated_at: string | null
+          user_id: string | null
+          vote_count: number | null
+        }
+        Insert: {
+          campaign_message?: string | null
+          election_id?: string | null
+          id?: string
+          level_position?: number | null
+          nominated_at?: string | null
+          user_id?: string | null
+          vote_count?: number | null
+        }
+        Update: {
+          campaign_message?: string | null
+          election_id?: string | null
+          id?: string
+          level_position?: number | null
+          nominated_at?: string | null
+          user_id?: string | null
+          vote_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "election_candidates_election_id_fkey"
+            columns: ["election_id"]
+            isOneToOne: false
+            referencedRelation: "group_elections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      election_votes: {
+        Row: {
+          candidate_id: string | null
+          election_id: string | null
+          id: string
+          voted_at: string | null
+          voter_id: string | null
+        }
+        Insert: {
+          candidate_id?: string | null
+          election_id?: string | null
+          id?: string
+          voted_at?: string | null
+          voter_id?: string | null
+        }
+        Update: {
+          candidate_id?: string | null
+          election_id?: string | null
+          id?: string
+          voted_at?: string | null
+          voter_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "election_votes_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "election_candidates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "election_votes_election_id_fkey"
+            columns: ["election_id"]
+            isOneToOne: false
+            referencedRelation: "group_elections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       focus_sessions: {
         Row: {
           completed: boolean
@@ -109,6 +186,50 @@ export type Database = {
           },
         ]
       }
+      group_elections: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          election_type: string
+          end_date: string
+          group_id: string | null
+          id: string
+          max_candidates: number | null
+          start_date: string
+          status: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          election_type?: string
+          end_date: string
+          group_id?: string | null
+          id?: string
+          max_candidates?: number | null
+          start_date: string
+          status?: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          election_type?: string
+          end_date?: string
+          group_id?: string | null
+          id?: string
+          max_candidates?: number | null
+          start_date?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_elections_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       group_members: {
         Row: {
           group_id: string
@@ -134,6 +255,63 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "group_members_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      group_performance_reports: {
+        Row: {
+          active_members: number | null
+          completed_projects: number | null
+          created_at: string | null
+          generated_by: string | null
+          group_id: string | null
+          id: string
+          member_satisfaction: number | null
+          performance_score: number | null
+          report_data: Json | null
+          report_period: string
+          total_savings: number | null
+        }
+        Insert: {
+          active_members?: number | null
+          completed_projects?: number | null
+          created_at?: string | null
+          generated_by?: string | null
+          group_id?: string | null
+          id?: string
+          member_satisfaction?: number | null
+          performance_score?: number | null
+          report_data?: Json | null
+          report_period: string
+          total_savings?: number | null
+        }
+        Update: {
+          active_members?: number | null
+          completed_projects?: number | null
+          created_at?: string | null
+          generated_by?: string | null
+          group_id?: string | null
+          id?: string
+          member_satisfaction?: number | null
+          performance_score?: number | null
+          report_data?: Json | null
+          report_period?: string
+          total_savings?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_performance_reports_generated_by_fkey"
+            columns: ["generated_by"]
+            isOneToOne: false
+            referencedRelation: "mcp_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_performance_reports_group_id_fkey"
             columns: ["group_id"]
             isOneToOne: false
             referencedRelation: "groups"
@@ -193,6 +371,7 @@ export type Database = {
           current_members: number | null
           description: string | null
           gateway_type: Database["public"]["Enums"]["gateway_type"]
+          group_number: string | null
           id: string
           industry_sector_id: string | null
           is_public: boolean
@@ -208,6 +387,7 @@ export type Database = {
           current_members?: number | null
           description?: string | null
           gateway_type: Database["public"]["Enums"]["gateway_type"]
+          group_number?: string | null
           id?: string
           industry_sector_id?: string | null
           is_public?: boolean
@@ -223,6 +403,7 @@ export type Database = {
           current_members?: number | null
           description?: string | null
           gateway_type?: Database["public"]["Enums"]["gateway_type"]
+          group_number?: string | null
           id?: string
           industry_sector_id?: string | null
           is_public?: boolean
@@ -272,6 +453,53 @@ export type Database = {
         }
         Relationships: []
       }
+      ipfs_storage: {
+        Row: {
+          created_at: string | null
+          file_hash: string
+          file_name: string
+          file_size: number | null
+          file_type: string | null
+          group_id: string | null
+          id: string
+          metadata: Json | null
+          storage_purpose: string | null
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          file_hash: string
+          file_name: string
+          file_size?: number | null
+          file_type?: string | null
+          group_id?: string | null
+          id?: string
+          metadata?: Json | null
+          storage_purpose?: string | null
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          file_hash?: string
+          file_name?: string
+          file_size?: number | null
+          file_type?: string | null
+          group_id?: string | null
+          id?: string
+          metadata?: Json | null
+          storage_purpose?: string | null
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ipfs_storage_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       kyc_documents: {
         Row: {
           created_at: string
@@ -311,6 +539,84 @@ export type Database = {
           submitted_at?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      mcp_activities: {
+        Row: {
+          activity_type: string
+          created_at: string | null
+          description: string | null
+          group_id: string | null
+          id: string
+          mcp_agent_id: string | null
+          metadata: Json | null
+        }
+        Insert: {
+          activity_type: string
+          created_at?: string | null
+          description?: string | null
+          group_id?: string | null
+          id?: string
+          mcp_agent_id?: string | null
+          metadata?: Json | null
+        }
+        Update: {
+          activity_type?: string
+          created_at?: string | null
+          description?: string | null
+          group_id?: string | null
+          id?: string
+          mcp_agent_id?: string | null
+          metadata?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mcp_activities_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mcp_activities_mcp_agent_id_fkey"
+            columns: ["mcp_agent_id"]
+            isOneToOne: false
+            referencedRelation: "mcp_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mcp_agents: {
+        Row: {
+          agent_code: string
+          created_at: string | null
+          full_name: string
+          id: string
+          is_active: boolean | null
+          specialization: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          agent_code: string
+          created_at?: string | null
+          full_name: string
+          id?: string
+          is_active?: boolean | null
+          specialization?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          agent_code?: string
+          created_at?: string | null
+          full_name?: string
+          id?: string
+          is_active?: boolean | null
+          specialization?: string | null
+          updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -578,6 +884,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_group_number: {
+        Args: { gateway_type: string }
+        Returns: string
+      }
       is_api_user: {
         Args: { user_email: string }
         Returns: boolean
