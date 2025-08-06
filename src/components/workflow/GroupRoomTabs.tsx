@@ -15,7 +15,8 @@ import {
   AlertTriangle,
   Crown,
   ExternalLink,
-  Inbox
+  Inbox,
+  Send
 } from 'lucide-react';
 import GroupOverview from './GroupOverview';
 import GroupMembersTab from './GroupMembersTab';
@@ -27,6 +28,7 @@ import GroupComplaints from './GroupComplaints';
 import GroupManagersTab from './GroupManagersTab';
 import GroupExternalTab from './GroupExternalTab';
 import GroupInbox from './GroupInbox';
+import GroupOutbox from './GroupOutbox';
 
 interface GroupRoomTabsProps {
   group: any;
@@ -41,6 +43,7 @@ const GroupRoomTabs = ({ group, userRole, isManager, groupId }: GroupRoomTabsPro
   const tabs = [
     { id: 'overview', label: 'نظرة عامة', icon: TrendingUp, show: true },
     { id: 'inbox', label: 'صندوق الوارد', icon: Inbox, show: isManager || userRole === 'founder' },
+    { id: 'outbox', label: 'صندوق الصادر', icon: Send, show: isManager || userRole === 'founder' },
     { id: 'members', label: 'الأعضاء', icon: Users, show: true },
     { id: 'voting', label: 'القرارات والتصويت', icon: Vote, show: true },
     { id: 'decisions', label: 'الصادر/الوارد', icon: FileText, show: true },
@@ -70,6 +73,9 @@ const GroupRoomTabs = ({ group, userRole, isManager, groupId }: GroupRoomTabsPro
             {tab.id === 'inbox' && (
               <Badge className="bg-red-100 text-red-800 text-xs">1</Badge>
             )}
+            {tab.id === 'outbox' && (
+              <Badge className="bg-green-100 text-green-800 text-xs">3</Badge>
+            )}
           </TabsTrigger>
         ))}
       </TabsList>
@@ -81,6 +87,12 @@ const GroupRoomTabs = ({ group, userRole, isManager, groupId }: GroupRoomTabsPro
       {(isManager || userRole === 'founder') && (
         <TabsContent value="inbox">
           <GroupInbox groupId={groupId} userRole={userRole} />
+        </TabsContent>
+      )}
+
+      {(isManager || userRole === 'founder') && (
+        <TabsContent value="outbox">
+          <GroupOutbox groupId={groupId} userRole={userRole} />
         </TabsContent>
       )}
 

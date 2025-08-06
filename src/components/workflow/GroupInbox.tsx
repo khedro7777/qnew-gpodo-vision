@@ -13,8 +13,11 @@ import {
   Filter,
   Eye,
   Download,
-  Calendar
+  Calendar,
+  Reply
 } from 'lucide-react';
+import ReplyModal from './ReplyModal';
+import { toast } from 'sonner';
 
 interface GroupInboxProps {
   groupId: string;
@@ -24,6 +27,8 @@ interface GroupInboxProps {
 const GroupInbox = ({ groupId, userRole }: GroupInboxProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('all');
+  const [replyModalOpen, setReplyModalOpen] = useState(false);
+  const [selectedMessage, setSelectedMessage] = useState<any>(null);
 
   // Mock inbox messages - in real app this would come from database
   const messages = [
@@ -32,6 +37,7 @@ const GroupInbox = ({ groupId, userRole }: GroupInboxProps) => {
       type: 'contact',
       subject: 'Question about group purchasing terms',
       sender: 'Ahmed Al-Rashid',
+      senderId: 'user-123',
       company: 'Tech Solutions LLC',
       submittedAt: '2024-01-20T10:30:00Z',
       status: 'unread',
@@ -43,6 +49,7 @@ const GroupInbox = ({ groupId, userRole }: GroupInboxProps) => {
       type: 'supplier',
       subject: 'Medical Equipment Supply Offer',
       sender: 'Sarah Medical Corp',
+      senderId: 'supplier-456',
       company: 'Sarah Medical Corp',
       submittedAt: '2024-01-19T14:15:00Z',
       status: 'read',
@@ -56,6 +63,7 @@ const GroupInbox = ({ groupId, userRole }: GroupInboxProps) => {
       type: 'freelancer',
       subject: 'Web Developer Application',
       sender: 'Mohammed Hassan',
+      senderId: 'freelancer-789',
       company: 'Freelancer',
       submittedAt: '2024-01-18T09:45:00Z',
       status: 'read',
@@ -88,6 +96,29 @@ const GroupInbox = ({ groupId, userRole }: GroupInboxProps) => {
     
     const config = configs[type as keyof typeof configs] || configs.contact;
     return <Badge className={config.className}>{config.label}</Badge>;
+  };
+
+  const handleReply = (message: any) => {
+    setSelectedMessage(message);
+    setReplyModalOpen(true);
+  };
+
+  const handleSendReply = async (replyData: any) => {
+    try {
+      // In real app, this would send to backend API
+      console.log('Sending reply:', replyData);
+      
+      // Mark original message as read if it wasn't
+      const messageIndex = messages.findIndex(m => m.id === replyData.originalMessageId);
+      if (messageIndex !== -1 && messages[messageIndex].status === 'unread') {
+        messages[messageIndex].status = 'read';
+      }
+      
+      toast.success('Reply sent successfully');
+    } catch (error) {
+      console.error('Send reply error:', error);
+      throw error;
+    }
   };
 
   const filteredMessages = messages.filter(message => {
@@ -167,6 +198,15 @@ const GroupInbox = ({ groupId, userRole }: GroupInboxProps) => {
                     <Eye className="w-4 h-4 mr-1" />
                     View
                   </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => handleReply(message)}
+                    className="text-blue-600 hover:text-blue-700"
+                  >
+                    <Reply className="w-4 h-4 mr-1" />
+                    Reply
+                  </Button>
                   {message.hasAttachments && (
                     <Button variant="outline" size="sm">
                       <Download className="w-4 h-4 mr-1" />
@@ -208,6 +248,18 @@ const GroupInbox = ({ groupId, userRole }: GroupInboxProps) => {
           </p>
         </div>
       )}
+
+      {/* Reply Modal */}
+      <ReplyModal
+        isOpen={replyModalOpen}
+        onClose={() => {
+          setReplyModalOpen(false);
+          setSelectedMessage(null);
+        }}
+        message={selectedMessage}
+        groupId={groupId}
+        onReply={handleSendReply}
+      />
     </div>
   );
 };
