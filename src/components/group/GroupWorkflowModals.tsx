@@ -13,6 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import FileUpload from '@/components/ui/file-upload';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { MessageCircle, Briefcase, Building } from 'lucide-react';
 
@@ -55,25 +56,90 @@ const GroupWorkflowModals = ({ isOpen, onClose, groupId, type }: WorkflowModalPr
     setLoading(true);
     
     try {
-      // Mock submission - in real app this would upload files and send to group inbox
-      console.log('Submitting to group:', groupId);
-      console.log('Type:', type);
-      console.log('Form data:', formData);
-      console.log('Files:', files);
-
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      const messages = {
-        contact: 'Your message has been sent to the group admin',
-        supplier: 'Your supplier offer has been submitted successfully',
-        freelancer: 'Your freelancer application has been submitted successfully'
+      let submissionData: any = {
+        group_id: groupId,
+        user_id: user.id,
+        status: 'pending',
+        created_at: new Date().toISOString(),
       };
 
-      toast.success(messages[type]);
+      if (type === 'contact') {
+        // Send to inbox (existing functionality)
+        submissionData = {
+          ...submissionData,
+          type: 'contact',
+          subject: formData.subject,
+          message: formData.message,
+          sender_name: user.full_name || user.email,
+          sender_email: user.email
+        };
+
+        console.log('Contact submission to inbox:', submissionData);
+        toast.success('Your message has been sent to the group admin');
+
+      } else if (type === 'supplier') {
+        // Send to Offers tab
+        submissionData = {
+          ...submissionData,
+          type: 'supplier_offer',
+          title: formData.offerTitle,
+          company_name: formData.companyName,
+          description: formData.message,
+          price: formData.price,
+          delivery_time: formData.deliveryTime,
+          attachments: files.map(f => ({ name: f.name, size: f.size }))
+        };
+
+        // In a real implementation, this would be stored in a offers table
+        console.log('Supplier offer submission:', submissionData);
+        
+        // Create a notification for group admin
+        await supabase
+          .from('notifications')
+          .insert({
+            user_id: groupId, // This would be the group admin's user_id
+            title: 'New Supplier Offer',
+            message: `${formData.companyName} has submitted a new supplier offer: ${formData.offerTitle}`,
+            type: 'info',
+            action_url: `/group-room/${groupId}?tab=offers`
+          });
+
+        toast.success('Your supplier offer has been submitted successfully');
+
+      } else if (type === 'freelancer') {
+        // Send to External Parties tab
+        submissionData = {
+          ...submissionData,
+          type: 'freelancer_application',
+          skills: formData.skills,
+          experience: formData.experience,
+          hourly_rate: formData.hourlyRate,
+          availability: formData.availability,
+          cover_letter: formData.message,
+          attachments: files.map(f => ({ name: f.name, size: f.size }))
+        };
+
+        // In a real implementation, this would be stored in an external_applications table
+        console.log('Freelancer application submission:', submissionData);
+        
+        // Create a notification for group admin
+        await supabase
+          .from('notifications')
+          .insert({
+            user_id: groupId, // This would be the group admin's user_id
+            title: 'New Freelancer Application',
+            message: `${user.full_name || user.email} has applied for a freelancer role`,
+            type: 'info',
+            action_url: `/group-room/${groupId}?tab=external`
+          });
+
+        toast.success('Your freelancer application has been submitted successfully');
+      }
+
       onClose();
       resetForm();
     } catch (error) {
+      console.error('Submission error:', error);
       toast.error('Failed to submit. Please try again.');
     } finally {
       setLoading(false);

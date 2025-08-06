@@ -1,20 +1,20 @@
 
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { 
-  Package, 
-  Plus, 
+  Building, 
+  Search, 
   Eye, 
-  CheckCircle, 
-  XCircle,
-  Clock,
+  Download, 
+  Calendar,
   DollarSign,
-  Building
+  Clock,
+  Mail,
+  Phone
 } from 'lucide-react';
-import { toast } from 'sonner';
 
 interface GroupOffersTabProps {
   groupId: string;
@@ -24,226 +24,244 @@ interface GroupOffersTabProps {
 
 const GroupOffersTab = ({ groupId, userRole, isManager }: GroupOffersTabProps) => {
   const [searchTerm, setSearchTerm] = useState('');
-  
-  const offers = [
+  const [statusFilter, setStatusFilter] = useState('all');
+
+  // Mock supplier offers - in real app this would come from database
+  const supplierOffers = [
     {
       id: '1',
-      title: 'Desktop Computers - HP EliteDesk',
-      company: 'Advanced Technology Company',
-      price: '$650/unit',
-      quantity: '50 units',
+      title: 'Medical Equipment Supply Package',
+      companyName: 'MedTech Solutions LLC',
+      contactEmail: 'contact@medtech.com',
+      contactPhone: '+971-50-123-4567',
+      price: '$45,000',
+      deliveryTime: '2 weeks',
+      description: 'High-quality medical equipment including monitors, ventilators, and diagnostic tools. All items come with 3-year warranty and technical support.',
       status: 'pending',
-      submittedDate: '2024-01-15',
-      validUntil: '2024-01-30',
-      description: 'High-performance desktop computers with 3-year warranty'
+      submittedAt: '2024-01-20T10:30:00Z',
+      attachments: [
+        { name: 'product_catalog.pdf', size: '2.5MB' },
+        { name: 'certifications.pdf', size: '1.2MB' }
+      ]
     },
     {
       id: '2',
-      title: 'Digital Marketing Services',
-      company: 'Digital Creative Agency',
-      price: '$3,900/month',
-      quantity: '6 months',
+      title: 'IT Infrastructure Services',
+      companyName: 'TechFlow Systems',
+      contactEmail: 'sales@techflow.ae',
+      contactPhone: '+971-55-987-6543',
+      price: '$25,000',
+      deliveryTime: '1 month',
+      description: 'Complete IT setup including servers, networking equipment, security systems, and ongoing maintenance support.',
       status: 'approved',
-      submittedDate: '2024-01-10',
-      validUntil: '2024-01-25',
-      description: 'Comprehensive digital marketing campaign including social media and Google Ads'
+      submittedAt: '2024-01-18T14:15:00Z',
+      attachments: [
+        { name: 'technical_specs.docx', size: '1.8MB' },
+        { name: 'pricing_breakdown.xlsx', size: '890KB' }
+      ]
     },
     {
       id: '3',
-      title: 'Specialized Legal Consulting',
-      company: 'Distinguished Law Firm',
-      price: '$130/hour',
-      quantity: '20 hours',
-      status: 'rejected',
-      submittedDate: '2024-01-08',
-      validUntil: '2024-01-20',
-      description: 'Legal consulting in corporate and commercial contracts'
+      title: 'Office Furniture & Equipment',
+      companyName: 'Premium Office Solutions',
+      contactEmail: 'info@premiumoffice.com',
+      contactPhone: '+971-52-456-7890',
+      price: '$15,500',
+      deliveryTime: '1 week',
+      description: 'Modern office furniture including desks, chairs, meeting tables, and storage solutions. Ergonomic designs with 2-year warranty.',
+      status: 'under_review',
+      submittedAt: '2024-01-19T09:45:00Z',
+      attachments: [
+        { name: 'furniture_catalog.pdf', size: '3.2MB' }
+      ]
     }
   ];
 
   const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return <Badge className="bg-yellow-100 text-yellow-800">Under Review</Badge>;
-      case 'approved':
-        return <Badge className="bg-green-100 text-green-800">Approved</Badge>;
-      case 'rejected':
-        return <Badge className="bg-red-100 text-red-800">Rejected</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
-    }
+    const configs = {
+      pending: { label: 'معلق', className: 'bg-yellow-100 text-yellow-800' },
+      approved: { label: 'موافق عليه', className: 'bg-green-100 text-green-800' },
+      under_review: { label: 'قيد المراجعة', className: 'bg-blue-100 text-blue-800' },
+      rejected: { label: 'مرفوض', className: 'bg-red-100 text-red-800' }
+    };
+    
+    const config = configs[status as keyof typeof configs] || configs.pending;
+    return <Badge className={config.className}>{config.label}</Badge>;
   };
 
+  const filteredOffers = supplierOffers.filter(offer => {
+    const matchesSearch = offer.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         offer.companyName.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || offer.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
   const handleApproveOffer = (offerId: string) => {
-    toast.success('Offer approved successfully');
+    console.log('Approving offer:', offerId);
+    // In real app, this would update the offer status
   };
 
   const handleRejectOffer = (offerId: string) => {
-    toast.success('Offer rejected');
+    console.log('Rejecting offer:', offerId);
+    // In real app, this would update the offer status
   };
 
-  const filteredOffers = offers.filter(offer =>
-    offer.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    offer.company.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir="rtl">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">Submitted Offers</h2>
-          <p className="text-gray-600">Review and manage group offers</p>
+        <div className="flex items-center gap-3">
+          <Building className="w-6 h-6" />
+          <div>
+            <h2 className="text-2xl font-bold">عروض الموردين</h2>
+            <p className="text-gray-600">إدارة عروض الموردين المقدمة للمجموعة</p>
+          </div>
         </div>
-        {isManager && (
-          <Button>
-            <Plus className="w-4 h-4 mr-2" />
-            Request New Offer
-          </Button>
-        )}
+        <Badge variant="outline" className="bg-blue-50">
+          {filteredOffers.length} عرض
+        </Badge>
       </div>
 
-      {/* Search */}
+      {/* Search and Filter */}
       <div className="flex gap-4">
-        <div className="flex-1">
+        <div className="flex-1 relative">
+          <Search className="w-4 h-4 absolute right-3 top-3 text-gray-400" />
           <Input
-            placeholder="Search offers..."
+            placeholder="البحث في العروض..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            className="pr-10"
           />
         </div>
-        <select className="px-3 py-2 border rounded-md">
-          <option value="">All Status</option>
-          <option value="pending">Under Review</option>
-          <option value="approved">Approved</option>
-          <option value="rejected">Rejected</option>
+        <select 
+          className="px-3 py-2 border rounded-md"
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+        >
+          <option value="all">جميع العروض</option>
+          <option value="pending">معلقة</option>
+          <option value="under_review">قيد المراجعة</option>
+          <option value="approved">موافق عليها</option>
+          <option value="rejected">مرفوضة</option>
         </select>
       </div>
 
       {/* Offers List */}
-      <div className="grid gap-6">
+      <div className="space-y-4">
         {filteredOffers.map((offer) => (
-          <Card key={offer.id} className="overflow-hidden">
+          <Card key={offer.id} className="hover:shadow-md transition-shadow">
             <CardHeader>
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <CardTitle className="text-xl mb-2">{offer.title}</CardTitle>
-                  <div className="flex items-center gap-4 text-sm text-gray-500">
-                    <div className="flex items-center gap-1">
-                      <Building className="w-4 h-4" />
-                      <span>{offer.company}</span>
+                  <div className="flex items-center gap-3 mb-2">
+                    <Building className="w-5 h-5 text-purple-600" />
+                    <CardTitle className="text-lg">{offer.title}</CardTitle>
+                    {getStatusBadge(offer.status)}
+                  </div>
+                  
+                  <div className="space-y-2 text-sm text-gray-600">
+                    <div className="flex items-center gap-4">
+                      <span className="font-medium">الشركة: {offer.companyName}</span>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-1">
+                        <Mail className="w-3 h-3" />
+                        <span>{offer.contactEmail}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Phone className="w-3 h-3" />
+                        <span>{offer.contactPhone}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-1">
+                        <DollarSign className="w-3 h-3 text-green-600" />
+                        <span className="text-green-600 font-medium">السعر: {offer.price}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Clock className="w-3 h-3 text-blue-600" />
+                        <span className="text-blue-600">وقت التسليم: {offer.deliveryTime}</span>
+                      </div>
                     </div>
                     <div className="flex items-center gap-1">
-                      <Clock className="w-4 h-4" />
-                      <span>Valid until {new Date(offer.validUntil).toLocaleDateString()}</span>
+                      <Calendar className="w-3 h-3" />
+                      <span>تاريخ التقديم: {new Date(offer.submittedAt).toLocaleDateString('ar-AE')}</span>
                     </div>
                   </div>
                 </div>
-                {getStatusBadge(offer.status)}
+                
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm">
+                    <Eye className="w-4 h-4 ml-1" />
+                    عرض
+                  </Button>
+                  {offer.attachments.length > 0 && (
+                    <Button variant="outline" size="sm">
+                      <Download className="w-4 h-4 ml-1" />
+                      الملفات ({offer.attachments.length})
+                    </Button>
+                  )}
+                </div>
               </div>
             </CardHeader>
 
             <CardContent>
-              <div className="space-y-4">
-                <p className="text-gray-600">{offer.description}</p>
-                
-                <div className="grid md:grid-cols-3 gap-4">
-                  <div className="flex items-center gap-2">
-                    <DollarSign className="w-4 h-4 text-green-500" />
-                    <div>
-                      <p className="text-sm text-gray-500">Price</p>
-                      <p className="font-medium">{offer.price}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                    <Package className="w-4 h-4 text-blue-500" />
-                    <div>
-                      <p className="text-sm text-gray-500">Quantity</p>
-                      <p className="font-medium">{offer.quantity}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-gray-500" />
-                    <div>
-                      <p className="text-sm text-gray-500">Submission Date</p>
-                      <p className="font-medium">{new Date(offer.submittedDate).toLocaleDateString()}</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex gap-3 pt-4 border-t">
-                  <Button variant="outline" className="flex-1">
-                    <Eye className="w-4 h-4 mr-2" />
-                    View Details
+              <p className="text-gray-600 mb-4">{offer.description}</p>
+              
+              {/* Action Buttons for Managers */}
+              {isManager && offer.status === 'pending' && (
+                <div className="flex gap-2 pt-4 border-t">
+                  <Button 
+                    onClick={() => handleApproveOffer(offer.id)}
+                    className="bg-green-600 hover:bg-green-700"
+                    size="sm"
+                  >
+                    الموافقة على العرض
                   </Button>
-                  
-                  {isManager && offer.status === 'pending' && (
-                    <>
-                      <Button 
-                        onClick={() => handleApproveOffer(offer.id)}
-                        className="bg-green-600 hover:bg-green-700"
-                      >
-                        <CheckCircle className="w-4 h-4 mr-2" />
-                        Approve
-                      </Button>
-                      <Button 
-                        variant="outline"
-                        onClick={() => handleRejectOffer(offer.id)}
-                        className="text-red-600 border-red-300 hover:bg-red-50"
-                      >
-                        <XCircle className="w-4 h-4 mr-2" />
-                        Reject
-                      </Button>
-                    </>
-                  )}
+                  <Button 
+                    onClick={() => handleRejectOffer(offer.id)}
+                    variant="outline"
+                    className="text-red-600 border-red-600 hover:bg-red-50"
+                    size="sm"
+                  >
+                    رفض العرض
+                  </Button>
                 </div>
-              </div>
+              )}
+
+              {/* Attachments List */}
+              {offer.attachments.length > 0 && (
+                <div className="mt-4 pt-4 border-t">
+                  <h4 className="text-sm font-medium mb-2">الملفات المرفقة:</h4>
+                  <div className="space-y-1">
+                    {offer.attachments.map((attachment, index) => (
+                      <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                        <span className="text-sm">{attachment.name}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-gray-500">({attachment.size})</span>
+                          <Button variant="ghost" size="sm">
+                            <Download className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         ))}
       </div>
 
-      {/* Statistics */}
-      <div className="grid md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4 text-center">
-            <Package className="w-8 h-8 text-blue-500 mx-auto mb-2" />
-            <h3 className="font-semibold">Total Offers</h3>
-            <p className="text-2xl font-bold text-blue-600">{offers.length}</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4 text-center">
-            <Clock className="w-8 h-8 text-yellow-500 mx-auto mb-2" />
-            <h3 className="font-semibold">Under Review</h3>
-            <p className="text-2xl font-bold text-yellow-600">
-              {offers.filter(o => o.status === 'pending').length}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4 text-center">
-            <CheckCircle className="w-8 h-8 text-green-500 mx-auto mb-2" />
-            <h3 className="font-semibold">Approved</h3>
-            <p className="text-2xl font-bold text-green-600">
-              {offers.filter(o => o.status === 'approved').length}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4 text-center">
-            <DollarSign className="w-8 h-8 text-purple-500 mx-auto mb-2" />
-            <h3 className="font-semibold">Total Value</h3>
-            <p className="text-2xl font-bold text-purple-600">$47,000</p>
-          </CardContent>
-        </Card>
-      </div>
+      {filteredOffers.length === 0 && (
+        <div className="text-center py-12">
+          <Building className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+          <h3 className="text-lg font-semibold text-gray-600 mb-2">لا توجد عروض</h3>
+          <p className="text-gray-500">
+            {searchTerm ? 'جرب تعديل مصطلحات البحث' : 'لم يتم تقديم أي عروض من الموردين بعد'}
+          </p>
+        </div>
+      )}
     </div>
   );
 };

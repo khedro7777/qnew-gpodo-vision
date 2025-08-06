@@ -1,19 +1,21 @@
 
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { 
-  ExternalLink, 
-  Plus, 
-  User, 
-  Building,
+  Users, 
+  Search, 
+  Eye, 
+  Download, 
+  Calendar,
+  DollarSign,
+  Clock,
   Mail,
-  Phone,
-  Globe
+  Star,
+  Briefcase
 } from 'lucide-react';
-import { toast } from 'sonner';
 
 interface GroupExternalTabProps {
   groupId: string;
@@ -22,267 +24,270 @@ interface GroupExternalTabProps {
 
 const GroupExternalTab = ({ groupId, userRole }: GroupExternalTabProps) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
 
-  const externalParties = [
+  // Mock freelancer applications - in real app this would come from database
+  const freelancerApplications = [
     {
       id: '1',
-      name: 'شركة التقنيات المتطورة',
-      type: 'supplier',
-      contact: {
-        email: 'info@advtech.sa',
-        phone: '+966501234567',
-        website: 'www.advtech.sa'
-      },
-      relationship: 'active_supplier',
-      lastInteraction: '2024-01-15',
-      totalContracts: 3,
-      status: 'verified'
+      applicantName: 'أحمد محمد علي',
+      applicantEmail: 'ahmed.ali@email.com',
+      skills: 'Web Development, React, Node.js, MongoDB',
+      experience: '4-5 years',
+      hourlyRate: '$35/hour',
+      availability: 'Full-time',
+      coverLetter: 'أنا مطور ويب خبير بخبرة 5 سنوات في تطوير التطبيقات الحديثة. لدي خبرة واسعة في React و Node.js ومهتم بالعمل مع فريقكم...',
+      status: 'pending',
+      submittedAt: '2024-01-20T10:30:00Z',
+      rating: 4.8,
+      completedProjects: 23,
+      attachments: [
+        { name: 'portfolio.pdf', size: '2.1MB' },
+        { name: 'resume.pdf', size: '850KB' }
+      ]
     },
     {
       id: '2',
-      name: 'وكالة الإبداع الرقمي',
-      type: 'service_provider',
-      contact: {
-        email: 'contact@creativedigital.sa',
-        phone: '+966501234568',
-        website: 'www.creativedigital.sa'
-      },
-      relationship: 'marketing_partner',
-      lastInteraction: '2024-01-12',
-      totalContracts: 1,
-      status: 'pending'
+      applicantName: 'سارة أحمد',
+      applicantEmail: 'sara.ahmed@email.com',
+      skills: 'Graphic Design, UI/UX, Adobe Creative Suite',
+      experience: '2-3 years',
+      hourlyRate: '$25/hour',
+      availability: 'Part-time',
+      coverLetter: 'مصممة جرافيك ومتخصصة في تصميم واجهات المستخدم. لدي شغف بالتصميم الحديث والإبداعي...',
+      status: 'approved',
+      submittedAt: '2024-01-18T14:15:00Z',
+      rating: 4.9,
+      completedProjects: 15,
+      attachments: [
+        { name: 'design_portfolio.pdf', size: '4.2MB' },
+        { name: 'cv.docx', size: '1.1MB' }
+      ]
     },
     {
       id: '3',
-      name: 'مكتب المحاماة المتميز',
-      type: 'consultant',
-      contact: {
-        email: 'legal@excellentlaw.sa',
-        phone: '+966501234569',
-        website: 'www.excellentlaw.sa'
-      },
-      relationship: 'legal_advisor',
-      lastInteraction: '2024-01-10',
-      totalContracts: 2,
-      status: 'verified'
+      applicantName: 'محمد حسن',
+      applicantEmail: 'mohamed.hassan@email.com',
+      skills: 'Digital Marketing, SEO, Social Media Management',
+      experience: '6-10 years',
+      hourlyRate: '$30/hour',
+      availability: 'Project-based',
+      coverLetter: 'خبير تسويق رقمي بخبرة 8 سنوات في إدارة الحملات التسويقية وتحسين محركات البحث...',
+      status: 'under_review',
+      submittedAt: '2024-01-19T09:45:00Z',
+      rating: 4.7,
+      completedProjects: 31,
+      attachments: [
+        { name: 'marketing_cases.pdf', size: '3.5MB' }
+      ]
     }
   ];
 
-  const getTypeBadge = (type: string) => {
-    switch (type) {
-      case 'supplier':
-        return <Badge className="bg-blue-100 text-blue-800">مورد</Badge>;
-      case 'service_provider':
-        return <Badge className="bg-green-100 text-green-800">مزود خدمة</Badge>;
-      case 'consultant':
-        return <Badge className="bg-purple-100 text-purple-800">مستشار</Badge>;
-      case 'partner':
-        return <Badge className="bg-orange-100 text-orange-800">شريك</Badge>;
-      default:
-        return <Badge variant="outline">{type}</Badge>;
-    }
-  };
-
   const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'verified':
-        return <Badge className="bg-green-100 text-green-800">موثق</Badge>;
-      case 'pending':
-        return <Badge className="bg-yellow-100 text-yellow-800">قيد المراجعة</Badge>;
-      case 'blocked':
-        return <Badge className="bg-red-100 text-red-800">محظور</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
-    }
+    const configs = {
+      pending: { label: 'معلق', className: 'bg-yellow-100 text-yellow-800' },
+      approved: { label: 'موافق عليه', className: 'bg-green-100 text-green-800' },
+      under_review: { label: 'قيد المراجعة', className: 'bg-blue-100 text-blue-800' },
+      rejected: { label: 'مرفوض', className: 'bg-red-100 text-red-800' }
+    };
+    
+    const config = configs[status as keyof typeof configs] || configs.pending;
+    return <Badge className={config.className}>{config.label}</Badge>;
   };
 
-  const getRelationshipText = (relationship: string) => {
-    switch (relationship) {
-      case 'active_supplier':
-        return 'مورد نشط';
-      case 'marketing_partner':
-        return 'شريك تسويقي';
-      case 'legal_advisor':
-        return 'مستشار قانوني';
-      case 'financial_partner':
-        return 'شريك مالي';
-      default:
-        return relationship;
-    }
+  const filteredApplications = freelancerApplications.filter(app => {
+    const matchesSearch = app.applicantName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         app.skills.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || app.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
+  const handleApproveApplication = (applicationId: string) => {
+    console.log('Approving application:', applicationId);
+    // In real app, this would update the application status
   };
 
-  const inviteExternalParty = () => {
-    toast.success('تم إرسال دعوة للطرف الخارجي');
+  const handleRejectApplication = (applicationId: string) => {
+    console.log('Rejecting application:', applicationId);
+    // In real app, this would update the application status
   };
-
-  const filteredParties = externalParties.filter(party =>
-    party.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    party.type.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir="rtl">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">الأطراف الخارجية</h2>
-          <p className="text-gray-600">إدارة العلاقات مع الموردين والشركاء الخارجيين</p>
+        <div className="flex items-center gap-3">
+          <Users className="w-6 h-6" />
+          <div>
+            <h2 className="text-2xl font-bold">الأطراف الخارجية</h2>
+            <p className="text-gray-600">طلبات العمل الحر والمتعاونين الخارجيين</p>
+          </div>
         </div>
-        {userRole === 'admin' && (
-          <Button onClick={inviteExternalParty}>
-            <Plus className="w-4 h-4 mr-2" />
-            دعوة طرف خارجي
-          </Button>
-        )}
+        <Badge variant="outline" className="bg-blue-50">
+          {filteredApplications.length} طلب
+        </Badge>
       </div>
 
       {/* Search and Filter */}
       <div className="flex gap-4">
-        <div className="flex-1">
+        <div className="flex-1 relative">
+          <Search className="w-4 h-4 absolute right-3 top-3 text-gray-400" />
           <Input
-            placeholder="البحث في الأطراف الخارجية..."
+            placeholder="البحث في الطلبات..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            className="pr-10"
           />
         </div>
-        <select className="px-3 py-2 border rounded-md">
-          <option value="">جميع الأنواع</option>
-          <option value="supplier">موردين</option>
-          <option value="service_provider">مزودي خدمة</option>
-          <option value="consultant">مستشارين</option>
-          <option value="partner">شركاء</option>
-        </select>
-        <select className="px-3 py-2 border rounded-md">
-          <option value="">جميع الحالات</option>
-          <option value="verified">موثق</option>
-          <option value="pending">قيد المراجعة</option>
-          <option value="blocked">محظور</option>
+        <select 
+          className="px-3 py-2 border rounded-md"
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+        >
+          <option value="all">جميع الطلبات</option>
+          <option value="pending">معلقة</option>
+          <option value="under_review">قيد المراجعة</option>
+          <option value="approved">موافق عليها</option>
+          <option value="rejected">مرفوضة</option>
         </select>
       </div>
 
-      {/* External Parties List */}
-      <div className="grid gap-6">
-        {filteredParties.map((party) => (
-          <Card key={party.id} className="overflow-hidden">
+      {/* Applications List */}
+      <div className="space-y-4">
+        {filteredApplications.map((application) => (
+          <Card key={application.id} className="hover:shadow-md transition-shadow">
             <CardHeader>
               <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <Building className="w-8 h-8 text-gray-400" />
-                  <div>
-                    <CardTitle className="text-xl">{party.name}</CardTitle>
-                    <p className="text-gray-600">{getRelationshipText(party.relationship)}</p>
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-2">
+                    <Briefcase className="w-5 h-5 text-orange-600" />
+                    <CardTitle className="text-lg">{application.applicantName}</CardTitle>
+                    {getStatusBadge(application.status)}
+                  </div>
+                  
+                  <div className="space-y-2 text-sm text-gray-600">
+                    <div className="flex items-center gap-1">
+                      <Mail className="w-3 h-3" />
+                      <span>{application.applicantEmail}</span>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-1">
+                        <Star className="w-3 h-3 text-yellow-500" />
+                        <span>{application.rating}/5</span>
+                      </div>
+                      <span>المشاريع المكتملة: {application.completedProjects}</span>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-1">
+                        <DollarSign className="w-3 h-3 text-green-600" />
+                        <span className="text-green-600 font-medium">الأجر: {application.hourlyRate}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Clock className="w-3 h-3 text-blue-600" />
+                        <span className="text-blue-600">التفرغ: {application.availability}</span>
+                      </div>
+                    </div>
+                    <div>
+                      <span className="font-medium">الخبرة: </span>
+                      <span>{application.experience}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Calendar className="w-3 h-3" />
+                      <span>تاريخ التقديم: {new Date(application.submittedAt).toLocaleDateString('ar-AE')}</span>
+                    </div>
                   </div>
                 </div>
+                
                 <div className="flex gap-2">
-                  {getTypeBadge(party.type)}
-                  {getStatusBadge(party.status)}
+                  <Button variant="outline" size="sm">
+                    <Eye className="w-4 h-4 ml-1" />
+                    عرض
+                  </Button>
+                  {application.attachments.length > 0 && (
+                    <Button variant="outline" size="sm">
+                      <Download className="w-4 h-4 ml-1" />
+                      الملفات ({application.attachments.length})
+                    </Button>
+                  )}
                 </div>
               </div>
             </CardHeader>
 
             <CardContent>
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="space-y-3">
-                  <h4 className="font-medium text-gray-900">معلومات الاتصال</h4>
-                  
-                  <div className="flex items-center gap-2 text-sm">
-                    <Mail className="w-4 h-4 text-gray-400" />
-                    <span>{party.contact.email}</span>
-                  </div>
-                  
-                  <div className="flex items-center gap-2 text-sm">
-                    <Phone className="w-4 h-4 text-gray-400" />
-                    <span>{party.contact.phone}</span>
-                  </div>
-                  
-                  <div className="flex items-center gap-2 text-sm">
-                    <Globe className="w-4 h-4 text-gray-400" />
-                    <span>{party.contact.website}</span>
+              <div className="space-y-4">
+                {/* Skills */}
+                <div>
+                  <h4 className="font-medium mb-2">المهارات والخبرات:</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {application.skills.split(', ').map((skill, index) => (
+                      <Badge key={index} variant="outline" className="bg-blue-50">
+                        {skill}
+                      </Badge>
+                    ))}
                   </div>
                 </div>
 
-                <div className="space-y-3">
-                  <h4 className="font-medium text-gray-900">إحصائيات التعامل</h4>
-                  
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-500">العقود النشطة</span>
-                    <span className="font-medium">{party.totalContracts}</span>
-                  </div>
-                  
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-500">آخر تفاعل</span>
-                    <span className="font-medium">
-                      {new Date(party.lastInteraction).toLocaleDateString('ar')}
-                    </span>
-                  </div>
-                  
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-500">تقييم الأداء</span>
-                    <span className="font-medium">⭐ 4.7/5</span>
-                  </div>
+                {/* Cover Letter */}
+                <div>
+                  <h4 className="font-medium mb-2">خطاب التقديم:</h4>
+                  <p className="text-gray-600 text-sm">{application.coverLetter}</p>
                 </div>
-              </div>
 
-              {/* Action Buttons */}
-              <div className="flex gap-3 mt-6 pt-4 border-t">
-                <Button variant="outline" className="flex-1">
-                  <User className="w-4 h-4 mr-2" />
-                  عرض الملف
-                </Button>
-                <Button variant="outline" className="flex-1">
-                  <Mail className="w-4 h-4 mr-2" />
-                  إرسال رسالة
-                </Button>
-                <Button className="flex-1">
-                  <ExternalLink className="w-4 h-4 mr-2" />
-                  بدء تعاون
-                </Button>
+                {/* Action Buttons for Managers */}
+                {(userRole === 'founder' || userRole === 'manager') && application.status === 'pending' && (
+                  <div className="flex gap-2 pt-4 border-t">
+                    <Button 
+                      onClick={() => handleApproveApplication(application.id)}
+                      className="bg-green-600 hover:bg-green-700"
+                      size="sm"
+                    >
+                      الموافقة على الطلب
+                    </Button>
+                    <Button 
+                      onClick={() => handleRejectApplication(application.id)}
+                      variant="outline"
+                      className="text-red-600 border-red-600 hover:bg-red-50"
+                      size="sm"
+                    >
+                      رفض الطلب
+                    </Button>
+                  </div>
+                )}
+
+                {/* Attachments List */}
+                {application.attachments.length > 0 && (
+                  <div className="pt-4 border-t">
+                    <h4 className="text-sm font-medium mb-2">الملفات المرفقة:</h4>
+                    <div className="space-y-1">
+                      {application.attachments.map((attachment, index) => (
+                        <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                          <span className="text-sm">{attachment.name}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-gray-500">({attachment.size})</span>
+                            <Button variant="ghost" size="sm">
+                              <Download className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      {/* Statistics */}
-      <div className="grid md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4 text-center">
-            <Building className="w-8 h-8 text-blue-500 mx-auto mb-2" />
-            <h3 className="font-semibold">إجمالي الأطراف</h3>
-            <p className="text-2xl font-bold text-blue-600">{externalParties.length}</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4 text-center">
-            <User className="w-8 h-8 text-green-500 mx-auto mb-2" />
-            <h3 className="font-semibold">الموردين</h3>
-            <p className="text-2xl font-bold text-green-600">
-              {externalParties.filter(p => p.type === 'supplier').length}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4 text-center">
-            <ExternalLink className="w-8 h-8 text-purple-500 mx-auto mb-2" />
-            <h3 className="font-semibold">مزودي الخدمة</h3>
-            <p className="text-2xl font-bold text-purple-600">
-              {externalParties.filter(p => p.type === 'service_provider').length}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4 text-center">
-            <Globe className="w-8 h-8 text-orange-500 mx-auto mb-2" />
-            <h3 className="font-semibold">الشركاء النشطين</h3>
-            <p className="text-2xl font-bold text-orange-600">
-              {externalParties.filter(p => p.status === 'verified').length}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+      {filteredApplications.length === 0 && (
+        <div className="text-center py-12">
+          <Users className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+          <h3 className="text-lg font-semibold text-gray-600 mb-2">لا توجد طلبات</h3>
+          <p className="text-gray-500">
+            {searchTerm ? 'جرب تعديل مصطلحات البحث' : 'لم يتم تقديم أي طلبات للعمل الحر بعد'}
+          </p>
+        </div>
+      )}
     </div>
   );
 };
