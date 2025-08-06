@@ -10,7 +10,8 @@ import {
   Send, 
   UserCheck, 
   Settings,
-  Shield
+  Shield,
+  Gavel
 } from 'lucide-react';
 import GroupOverview from './GroupOverview';
 import GroupMembersTab from './GroupMembersTab';
@@ -22,6 +23,7 @@ import GroupContractsTab from './GroupContractsTab';
 import GroupInbox from './GroupInbox';
 import GroupOutbox from './GroupOutbox';
 import GroupExternalTab from './GroupExternalTab';
+import FinalDecisionsTab from './FinalDecisionsTab';
 import MCPAgentTab from '@/components/dashboard/MCPAgentTab';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -45,6 +47,7 @@ const GroupRoomTabs = ({ groupId, group, userRole = 'member', isManager = false 
     { id: 'managers', label: 'Managers', icon: Crown },
     { id: 'decisions', label: 'Decisions', icon: Vote },
     { id: 'voting', label: 'Voting', icon: UserCheck },
+    { id: 'final-decisions', label: 'Final Decisions', icon: Gavel },
     { id: 'offers', label: 'Offers', icon: FileText },
     { id: 'contracts', label: 'Contracts', icon: FileText },
     { id: 'inbox', label: 'Inbox', icon: MessageSquare },
@@ -56,7 +59,7 @@ const GroupRoomTabs = ({ groupId, group, userRole = 'member', isManager = false 
   return (
     <div className="w-full">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5 lg:grid-cols-11 mb-6">
+        <TabsList className="grid w-full grid-cols-6 lg:grid-cols-12 mb-6">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             return (
@@ -90,6 +93,10 @@ const GroupRoomTabs = ({ groupId, group, userRole = 'member', isManager = false 
 
         <TabsContent value="voting">
           <GroupVotingTab groupId={groupId} userRole={userRole} isManager={isManager} />
+        </TabsContent>
+
+        <TabsContent value="final-decisions">
+          <FinalDecisionsTab groupId={groupId} userRole={userRole} />
         </TabsContent>
 
         <TabsContent value="offers">
