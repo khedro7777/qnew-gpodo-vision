@@ -73,7 +73,7 @@ const GroupRoomTabs = ({ groupId, group, userRole = 'member', isManager = false 
         </TabsList>
 
         <TabsContent value="overview">
-          <GroupOverview group={group} />
+          <GroupOverview group={group} userRole={userRole} />
         </TabsContent>
 
         <TabsContent value="members">
