@@ -1,4 +1,3 @@
-
 import React from 'react';
 import Header from '@/components/Header';
 import HeroSection from '@/components/HeroSection';
@@ -6,6 +5,9 @@ import MainPortals from '@/components/MainPortals';
 import LiveGroups from '@/components/LiveGroups';
 import GroupOffersSection from '@/components/offers/GroupOffersSection';
 import GroupPurchasingSection from '@/components/purchasing/GroupPurchasingSection';
+import InvestmentProjectsSection from '@/components/investment/InvestmentProjectsSection';
+import FreelancerServicesSection from '@/components/freelancer/FreelancerServicesSection';
+import SupplierOffersSection from '@/components/supplier/SupplierOffersSection';
 import Footer from '@/components/Footer';
 
 const Index = () => {
@@ -17,6 +19,9 @@ const Index = () => {
         <MainPortals />
         <GroupPurchasingSection />
         <GroupOffersSection />
+        <InvestmentProjectsSection />
+        <FreelancerServicesSection />
+        <SupplierOffersSection />
         <LiveGroups />
       </main>
       <Footer />
