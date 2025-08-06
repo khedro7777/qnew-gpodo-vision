@@ -45,7 +45,7 @@ const GroupRoomTabs = ({ groupId, group, userRole = 'member', isManager = false 
     { id: 'overview', label: 'Overview', icon: Settings },
     { id: 'members', label: 'Members', icon: Users },
     { id: 'managers', label: 'Managers', icon: Crown },
-    { id: 'decisions', label: 'Decisions', icon: Vote },
+    { id: 'proposals', label: 'Proposals', icon: Vote }, // Changed from 'decisions' to 'proposals'
     { id: 'voting', label: 'Voting', icon: UserCheck },
     { id: 'final-decisions', label: 'Final Decisions', icon: Gavel },
     { id: 'offers', label: 'Offers', icon: FileText },
@@ -87,7 +87,7 @@ const GroupRoomTabs = ({ groupId, group, userRole = 'member', isManager = false 
           <GroupManagersTab groupId={groupId} />
         </TabsContent>
 
-        <TabsContent value="decisions">
+        <TabsContent value="proposals"> {/* Changed from 'decisions' to 'proposals' */}
           <GroupDecisionsTab groupId={groupId} userRole={userRole} />
         </TabsContent>
 

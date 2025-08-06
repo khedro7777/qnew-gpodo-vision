@@ -13,9 +13,11 @@ import {
   Shield,
   Clock,
   CheckCircle,
-  AlertTriangle
+  AlertTriangle,
+  Globe
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface ProposalSubmission {
   id: string;
@@ -66,6 +68,49 @@ const MCPProposalCollector = ({ groupId, userRole }: MCPProposalCollectorProps) 
     category: 'general'
   });
   const [showSubmissionForm, setShowSubmissionForm] = useState(false);
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [translatedTexts, setTranslatedTexts] = useState<Record<string, string>>({});
+  const { translate } = useTranslation();
+
+  // Translation function
+  const handleTranslation = async () => {
+    setIsTranslating(true);
+    try {
+      const textsToTranslate = {
+        'collector_title': 'جامع اقتراحات الأعضاء',
+        'collector_desc': 'يقوم MCP Agent بجمع الاقتراحات وإرسالها للتصويت أو النقاش',
+        'new_proposal': 'اقتراح جديد',
+        'mcp_process_title': 'عملية MCP Agent لمعالجة الاقتراحات',
+        'collect_step': 'جمع الاقتراحات',
+        'from_members': 'من الأعضاء',
+        'mcp_review': 'مراجعة MCP',
+        'analyze_classify': 'تحليل وتصنيف',
+        'send_voting': 'إرسال للتصويت',
+        'or_discussion': 'أو النقاش',
+        'final_decision': 'القرار النهائي',
+        'based_results': 'بناءً على النتائج'
+      };
+
+      const translated: Record<string, string> = {};
+      for (const [key, text] of Object.entries(textsToTranslate)) {
+        try {
+          translated[key] = await translate(text, 'EN');
+        } catch (error) {
+          console.error(`Translation failed for ${key}:`, error);
+          translated[key] = text;
+        }
+      }
+      setTranslatedTexts(translated);
+    } catch (error) {
+      console.error('Translation error:', error);
+    } finally {
+      setIsTranslating(false);
+    }
+  };
+
+  const getDisplayText = (key: string, fallback: string) => {
+    return translatedTexts[key] || fallback;
+  };
 
   const submitProposal = async () => {
     if (!newProposal.title.trim() || !newProposal.description.trim()) {
@@ -137,16 +182,32 @@ const MCPProposalCollector = ({ groupId, userRole }: MCPProposalCollectorProps) 
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir="rtl">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">جامع اقتراحات الأعضاء</h2>
-          <p className="text-gray-600">يقوم MCP Agent بجمع الاقتراحات وإرسالها للتصويت أو النقاش</p>
+          <div className="flex items-center gap-3">
+            <h2 className="text-2xl font-bold">
+              {getDisplayText('collector_title', 'جامع اقتراحات الأعضاء')}
+            </h2>
+            <Button
+              onClick={handleTranslation}
+              size="sm"
+              variant="outline"
+              disabled={isTranslating}
+              className="flex items-center gap-2"
+            >
+              <Globe className="w-4 h-4" />
+              {isTranslating ? 'جاري الترجمة...' : 'ترجمة'}
+            </Button>
+          </div>
+          <p className="text-gray-600">
+            {getDisplayText('collector_desc', 'يقوم MCP Agent بجمع الاقتراحات وإرسالها للتصويت أو النقاش')}
+          </p>
         </div>
         <Button onClick={() => setShowSubmissionForm(true)}>
           <Plus className="w-4 h-4 mr-2" />
-          اقتراح جديد
+          {getDisplayText('new_proposal', 'اقتراح جديد')}
         </Button>
       </div>
 
@@ -155,7 +216,7 @@ const MCPProposalCollector = ({ groupId, userRole }: MCPProposalCollectorProps) 
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Shield className="w-5 h-5 text-blue-500" />
-            عملية MCP Agent لمعالجة الاقتراحات
+            {getDisplayText('mcp_process_title', 'عملية MCP Agent لمعالجة الاقتراحات')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -164,32 +225,32 @@ const MCPProposalCollector = ({ groupId, userRole }: MCPProposalCollectorProps) 
               <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-2">
                 <Users className="w-6 h-6 text-white" />
               </div>
-              <h4 className="font-semibold">1. جمع الاقتراحات</h4>
-              <p className="text-sm text-gray-600">من الأعضاء</p>
+              <h4 className="font-semibold">1. {getDisplayText('collect_step', 'جمع الاقتراحات')}</h4>
+              <p className="text-sm text-gray-600">{getDisplayText('from_members', 'من الأعضاء')}</p>
             </div>
             
             <div className="text-center">
               <div className="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center mx-auto mb-2">
                 <Shield className="w-6 h-6 text-white" />
               </div>
-              <h4 className="font-semibold">2. مراجعة MCP</h4>
-              <p className="text-sm text-gray-600">تحليل وتصنيف</p>
+              <h4 className="font-semibold">2. {getDisplayText('mcp_review', 'مراجعة MCP')}</h4>
+              <p className="text-sm text-gray-600">{getDisplayText('analyze_classify', 'تحليل وتصنيف')}</p>
             </div>
             
             <div className="text-center">
               <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-2">
                 <Vote className="w-6 h-6 text-white" />
               </div>
-              <h4 className="font-semibold">3. إرسال للتصويت</h4>
-              <p className="text-sm text-gray-600">أو النقاش</p>
+              <h4 className="font-semibold">3. {getDisplayText('send_voting', 'إرسال للتصويت')}</h4>
+              <p className="text-sm text-gray-600">{getDisplayText('or_discussion', 'أو النقاش')}</p>
             </div>
             
             <div className="text-center">
               <div className="w-12 h-12 bg-gray-500 rounded-full flex items-center justify-center mx-auto mb-2">
                 <CheckCircle className="w-6 h-6 text-white" />
               </div>
-              <h4 className="font-semibold">4. القرار النهائي</h4>
-              <p className="text-sm text-gray-600">بناءً على النتائج</p>
+              <h4 className="font-semibold">4. {getDisplayText('final_decision', 'القرار النهائي')}</h4>
+              <p className="text-sm text-gray-600">{getDisplayText('based_results', 'بناءً على النتائج')}</p>
             </div>
           </div>
         </CardContent>
