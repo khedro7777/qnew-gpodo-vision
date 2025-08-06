@@ -11,7 +11,8 @@ import {
   Users, 
   Shield,
   Lightbulb,
-  ArrowRight
+  ArrowRight,
+  Eye
 } from 'lucide-react';
 import MCPProposalCollector from './MCPProposalCollector';
 

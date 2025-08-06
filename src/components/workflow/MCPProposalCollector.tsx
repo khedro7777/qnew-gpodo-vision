@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -93,13 +92,13 @@ const MCPProposalCollector = ({ groupId, userRole }: MCPProposalCollectorProps) 
     toast.success('تم إرسال الاقتراح بنجاح! سيقوم MCP Agent بمراجعته');
   };
 
-  const mcpProcessProposal = (proposalId: string, action: 'send_to_voting' | 'send_to_discussion') => {
+  const mcpProcessProposal = (proposalId: string, action: 'sent_to_voting' | 'sent_to_discussion') => {
     setProposals(prev => prev.map(p => {
       if (p.id === proposalId) {
         return {
           ...p,
           status: action,
-          mcp_notes: action === 'send_to_voting' 
+          mcp_notes: action === 'sent_to_voting' 
             ? 'تم إرسال الاقتراح للتصويت بناءً على تحليل MCP Agent'
             : 'تم إرسال الاقتراح للنقاش في قاعة المجموعة لجمع المزيد من الآراء'
         };
@@ -107,7 +106,7 @@ const MCPProposalCollector = ({ groupId, userRole }: MCPProposalCollectorProps) 
       return p;
     }));
 
-    const actionText = action === 'send_to_voting' ? 'التصويت' : 'النقاش';
+    const actionText = action === 'sent_to_voting' ? 'التصويت' : 'النقاش';
     toast.success(`تم إرسال الاقتراح إلى ${actionText} بواسطة MCP Agent`);
   };
 
@@ -234,7 +233,7 @@ const MCPProposalCollector = ({ groupId, userRole }: MCPProposalCollectorProps) 
                 <div className="flex gap-2 pt-4 border-t">
                   <Button 
                     size="sm"
-                    onClick={() => mcpProcessProposal(proposal.id, 'send_to_voting')}
+                    onClick={() => mcpProcessProposal(proposal.id, 'sent_to_voting')}
                     className="bg-green-600 hover:bg-green-700"
                   >
                     <Vote className="w-4 h-4 mr-1" />
@@ -243,7 +242,7 @@ const MCPProposalCollector = ({ groupId, userRole }: MCPProposalCollectorProps) 
                   <Button 
                     size="sm"
                     variant="outline"
-                    onClick={() => mcpProcessProposal(proposal.id, 'send_to_discussion')}
+                    onClick={() => mcpProcessProposal(proposal.id, 'sent_to_discussion')}
                   >
                     <MessageSquare className="w-4 h-4 mr-1" />
                     إرسال للنقاش
