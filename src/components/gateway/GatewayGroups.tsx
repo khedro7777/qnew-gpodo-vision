@@ -14,7 +14,83 @@ const GatewayGroups = ({ gatewayType }: GatewayGroupsProps) => {
   const { data: allGroups, isLoading } = useGroups();
   const navigate = useNavigate();
 
-  const groups = allGroups?.filter(group => group.gateway_type === gatewayType) || [];
+  // Mock data for demonstration with proper English content
+  const mockGroups = [
+    {
+      id: 'group-1',
+      name: 'Medical Equipment Group Purchasing',
+      description: 'Collaborative purchasing of medical equipment for healthcare facilities',
+      gateway_type: 'purchasing',
+      status: 'active',
+      current_members: 12,
+      max_members: 20,
+      created_at: '2024-01-15T10:00:00Z',
+      industry_sectors: { name: 'Healthcare', icon: '🏥' },
+      countries: { name: 'Saudi Arabia', flag_emoji: '🇸🇦' }
+    },
+    {
+      id: 'group-2',
+      name: 'Tech Startups Marketing Alliance',
+      description: 'Joint marketing campaigns for technology startups',
+      gateway_type: 'marketing',
+      status: 'active',
+      current_members: 8,
+      max_members: 15,
+      created_at: '2024-01-20T14:30:00Z',
+      industry_sectors: { name: 'Technology', icon: '💻' },
+      countries: { name: 'United Arab Emirates', flag_emoji: '🇦🇪' }
+    },
+    {
+      id: 'group-3',
+      name: 'Construction Materials Suppliers',
+      description: 'Premium suppliers offering bulk construction materials',
+      gateway_type: 'suppliers',
+      status: 'active',
+      current_members: 15,
+      max_members: 25,
+      created_at: '2024-01-10T09:15:00Z',
+      industry_sectors: { name: 'Construction', icon: '🏗️' },
+      countries: { name: 'Egypt', flag_emoji: '🇪🇬' }
+    },
+    {
+      id: 'group-4',
+      name: 'Digital Design Freelancers',
+      description: 'Professional freelancers specializing in digital design and branding',
+      gateway_type: 'freelancers',
+      status: 'active',
+      current_members: 18,
+      max_members: 30,
+      created_at: '2024-01-25T16:45:00Z',
+      industry_sectors: { name: 'Creative Services', icon: '🎨' },
+      countries: { name: 'Jordan', flag_emoji: '🇯🇴' }
+    },
+    {
+      id: 'group-5',
+      name: 'E-commerce Business Formation',
+      description: 'Support group for e-commerce business setup and incorporation',
+      gateway_type: 'formation',
+      status: 'active',
+      current_members: 6,
+      max_members: 12,
+      created_at: '2024-02-01T11:20:00Z',
+      industry_sectors: { name: 'E-commerce', icon: '🛍️' },
+      countries: { name: 'Kuwait', flag_emoji: '🇰🇼' }
+    },
+    {
+      id: 'group-6',
+      name: 'Contract Dispute Resolution',
+      description: 'Legal arbitration and documentation services for business contracts',
+      gateway_type: 'legal',
+      status: 'active',
+      current_members: 4,
+      max_members: 10,
+      created_at: '2024-01-28T13:10:00Z',
+      industry_sectors: { name: 'Legal Services', icon: '⚖️' },
+      countries: { name: 'Bahrain', flag_emoji: '🇧🇭' }
+    }
+  ];
+
+  const groups = mockGroups.filter(group => group.gateway_type === gatewayType);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -27,7 +103,7 @@ const GatewayGroups = ({ gatewayType }: GatewayGroupsProps) => {
   };
 
   const handleGroupClick = (groupId: string) => {
-    navigate(`/group/${groupId}`);
+    navigate(`/group/${groupId}/profile`);
   };
 
   if (isLoading) {
@@ -50,7 +126,7 @@ const GatewayGroups = ({ gatewayType }: GatewayGroupsProps) => {
             {groups.map((group) => (
               <div
                 key={group.id}
-                className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-white/50 hover:shadow-xl transition-all duration-300 cursor-pointer"
+                className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-white/50 hover:shadow-xl transition-all duration-300 cursor-pointer hover:scale-105"
                 onClick={() => handleGroupClick(group.id)}
               >
                 <div className="flex justify-between items-start mb-4">
@@ -97,7 +173,7 @@ const GatewayGroups = ({ gatewayType }: GatewayGroupsProps) => {
 
                 <Button className="w-full bg-productivity-blue hover:bg-productivity-blue/90">
                   <Eye className="w-4 h-4 mr-2" />
-                  View Group Details
+                  View Group Profile
                 </Button>
               </div>
             ))}

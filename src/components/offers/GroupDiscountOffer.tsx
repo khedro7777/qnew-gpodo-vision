@@ -85,7 +85,7 @@ const GroupDiscountOffer = ({ offer, variant = 'card' }: GroupDiscountOfferProps
       <Card className="relative overflow-hidden bg-gradient-to-br from-blue-50 to-purple-50 border-2 border-blue-200">
         <div className="absolute top-4 right-4">
           <Badge className="bg-gradient-to-r from-orange-500 to-red-500 text-white border-0">
-            🔥 عرض مميز
+            🔥 Featured Offer
           </Badge>
         </div>
         
@@ -107,7 +107,7 @@ const GroupDiscountOffer = ({ offer, variant = 'card' }: GroupDiscountOfferProps
                 <span className="text-sm text-gray-600">{offer.supplier.name}</span>
                 {offer.supplier.verified && (
                   <Badge variant="outline" className="text-green-600 border-green-300">
-                    ✓ موثق
+                    ✓ Verified
                   </Badge>
                 )}
               </div>
@@ -126,13 +126,13 @@ const GroupDiscountOffer = ({ offer, variant = 'card' }: GroupDiscountOfferProps
           <div className="bg-white/80 rounded-xl p-4 border border-white/50">
             <div className="flex items-center justify-between mb-3">
               <div>
-                <p className="text-sm text-gray-500">السعر الحالي</p>
+                <p className="text-sm text-gray-500">Current Price</p>
                 <p className="text-2xl font-bold text-blue-600">
                   {currentPrice.toFixed(2)} {offer.pricing.currency}
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-sm text-gray-500">السعر المحتمل</p>
+                <p className="text-sm text-gray-500">Potential Price</p>
                 <p className="text-xl font-bold text-green-600">
                   {potentialPrice.toFixed(2)} {offer.pricing.currency}
                 </p>
@@ -141,10 +141,10 @@ const GroupDiscountOffer = ({ offer, variant = 'card' }: GroupDiscountOfferProps
             
             <div className="flex items-center justify-between">
               <Badge className="bg-green-100 text-green-800 border-0">
-                خصم {offer.pricing.currentDiscount}%
+                {offer.pricing.currentDiscount}% Off
               </Badge>
               <Badge className="bg-blue-100 text-blue-800 border-0">
-                يصل إلى {offer.pricing.maxDiscount}%
+                Up to {offer.pricing.maxDiscount}%
               </Badge>
             </div>
           </div>
@@ -155,13 +155,13 @@ const GroupDiscountOffer = ({ offer, variant = 'card' }: GroupDiscountOfferProps
               <div className="flex items-center gap-2">
                 <Users className="w-4 h-4 text-blue-500" />
                 <span className="text-sm font-medium">
-                  {offer.groupDetails.currentMembers} / {offer.groupDetails.targetMembers} منضم
+                  {offer.groupDetails.currentMembers} / {offer.groupDetails.targetMembers} joined
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <Clock className="w-4 h-4 text-orange-500" />
                 <span className="text-sm font-medium text-orange-600">
-                  {daysLeft > 0 ? `${daysLeft} يوم متبقي` : 'انتهت المهلة'}
+                  {daysLeft > 0 ? `${daysLeft} days left` : 'Expired'}
                 </span>
               </div>
             </div>
@@ -169,7 +169,7 @@ const GroupDiscountOffer = ({ offer, variant = 'card' }: GroupDiscountOfferProps
             <Progress value={discountProgress} className="h-3" />
             
             <p className="text-xs text-gray-500">
-              الحد الأدنى: {offer.groupDetails.minMembers} أشخاص للتفعيل
+              Minimum: {offer.groupDetails.minMembers} people to activate
             </p>
           </div>
 
@@ -183,12 +183,12 @@ const GroupDiscountOffer = ({ offer, variant = 'card' }: GroupDiscountOfferProps
               {isJoining ? (
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  جاري الانضمام...
+                  Joining...
                 </div>
               ) : (
                 <div className="flex items-center gap-2">
                   <UserPlus className="w-4 h-4" />
-                  انضم للعرض
+                  Join Offer
                 </div>
               )}
             </Button>
@@ -230,8 +230,8 @@ const GroupDiscountOffer = ({ offer, variant = 'card' }: GroupDiscountOfferProps
             offer.status === 'closed' ? 'bg-red-100 text-red-800' :
             'bg-blue-100 text-blue-800'
           } border-0 capitalize`}>
-            {offer.status === 'active' ? 'نشط' : 
-             offer.status === 'closed' ? 'مغلق' : 'مكتمل'}
+            {offer.status === 'active' ? 'Active' : 
+             offer.status === 'closed' ? 'Closed' : 'Completed'}
           </Badge>
         </div>
       </CardHeader>
@@ -240,14 +240,14 @@ const GroupDiscountOffer = ({ offer, variant = 'card' }: GroupDiscountOfferProps
         {/* Pricing Display */}
         <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
           <div>
-            <p className="text-sm text-gray-500">السعر الحالي</p>
+            <p className="text-sm text-gray-500">Current Price</p>
             <p className="text-xl font-bold text-blue-600">
               {currentPrice.toFixed(2)} {offer.pricing.currency}
             </p>
           </div>
           <div className="text-right">
             <Badge className="bg-green-100 text-green-800 border-0">
-              خصم {offer.pricing.currentDiscount}%
+              {offer.pricing.currentDiscount}% Off
             </Badge>
           </div>
         </div>
@@ -268,8 +268,8 @@ const GroupDiscountOffer = ({ offer, variant = 'card' }: GroupDiscountOfferProps
           <Progress value={discountProgress} className="h-2" />
           
           <div className="flex items-center justify-between text-sm text-gray-500">
-            <span>يصل إلى {offer.pricing.maxDiscount}% خصم</span>
-            <span>{daysLeft > 0 ? `${daysLeft} يوم متبقي` : 'انتهت'}</span>
+            <span>Up to {offer.pricing.maxDiscount}% discount</span>
+            <span>{daysLeft > 0 ? `${daysLeft} days left` : 'Expired'}</span>
           </div>
         </div>
 
@@ -281,7 +281,7 @@ const GroupDiscountOffer = ({ offer, variant = 'card' }: GroupDiscountOfferProps
             className="flex-1"
           >
             <Eye className="w-4 h-4 mr-2" />
-            عرض التفاصيل
+            View Details
           </Button>
           <Button 
             onClick={handleJoinOffer}

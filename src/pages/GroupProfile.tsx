@@ -16,7 +16,23 @@ const GroupProfile = () => {
   const { user } = useAuth();
 
   if (!groupId) {
-    return <div>Group not found</div>;
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
+        <Header />
+        <main className="py-8 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-7xl mx-auto">
+            <div className="text-center py-12">
+              <h2 className="text-xl font-semibold text-gray-900">Group Not Found</h2>
+              <p className="text-gray-600 mt-2">The group you're looking for doesn't exist or you don't have access to it.</p>
+              <Link to="/">
+                <Button className="mt-4">Back to Home</Button>
+              </Link>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
   }
 
   return (
