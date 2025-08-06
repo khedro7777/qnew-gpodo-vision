@@ -1,10 +1,10 @@
-
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MessageCircle, Video, Vote, FileText, Users, Calendar, AlertTriangle } from 'lucide-react';
+import IPFSFileManager from '@/components/ipfs/IPFSFileManager';
 
 const GroupRoomsTab = () => {
   const [selectedGroup, setSelectedGroup] = useState(null);
@@ -209,23 +209,7 @@ const GroupRoomsTab = () => {
                 </TabsContent>
 
                 <TabsContent value="vault" className="mt-6">
-                  <Card className="p-4">
-                    <h4 className="font-semibold text-gray-900 mb-4">IPFS Document Vault</h4>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                        <span>/ipfs/groups/{selectedGroup.id}/loi/</span>
-                        <Button size="sm" variant="outline">View</Button>
-                      </div>
-                      <div className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                        <span>/ipfs/groups/{selectedGroup.id}/icpo/</span>
-                        <Button size="sm" variant="outline">View</Button>
-                      </div>
-                      <div className="flex justify-between items-center p-2 bg-gray-100 rounded opacity-50">
-                        <span>/ipfs/groups/{selectedGroup.id}/fco/</span>
-                        <Button size="sm" variant="outline" disabled>Pending</Button>
-                      </div>
-                    </div>
-                  </Card>
+                  <IPFSFileManager groupId={selectedGroup.id} />
                 </TabsContent>
 
                 <TabsContent value="legal" className="mt-6">
