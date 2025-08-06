@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -26,6 +25,7 @@ import MCPGroupManager from './MCPGroupManager';
 import MCPElectionManager from './MCPElectionManager';
 import MCPOfferAnalyzer from './MCPOfferAnalyzer';
 import MCPPerformanceReports from './MCPPerformanceReports';
+import MCPTestSetup from './MCPTestSetup';
 
 const MCPAgentTab = () => {
   const { user } = useAuth();
@@ -39,6 +39,7 @@ const MCPAgentTab = () => {
     totalMembers: 0,
     recentActivities: []
   });
+  const [showTestSetup, setShowTestSetup] = useState(false);
 
   useEffect(() => {
     loadMCPAgent();
@@ -56,9 +57,12 @@ const MCPAgentTab = () => {
 
       if (agent) {
         setMcpAgent(agent);
+      } else {
+        setShowTestSetup(true);
       }
     } catch (error) {
       console.error('Error loading MCP agent:', error);
+      setShowTestSetup(true);
     }
   };
 
@@ -115,6 +119,33 @@ const MCPAgentTab = () => {
       console.error('Error logging MCP activity:', error);
     }
   };
+
+  if (!mcpAgent && showTestSetup) {
+    return (
+      <div className="space-y-6">
+        <Card className="p-8">
+          <div className="text-center mb-6">
+            <Shield className="w-16 h-16 mx-auto text-blue-500 mb-4" />
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">MCP Agent Setup Required</h3>
+            <p className="text-gray-600">
+              Set up MCP Agent privileges and test data to access the control panel.
+            </p>
+          </div>
+        </Card>
+        
+        <MCPTestSetup />
+        
+        <div className="text-center">
+          <Button 
+            onClick={() => window.location.reload()} 
+            className="mt-4"
+          >
+            Refresh to Check Setup
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (!mcpAgent) {
     return (
