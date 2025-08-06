@@ -4,6 +4,7 @@ import Header from '@/components/Header';
 import HeroSection from '@/components/HeroSection';
 import MainPortals from '@/components/MainPortals';
 import LiveGroups from '@/components/LiveGroups';
+import GroupOffersSection from '@/components/offers/GroupOffersSection';
 import Footer from '@/components/Footer';
 
 const Index = () => {
@@ -13,6 +14,7 @@ const Index = () => {
       <main>
         <HeroSection />
         <MainPortals />
+        <GroupOffersSection />
         <LiveGroups />
       </main>
       <Footer />
