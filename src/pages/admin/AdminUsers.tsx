@@ -74,6 +74,18 @@ const AdminUsers = () => {
     }
   };
 
+  // Helper function to safely get profile data
+  const getProfileData = (profiles: any) => {
+    if (!profiles) return { email: 'Email not available', full_name: 'Name not available' };
+    if (typeof profiles === 'object' && 'email' in profiles && 'full_name' in profiles) {
+      return {
+        email: profiles.email || 'Email not available',
+        full_name: profiles.full_name || 'Name not available'
+      };
+    }
+    return { email: 'Email not available', full_name: 'Name not available' };
+  };
+
   if (usersLoading || kycLoading) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -195,115 +207,113 @@ const AdminUsers = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {kycDocuments?.map((doc) => (
-                    <TableRow key={doc.id}>
-                      <TableCell className="font-medium">
-                        {/* Handle case where profiles relation might not exist */}
-                        {typeof doc.profiles === 'object' && doc.profiles && 'email' in doc.profiles 
-                          ? doc.profiles.email 
-                          : 'Email not available'}
-                      </TableCell>
-                      <TableCell>
-                        {typeof doc.profiles === 'object' && doc.profiles && 'full_name' in doc.profiles 
-                          ? doc.profiles.full_name || 'Not provided'
-                          : 'Name not available'}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">
-                          {doc.document_type}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={getKYCStatusVariant(doc.status)}>
-                          {doc.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {new Date(doc.submitted_at).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell className="space-x-2">
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setSelectedKYCDoc(doc)}
-                            >
-                              <Eye className="w-4 h-4 mr-1" />
-                              Review
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="max-w-2xl">
-                            <DialogHeader>
-                              <DialogTitle>KYC Document Review</DialogTitle>
-                            </DialogHeader>
-                            {selectedKYCDoc && (
-                              <div className="space-y-4">
-                                <div className="grid grid-cols-2 gap-4">
+                  {kycDocuments?.map((doc) => {
+                    const profileData = getProfileData(doc.profiles);
+                    return (
+                      <TableRow key={doc.id}>
+                        <TableCell className="font-medium">
+                          {profileData.email}
+                        </TableCell>
+                        <TableCell>
+                          {profileData.full_name}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">
+                            {doc.document_type}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={getKYCStatusVariant(doc.status)}>
+                            {doc.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {new Date(doc.submitted_at).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell className="space-x-2">
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setSelectedKYCDoc(doc)}
+                              >
+                                <Eye className="w-4 h-4 mr-1" />
+                                Review
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-2xl">
+                              <DialogHeader>
+                                <DialogTitle>KYC Document Review</DialogTitle>
+                              </DialogHeader>
+                              {selectedKYCDoc && (
+                                <div className="space-y-4">
+                                  <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                      <label className="text-sm font-medium">Document Type</label>
+                                      <p className="text-sm text-gray-600">{selectedKYCDoc.document_type}</p>
+                                    </div>
+                                    <div>
+                                      <label className="text-sm font-medium">Status</label>
+                                      <Badge variant={getKYCStatusVariant(selectedKYCDoc.status)}>
+                                        {selectedKYCDoc.status}
+                                      </Badge>
+                                    </div>
+                                  </div>
+                                  
                                   <div>
-                                    <label className="text-sm font-medium">Document Type</label>
-                                    <p className="text-sm text-gray-600">{selectedKYCDoc.document_type}</p>
+                                    <label className="text-sm font-medium">Document File</label>
+                                    <div className="mt-2">
+                                      <a
+                                        href={selectedKYCDoc.file_url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-blue-600 hover:text-blue-800 underline"
+                                      >
+                                        {selectedKYCDoc.file_name}
+                                      </a>
+                                    </div>
                                   </div>
+
                                   <div>
-                                    <label className="text-sm font-medium">Status</label>
-                                    <Badge variant={getKYCStatusVariant(selectedKYCDoc.status)}>
-                                      {selectedKYCDoc.status}
-                                    </Badge>
+                                    <label className="text-sm font-medium">Reviewer Notes</label>
+                                    <Textarea
+                                      value={reviewNotes}
+                                      onChange={(e) => setReviewNotes(e.target.value)}
+                                      placeholder="Add notes about your review decision..."
+                                      className="mt-2"
+                                    />
                                   </div>
-                                </div>
-                                
-                                <div>
-                                  <label className="text-sm font-medium">Document File</label>
-                                  <div className="mt-2">
-                                    <a
-                                      href={selectedKYCDoc.file_url}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="text-blue-600 hover:text-blue-800 underline"
-                                    >
-                                      {selectedKYCDoc.file_name}
-                                    </a>
-                                  </div>
-                                </div>
 
-                                <div>
-                                  <label className="text-sm font-medium">Reviewer Notes</label>
-                                  <Textarea
-                                    value={reviewNotes}
-                                    onChange={(e) => setReviewNotes(e.target.value)}
-                                    placeholder="Add notes about your review decision..."
-                                    className="mt-2"
-                                  />
+                                  {selectedKYCDoc.status === 'pending' && (
+                                    <div className="flex space-x-2">
+                                      <Button
+                                        onClick={() => handleKYCAction(selectedKYCDoc.id, 'approved')}
+                                        disabled={updateKYCStatus.isPending}
+                                        className="flex-1"
+                                      >
+                                        <CheckCircle className="w-4 h-4 mr-2" />
+                                        Approve
+                                      </Button>
+                                      <Button
+                                        variant="destructive"
+                                        onClick={() => handleKYCAction(selectedKYCDoc.id, 'rejected')}
+                                        disabled={updateKYCStatus.isPending}
+                                        className="flex-1"
+                                      >
+                                        <XCircle className="w-4 h-4 mr-2" />
+                                        Reject
+                                      </Button>
+                                    </div>
+                                  )}
                                 </div>
-
-                                {selectedKYCDoc.status === 'pending' && (
-                                  <div className="flex space-x-2">
-                                    <Button
-                                      onClick={() => handleKYCAction(selectedKYCDoc.id, 'approved')}
-                                      disabled={updateKYCStatus.isPending}
-                                      className="flex-1"
-                                    >
-                                      <CheckCircle className="w-4 h-4 mr-2" />
-                                      Approve
-                                    </Button>
-                                    <Button
-                                      variant="destructive"
-                                      onClick={() => handleKYCAction(selectedKYCDoc.id, 'rejected')}
-                                      disabled={updateKYCStatus.isPending}
-                                      className="flex-1"
-                                    >
-                                      <XCircle className="w-4 h-4 mr-2" />
-                                      Reject
-                                    </Button>
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                          </DialogContent>
-                        </Dialog>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                              )}
+                            </DialogContent>
+                          </Dialog>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </CardContent>
