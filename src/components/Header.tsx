@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, Globe, MapPin, DollarSign, Calendar, User, Menu, X, LogOut, Settings } from 'lucide-react';
+import { Clock, MapPin, DollarSign, Calendar, User, Menu, X, LogOut, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { 
   DropdownMenu, 
@@ -11,6 +11,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import AuthModal from '@/components/auth/AuthModal';
+import LanguageSelector from '@/components/LanguageSelector';
 import { useNavigate } from 'react-router-dom';
 
 const Header = () => {
@@ -60,9 +61,9 @@ const Header = () => {
           {/* Logo */}
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-              <Clock className="w-5 h-5 text-white" />
+              <span className="text-white font-bold text-sm">GPO</span>
             </div>
-            <div>
+            <div className="hidden sm:block">
               <h1 className="text-xl font-bold text-gray-900">GPO SMART</h1>
               <p className="text-xs text-gray-600">Smart B2B Platform</p>
             </div>
@@ -74,7 +75,7 @@ const Header = () => {
             <div className="flex items-center gap-4 text-sm text-gray-600">
               <div className="flex items-center gap-1">
                 <Calendar className="w-4 h-4" />
-                <span>{formatDate(currentTime)}</span>
+                <span className="hidden xl:inline">{formatDate(currentTime)}</span>
               </div>
               <div className="flex items-center gap-1">
                 <Clock className="w-4 h-4" />
@@ -84,30 +85,13 @@ const Header = () => {
 
             {/* Selectors */}
             <div className="flex items-center gap-2">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="gap-1">
-                    <Globe className="w-4 h-4" />
-                    EN
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem>🇺🇸 English</DropdownMenuItem>
-                  <DropdownMenuItem>🇸🇦 Arabic</DropdownMenuItem>
-                  <DropdownMenuItem>🇫🇷 French</DropdownMenuItem>
-                  <DropdownMenuItem>🇨🇳 Chinese</DropdownMenuItem>
-                  <DropdownMenuItem>🇪🇸 Spanish</DropdownMenuItem>
-                  <DropdownMenuItem>🇮🇳 Hindi</DropdownMenuItem>
-                  <DropdownMenuItem>🇯🇵 Japanese</DropdownMenuItem>
-                  <DropdownMenuItem>🇰🇷 Korean</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <LanguageSelector />
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="sm" className="gap-1">
                     <MapPin className="w-4 h-4" />
-                    US
+                    <span className="hidden xl:inline">US</span>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
@@ -125,7 +109,7 @@ const Header = () => {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="sm" className="gap-1">
                     <DollarSign className="w-4 h-4" />
-                    USD
+                    <span className="hidden xl:inline">USD</span>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
@@ -140,7 +124,7 @@ const Header = () => {
             </div>
 
             {/* Quick Links */}
-            <nav className="flex items-center gap-4 text-sm">
+            <nav className="hidden xl:flex items-center gap-4 text-sm">
               <a href="#about" className="text-gray-600 hover:text-gray-900 transition-colors">About Us</a>
               <a href="#how-it-works" className="text-gray-600 hover:text-gray-900 transition-colors">How It Works</a>
               <a href="#founders-message" className="text-gray-600 hover:text-gray-900 transition-colors">Founder's Message</a>
@@ -229,10 +213,7 @@ const Header = () => {
               <div className="flex flex-col gap-2">
                 <span className="text-sm font-medium text-gray-700">Settings</span>
                 <div className="flex gap-2">
-                  <Button variant="ghost" size="sm" className="gap-1 flex-1">
-                    <Globe className="w-4 h-4" />
-                    EN
-                  </Button>
+                  <LanguageSelector />
                   <Button variant="ghost" size="sm" className="gap-1 flex-1">
                     <MapPin className="w-4 h-4" />
                     US
