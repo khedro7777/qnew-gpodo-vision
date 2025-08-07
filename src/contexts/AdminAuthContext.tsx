@@ -49,6 +49,7 @@ export const AdminAuthProvider = ({ children }: { children: React.ReactNode }) =
             id,
             email,
             role,
+            full_name,
             last_login
           )
         `)
@@ -74,6 +75,7 @@ export const AdminAuthProvider = ({ children }: { children: React.ReactNode }) =
         id: data.admin_users.id,
         email: data.admin_users.email,
         role: data.admin_users.role,
+        full_name: data.admin_users.full_name,
         last_login: data.admin_users.last_login,
       });
 
@@ -90,7 +92,6 @@ export const AdminAuthProvider = ({ children }: { children: React.ReactNode }) =
     try {
       console.log('Attempting to sign in with email:', email);
 
-      // First, let's check if we can access the admin_users table
       const { data: adminData, error: adminError } = await supabase
         .from('admin_users')
         .select('*')
@@ -101,11 +102,6 @@ export const AdminAuthProvider = ({ children }: { children: React.ReactNode }) =
 
       if (adminError) {
         console.error('Admin query error:', adminError);
-        
-        if (adminError.code === 'PGRST116' || adminError.message.includes('not find')) {
-          throw new Error('جداول الإدارة غير موجودة. يرجى إنشاء الجداول أولاً.');
-        }
-        
         throw new Error('خطأ في الاستعلام: ' + adminError.message);
       }
 
@@ -152,6 +148,7 @@ export const AdminAuthProvider = ({ children }: { children: React.ReactNode }) =
         id: adminData.id,
         email: adminData.email,
         role: adminData.role,
+        full_name: adminData.full_name,
         last_login: adminData.last_login,
       });
 
