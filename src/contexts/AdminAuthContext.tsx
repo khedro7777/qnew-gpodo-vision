@@ -64,11 +64,6 @@ export const AdminAuthProvider = ({ children }: { children: React.ReactNode }) =
 
       if (error) {
         console.error('Auth check error:', error);
-        if (error.code === 'PGRST116' || error.code === '42P01') {
-          console.log('Admin tables not properly configured');
-          localStorage.removeItem('admin_token');
-          return false;
-        }
         localStorage.removeItem('admin_token');
         return false;
       }
@@ -101,23 +96,7 @@ export const AdminAuthProvider = ({ children }: { children: React.ReactNode }) =
     try {
       console.log('Attempting to sign in with email:', email);
 
-      // First, let's test if we can access the admin_users table
-      const { data: testData, error: testError } = await supabase
-        .from('admin_users')
-        .select('id')
-        .limit(1);
-
-      if (testError) {
-        console.error('Cannot access admin_users table:', testError);
-        if (testError.code === '42P01') {
-          throw new Error('جداول الإدارة غير مهيأة بشكل صحيح. يرجى التواصل مع المطور.');
-        }
-        throw new Error('خطأ في الوصول لقاعدة البيانات: ' + testError.message);
-      }
-
-      console.log('Admin table access test successful');
-
-      // Now try to find the admin user
+      // Try to find the admin user directly without testing table access
       const { data: adminData, error: adminError } = await supabase
         .from('admin_users')
         .select('*')
@@ -128,12 +107,18 @@ export const AdminAuthProvider = ({ children }: { children: React.ReactNode }) =
 
       if (adminError) {
         console.error('Admin query error:', adminError);
+        
+        // Handle specific error cases
+        if (adminError.code === 'PGRST116' || adminError.code === '42P01' || adminError.code === 'PGRST205') {
+          throw new Error('جداول الإدارة غير مهيأة بشكل صحيح في قاعدة البيانات. يرجى التأكد من تنفيذ ملفات الهجرة (migrations) بشكل صحيح.');
+        }
+        
         throw new Error('خطأ في الاستعلام: ' + adminError.message);
       }
 
       if (!adminData) {
         console.log('No admin user found for email:', email);
-        throw new Error('بيانات تسجيل الدخول غير صحيحة');
+        throw new Error('بيانات تسجيل الدخول غير صحيحة أو المستخدم غير مفعل');
       }
 
       console.log('Admin user found:', { id: adminData.id, email: adminData.email, role: adminData.role });

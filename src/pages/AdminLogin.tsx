@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Shield, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Loader2, Shield, AlertTriangle, CheckCircle, Database } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const AdminLogin = () => {
@@ -65,7 +65,19 @@ const AdminLogin = () => {
             <Alert className="border-red-200 bg-red-50">
               <AlertTriangle className="h-4 w-4 text-red-600" />
               <AlertDescription className="text-red-700 text-right">
-                {error}
+                <div className="font-semibold mb-2">خطأ في تسجيل الدخول:</div>
+                <div className="text-sm">{error}</div>
+                {error.includes('جداول الإدارة غير مهيأة') && (
+                  <div className="mt-3 p-3 bg-red-100 rounded-lg">
+                    <div className="flex items-center text-red-800">
+                      <Database className="w-4 h-4 mr-2" />
+                      <strong>مطلوب إجراء فني:</strong>
+                    </div>
+                    <div className="text-xs mt-1 text-red-700">
+                      يجب تنفيذ ملفات الهجرة (SQL migrations) في قاعدة البيانات أولاً
+                    </div>
+                  </div>
+                )}
               </AlertDescription>
             </Alert>
           )}
@@ -74,12 +86,16 @@ const AdminLogin = () => {
             <CheckCircle className="h-4 w-4 text-blue-600" />
             <AlertDescription className="text-blue-700 text-right">
               <strong>بيانات الدخول التجريبية:</strong>
-              <div className="mt-2 space-y-1 text-sm">
-                <div>📧 admin@gpodo.com</div>
-                <div>🔑 admin123</div>
-                <div className="border-t pt-1 mt-2">
-                  <div>📧 khedrodo@gmail.com</div>
-                  <div>🔑 Omarlo</div>
+              <div className="mt-3 space-y-3 text-sm">
+                <div className="bg-blue-100 p-3 rounded-lg">
+                  <div className="font-semibold text-blue-800">الحساب الأول:</div>
+                  <div className="flex items-center mt-1">📧 admin@gpodo.com</div>
+                  <div className="flex items-center">🔑 admin123</div>
+                </div>
+                <div className="bg-blue-100 p-3 rounded-lg">
+                  <div className="font-semibold text-blue-800">الحساب الثاني:</div>
+                  <div className="flex items-center mt-1">📧 khedrodo@gmail.com</div>
+                  <div className="flex items-center">🔑 Omarlo</div>
                 </div>
               </div>
             </AlertDescription>
