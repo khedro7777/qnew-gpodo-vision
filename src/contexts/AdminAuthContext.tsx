@@ -29,6 +29,11 @@ export const useAdminAuth = () => {
   return context;
 };
 
+// Simple hash function for demonstration - في بيئة الإنتاج، استخدم bcrypt أو مكتبة تشفير مناسبة
+const simpleHash = (password: string) => {
+  return password; // مؤقتاً نحتفظ بكلمة المرور كما هي للاختبار
+};
+
 export const AdminAuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
   const [loading, setLoading] = useState(true);
@@ -54,7 +59,7 @@ export const AdminAuthProvider = ({ children }: { children: React.ReactNode }) =
         `)
         .eq('token', token)
         .gt('expires_at', new Date().toISOString())
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Auth check error:', error);
@@ -90,20 +95,26 @@ export const AdminAuthProvider = ({ children }: { children: React.ReactNode }) =
     try {
       console.log('Attempting to sign in with email:', email);
 
-      // Check credentials against admin_users table
+      // Check if admin_users table exists by trying to query it
       const { data: adminData, error: adminError } = await supabase
         .from('admin_users')
         .select('*')
         .eq('email', email)
-        .eq('password_hash', password)
+        .eq('password_hash', simpleHash(password))
         .eq('is_active', true)
-        .single();
+        .maybeSingle();
 
       if (adminError) {
         console.error('Admin query error:', adminError);
+        
         if (adminError.code === 'PGRST116') {
-          throw new Error('المستخدم غير موجود أو كلمة المرور خاطئة');
+          throw new Error('بيانات تسجيل الدخول غير صحيحة');
         }
+        
+        if (adminError.code === 'PGRST205') {
+          throw new Error('جداول الإدارة غير مهيأة بشكل صحيح. يرجى التواصل مع المطور.');
+        }
+        
         throw new Error('خطأ في الاستعلام: ' + adminError.message);
       }
 
