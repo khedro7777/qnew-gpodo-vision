@@ -26,6 +26,7 @@ const AdminOverview = lazy(() => import("@/pages/admin/AdminOverview"));
 const AdminUsers = lazy(() => import("@/pages/admin/AdminUsers"));
 const AdminPortals = lazy(() => import("@/pages/admin/AdminPortals"));
 const AdminReferrals = lazy(() => import("@/pages/admin/AdminReferrals"));
+const AdminAPIs = lazy(() => import("@/pages/admin/AdminAPIs"));
 
 const queryClient = new QueryClient();
 
@@ -57,7 +58,7 @@ function App() {
                     <Route path="users" element={<AdminUsers />} />
                     <Route path="portals" element={<AdminPortals />} />
                     <Route path="referrals" element={<AdminReferrals />} />
-                    {/* Add more admin routes as needed */}
+                    <Route path="apis" element={<AdminAPIs />} />
                   </Route>
                   
                   <Route path="*" element={<NotFound />} />
