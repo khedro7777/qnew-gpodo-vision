@@ -8,7 +8,7 @@ export interface PlatformGroup {
   id: string;
   name: string;
   description: string;
-  gateway_type: string;
+  gateway_type: 'purchasing' | 'marketing' | 'suppliers' | 'freelancers' | 'formation' | 'legal';
   current_members: number;
   max_members: number;
   status: string;
@@ -22,14 +22,14 @@ export interface UserProfile {
   id: string;
   email: string;
   full_name?: string;
-  kyc_status: string;
+  kyc_status: 'pending' | 'approved' | 'rejected' | 'submitted';
   is_verified: boolean;
   company_name?: string;
   country_code?: string;
   industry_sector?: string;
   phone?: string;
   avatar_url?: string;
-  role: string;
+  role: 'user' | 'admin' | 'api' | 'supplier';
 }
 
 export const usePlatformGroups = () => {
@@ -93,12 +93,20 @@ export const useUpdateProfile = () => {
   const { user } = useAuth();
   
   return useMutation({
-    mutationFn: async (profileData: Partial<UserProfile>) => {
+    mutationFn: async (profileData: Partial<Omit<UserProfile, 'id'>>) => {
       if (!user) throw new Error('User not authenticated');
+
+      // Ensure kyc_status is properly typed
+      const updateData = {
+        ...profileData,
+        ...(profileData.kyc_status && {
+          kyc_status: profileData.kyc_status as 'pending' | 'approved' | 'rejected' | 'submitted'
+        })
+      };
 
       const { data, error } = await supabase
         .from('profiles')
-        .update(profileData)
+        .update(updateData)
         .eq('id', user.id)
         .select()
         .single();
@@ -147,12 +155,19 @@ export const useJoinGroup = () => {
 
       if (error) throw error;
 
-      // Update group member count
-      const { error: updateError } = await supabase.rpc('increment_group_members', {
-        group_id: groupId
-      });
+      // Update group member count manually since increment_group_members function doesn't exist
+      const { data: currentGroup } = await supabase
+        .from('groups')
+        .select('current_members')
+        .eq('id', groupId)
+        .single();
 
-      if (updateError) console.error('Failed to update member count:', updateError);
+      if (currentGroup) {
+        await supabase
+          .from('groups')
+          .update({ current_members: (currentGroup.current_members || 0) + 1 })
+          .eq('id', groupId);
+      }
 
       return groupId;
     },
@@ -175,7 +190,7 @@ export const useCreateGroup = () => {
     mutationFn: async (groupData: {
       name: string;
       description: string;
-      gateway_type: string;
+      gateway_type: 'purchasing' | 'marketing' | 'suppliers' | 'freelancers' | 'formation' | 'legal';
       max_members?: number;
       is_public?: boolean;
       country_id?: string;

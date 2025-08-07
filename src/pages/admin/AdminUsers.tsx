@@ -1,299 +1,315 @@
 
 import React, { useState } from 'react';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { 
-  Users, 
-  Search, 
-  Filter, 
-  Edit, 
-  Ban, 
-  CheckCircle, 
-  XCircle,
-  Calendar,
-  Mail,
-  Shield,
-  Eye,
-  UserCheck,
-  AlertTriangle
-} from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
 import { useAdminUsers, useUpdateUserStatus, useKYCDocuments, useUpdateKYCStatus } from '@/hooks/useAdmin';
+import { Search, UserCheck, UserX, Eye, CheckCircle, XCircle } from 'lucide-react';
+import { toast } from 'sonner';
 
 const AdminUsers = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [selectedUser, setSelectedUser] = useState<any>(null);
-  const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
-
-  const { data: users = [], isLoading: usersLoading } = useAdminUsers();
-  const { data: kycDocuments = [], isLoading: kycLoading } = useKYCDocuments();
+  const [selectedKYCDoc, setSelectedKYCDoc] = useState<any>(null);
+  const [reviewNotes, setReviewNotes] = useState('');
+  
+  const { data: users, isLoading: usersLoading } = useAdminUsers();
+  const { data: kycDocuments, isLoading: kycLoading } = useKYCDocuments();
   const updateUserStatus = useUpdateUserStatus();
   const updateKYCStatus = useUpdateKYCStatus();
 
-  const filteredUsers = users.filter(user => {
-    const matchesSearch = user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (user.full_name || '').toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || 
-                         (statusFilter === 'active' && user.is_active) ||
-                         (statusFilter === 'inactive' && !user.is_active);
-    return matchesSearch && matchesStatus;
-  });
+  // Filter users based on search term
+  const filteredUsers = users?.filter(user =>
+    user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
+  ) || [];
 
-  const handleUserAction = (userId: string, action: 'activate' | 'deactivate') => {
-    updateUserStatus.mutate({ 
-      userId, 
-      is_active: action === 'activate' 
-    });
-  };
-
-  const handleKYCAction = (documentId: string, status: 'approved' | 'rejected', notes?: string) => {
-    updateKYCStatus.mutate({ 
-      documentId, 
-      status, 
-      reviewer_notes: notes 
-    });
-  };
-
-  const getUserStatusBadge = (user: any) => {
-    if (user.is_active) {
-      return <Badge className="bg-green-100 text-green-800">Active</Badge>;
+  const handleStatusToggle = async (userId: string, currentStatus: boolean) => {
+    try {
+      await updateUserStatus.mutateAsync({ 
+        userId, 
+        is_active: !currentStatus 
+      });
+    } catch (error) {
+      console.error('Error updating user status:', error);
     }
-    return <Badge className="bg-red-100 text-red-800">Inactive</Badge>;
   };
 
-  const getRoleBadge = (role: string) => {
-    const configs = {
-      admin: { label: 'Admin', className: 'bg-purple-100 text-purple-800' },
-      user: { label: 'User', className: 'bg-blue-100 text-blue-800' },
-      api: { label: 'API User', className: 'bg-yellow-100 text-yellow-800' }
-    };
-    const config = configs[role as keyof typeof configs] || configs.user;
-    return <Badge className={config.className}>{config.label}</Badge>;
+  const handleKYCAction = async (documentId: string, status: 'approved' | 'rejected') => {
+    try {
+      await updateKYCStatus.mutateAsync({
+        documentId,
+        status,
+        reviewer_notes: reviewNotes
+      });
+      setSelectedKYCDoc(null);
+      setReviewNotes('');
+      toast.success(`KYC document ${status} successfully`);
+    } catch (error) {
+      console.error('Error updating KYC status:', error);
+    }
   };
+
+  const getUserRole = (role: string) => {
+    const roleMap: Record<string, { label: string; variant: any }> = {
+      admin: { label: 'Admin', variant: 'destructive' },
+      user: { label: 'User', variant: 'default' },
+      api: { label: 'API User', variant: 'secondary' },
+      supplier: { label: 'Supplier', variant: 'outline' }
+    };
+    return roleMap[role] || { label: 'Unknown', variant: 'default' };
+  };
+
+  const getKYCStatusVariant = (status: string) => {
+    switch (status) {
+      case 'approved': return 'default';
+      case 'rejected': return 'destructive';
+      case 'pending': return 'secondary';
+      case 'submitted': return 'outline';
+      default: return 'default';
+    }
+  };
+
+  if (usersLoading || kycLoading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-lg">Loading admin data...</div>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
-          <p className="text-gray-600">Manage platform users and their permissions</p>
-        </div>
-        
-        <div className="flex items-center gap-4">
-          <Badge variant="outline" className="bg-blue-50">
-            {users.length} total users
-          </Badge>
-          <Badge variant="outline" className="bg-green-50">
-            {users.filter(u => u.is_active).length} active
-          </Badge>
-        </div>
-      </div>
-
-      {/* Search and Filter */}
-      <div className="flex gap-4">
-        <div className="flex-1 relative">
-          <Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
-          <Input
-            placeholder="Search users by email or name..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-48">
-            <SelectValue placeholder="Filter by status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Users</SelectItem>
-            <SelectItem value="active">Active Only</SelectItem>
-            <SelectItem value="inactive">Inactive Only</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Users Grid */}
-      <div className="grid gap-4">
-        {usersLoading ? (
-          <Card className="p-6">
-            <div className="animate-pulse">Loading users...</div>
-          </Card>
-        ) : filteredUsers.length === 0 ? (
-          <Card className="p-6 text-center">
-            <Users className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No Users Found</h3>
-            <p className="text-gray-600">
-              {searchTerm ? 'Try adjusting your search terms' : 'No users registered yet'}
-            </p>
-          </Card>
-        ) : (
-          filteredUsers.map((user) => (
-            <Card key={user.id} className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <Avatar className="h-12 w-12">
-                    <AvatarFallback>
-                      {user.email.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold">{user.full_name || 'No Name'}</h3>
-                      {getUserStatusBadge(user)}
-                      {getRoleBadge(user.role)}
-                    </div>
-                    <div className="flex items-center gap-4 text-sm text-gray-500">
-                      <div className="flex items-center gap-1">
-                        <Mail className="w-3 h-3" />
-                        <span>{user.email}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Calendar className="w-3 h-3" />
-                        <span>Joined {new Date(user.created_at).toLocaleDateString()}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button variant="outline" size="sm">
-                        <Eye className="w-4 h-4 mr-2" />
-                        View
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-md">
-                      <DialogHeader>
-                        <DialogTitle>User Details</DialogTitle>
-                        <DialogDescription>
-                          {user.email}
-                        </DialogDescription>
-                      </DialogHeader>
-                      
-                      <div className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                          <div>
-                            <span className="font-medium">Status:</span>
-                            <div className="mt-1">{getUserStatusBadge(user)}</div>
-                          </div>
-                          <div>
-                            <span className="font-medium">Role:</span>
-                            <div className="mt-1">{getRoleBadge(user.role)}</div>
-                          </div>
-                          <div>
-                            <span className="font-medium">Joined:</span>
-                            <div className="mt-1">{new Date(user.created_at).toLocaleDateString()}</div>
-                          </div>
-                          <div>
-                            <span className="font-medium">Email Verified:</span>
-                            <div className="mt-1">
-                              {user.is_active ? (
-                                <CheckCircle className="w-4 h-4 text-green-600" />
-                              ) : (
-                                <XCircle className="w-4 h-4 text-red-600" />
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-
-                  {user.is_active ? (
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => handleUserAction(user.id, 'deactivate')}
-                      disabled={updateUserStatus.isPending}
-                    >
-                      <Ban className="w-4 h-4 mr-2" />
-                      Suspend
-                    </Button>
-                  ) : (
-                    <Button 
-                      size="sm"
-                      onClick={() => handleUserAction(user.id, 'activate')}
-                      disabled={updateUserStatus.isPending}
-                    >
-                      <UserCheck className="w-4 h-4 mr-2" />
-                      Activate
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </Card>
-          ))
-        )}
-      </div>
-
-      {/* KYC Documents Section */}
-      <Card className="p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <Shield className="w-5 h-5 text-blue-600" />
-            <h3 className="text-xl font-semibold">Pending KYC Documents</h3>
+    <div className="container mx-auto p-6 space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold">User Management</h1>
+        <div className="flex items-center space-x-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Search users..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 w-80"
+            />
           </div>
-          <Badge className="bg-yellow-100 text-yellow-800">
-            {kycDocuments.filter(doc => doc.status === 'pending').length} pending
-          </Badge>
         </div>
+      </div>
 
-        <div className="space-y-4">
-          {kycLoading ? (
-            <div className="animate-pulse">Loading KYC documents...</div>
-          ) : kycDocuments.filter(doc => doc.status === 'pending').length === 0 ? (
-            <div className="text-center py-8">
-              <CheckCircle className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-              <p className="text-gray-600">No pending KYC documents</p>
-            </div>
-          ) : (
-            kycDocuments
-              .filter(doc => doc.status === 'pending')
-              .slice(0, 5)
-              .map((doc) => (
-                <div key={doc.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="space-y-1">
-                    <div className="font-medium">
-                      {doc.profiles?.full_name || 'Unknown User'}
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      {doc.profiles?.email} • {doc.document_type} • 
-                      Submitted {new Date(doc.submitted_at).toLocaleDateString()}
-                    </div>
-                  </div>
+      <Tabs defaultValue="users" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="users">All Users</TabsTrigger>
+          <TabsTrigger value="kyc">KYC Documents</TabsTrigger>
+        </TabsList>
 
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      onClick={() => handleKYCAction(doc.id, 'approved')}
-                      disabled={updateKYCStatus.isPending}
-                    >
-                      <CheckCircle className="w-4 h-4 mr-1" />
-                      Approve
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleKYCAction(doc.id, 'rejected', 'Document unclear')}
-                      disabled={updateKYCStatus.isPending}
-                    >
-                      <XCircle className="w-4 h-4 mr-1" />
-                      Reject
-                    </Button>
-                  </div>
-                </div>
-              ))
-          )}
-        </div>
-      </Card>
+        <TabsContent value="users" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Registered Users</CardTitle>
+              <CardDescription>
+                Manage user accounts, roles, and status
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Full Name</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Joined</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredUsers.map((user) => {
+                    const roleInfo = getUserRole(user.role);
+                    return (
+                      <TableRow key={user.id}>
+                        <TableCell className="font-medium">{user.email}</TableCell>
+                        <TableCell>{user.full_name || 'Not provided'}</TableCell>
+                        <TableCell>
+                          <Badge variant={roleInfo.variant as any}>
+                            {roleInfo.label}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={user.is_active ? 'default' : 'destructive'}>
+                            {user.is_active ? 'Active' : 'Inactive'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {new Date(user.created_at).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant={user.is_active ? 'destructive' : 'default'}
+                            size="sm"
+                            onClick={() => handleStatusToggle(user.id, user.is_active)}
+                            disabled={updateUserStatus.isPending}
+                          >
+                            {user.is_active ? (
+                              <>
+                                <UserX className="w-4 h-4 mr-1" />
+                                Deactivate
+                              </>
+                            ) : (
+                              <>
+                                <UserCheck className="w-4 h-4 mr-1" />
+                                Activate
+                              </>
+                            )}
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="kyc" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>KYC Document Reviews</CardTitle>
+              <CardDescription>
+                Review and approve user KYC documents
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>User Email</TableHead>
+                    <TableHead>Full Name</TableHead>
+                    <TableHead>Document Type</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Submitted</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {kycDocuments?.map((doc) => (
+                    <TableRow key={doc.id}>
+                      <TableCell className="font-medium">
+                        {/* Handle case where profiles relation might not exist */}
+                        {typeof doc.profiles === 'object' && doc.profiles && 'email' in doc.profiles 
+                          ? doc.profiles.email 
+                          : 'Email not available'}
+                      </TableCell>
+                      <TableCell>
+                        {typeof doc.profiles === 'object' && doc.profiles && 'full_name' in doc.profiles 
+                          ? doc.profiles.full_name || 'Not provided'
+                          : 'Name not available'}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">
+                          {doc.document_type}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={getKYCStatusVariant(doc.status)}>
+                          {doc.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {new Date(doc.submitted_at).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell className="space-x-2">
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setSelectedKYCDoc(doc)}
+                            >
+                              <Eye className="w-4 h-4 mr-1" />
+                              Review
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-2xl">
+                            <DialogHeader>
+                              <DialogTitle>KYC Document Review</DialogTitle>
+                            </DialogHeader>
+                            {selectedKYCDoc && (
+                              <div className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                  <div>
+                                    <label className="text-sm font-medium">Document Type</label>
+                                    <p className="text-sm text-gray-600">{selectedKYCDoc.document_type}</p>
+                                  </div>
+                                  <div>
+                                    <label className="text-sm font-medium">Status</label>
+                                    <Badge variant={getKYCStatusVariant(selectedKYCDoc.status)}>
+                                      {selectedKYCDoc.status}
+                                    </Badge>
+                                  </div>
+                                </div>
+                                
+                                <div>
+                                  <label className="text-sm font-medium">Document File</label>
+                                  <div className="mt-2">
+                                    <a
+                                      href={selectedKYCDoc.file_url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-blue-600 hover:text-blue-800 underline"
+                                    >
+                                      {selectedKYCDoc.file_name}
+                                    </a>
+                                  </div>
+                                </div>
+
+                                <div>
+                                  <label className="text-sm font-medium">Reviewer Notes</label>
+                                  <Textarea
+                                    value={reviewNotes}
+                                    onChange={(e) => setReviewNotes(e.target.value)}
+                                    placeholder="Add notes about your review decision..."
+                                    className="mt-2"
+                                  />
+                                </div>
+
+                                {selectedKYCDoc.status === 'pending' && (
+                                  <div className="flex space-x-2">
+                                    <Button
+                                      onClick={() => handleKYCAction(selectedKYCDoc.id, 'approved')}
+                                      disabled={updateKYCStatus.isPending}
+                                      className="flex-1"
+                                    >
+                                      <CheckCircle className="w-4 h-4 mr-2" />
+                                      Approve
+                                    </Button>
+                                    <Button
+                                      variant="destructive"
+                                      onClick={() => handleKYCAction(selectedKYCDoc.id, 'rejected')}
+                                      disabled={updateKYCStatus.isPending}
+                                      className="flex-1"
+                                    >
+                                      <XCircle className="w-4 h-4 mr-2" />
+                                      Reject
+                                    </Button>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </DialogContent>
+                        </Dialog>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
