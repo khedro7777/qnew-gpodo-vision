@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, MapPin, DollarSign, Calendar, User, Menu, X, LogOut, Settings } from 'lucide-react';
+import { Clock, MapPin, DollarSign, Calendar, User, Menu, X, LogOut, Settings, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { 
   DropdownMenu, 
@@ -18,6 +18,8 @@ const Header = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
 
@@ -27,6 +29,32 @@ const Header = () => {
     }, 1000);
     return () => clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallPrompt(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  const handleInstallApp = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        console.log('User accepted the install prompt');
+        setShowInstallPrompt(false);
+      }
+      setDeferredPrompt(null);
+    }
+  };
 
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString('en-US', { 
@@ -55,81 +83,75 @@ const Header = () => {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-white/90 backdrop-blur-sm border-b border-gray-200">
+    <header className="sticky top-0 z-50 w-full bg-white shadow-sm border-b border-gray-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo */}
+        <div className="flex items-center justify-between h-14">
+          {/* Logo - LinkedIn style */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">GPO</span>
+            <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center">
+              <span className="text-white font-bold text-xs">GPO</span>
             </div>
             <div className="hidden sm:block">
-              <h1 className="text-xl font-bold text-gray-900">GPO SMART</h1>
-              <p className="text-xs text-gray-600">Smart B2B Platform</p>
+              <h1 className="text-lg font-semibold text-gray-900">GPO SMART</h1>
+              <p className="text-xs text-gray-500 -mt-1">Professional B2B Network</p>
             </div>
           </div>
 
-          {/* Desktop Navigation */}
-          <div className="hidden lg:flex items-center gap-6">
+          {/* Desktop Navigation - LinkedIn style */}
+          <div className="hidden lg:flex items-center gap-8">
+            {/* Primary Navigation */}
+            <nav className="flex items-center gap-6">
+              <a href="#" className="flex flex-col items-center p-2 text-gray-600 hover:text-blue-600 transition-colors">
+                <User className="w-5 h-5" />
+                <span className="text-xs mt-1">Home</span>
+              </a>
+              <a href="#" className="flex flex-col items-center p-2 text-gray-600 hover:text-blue-600 transition-colors">
+                <User className="w-5 h-5" />
+                <span className="text-xs mt-1">My Network</span>
+              </a>
+              <a href="#" className="flex flex-col items-center p-2 text-gray-600 hover:text-blue-600 transition-colors">
+                <User className="w-5 h-5" />
+                <span className="text-xs mt-1">Jobs</span>
+              </a>
+              <a href="#" className="flex flex-col items-center p-2 text-gray-600 hover:text-blue-600 transition-colors">
+                <User className="w-5 h-5" />
+                <span className="text-xs mt-1">Messaging</span>
+              </a>
+              <a href="#" className="flex flex-col items-center p-2 text-gray-600 hover:text-blue-600 transition-colors">
+                <Calendar className="w-5 h-5" />
+                <span className="text-xs mt-1">Notifications</span>
+              </a>
+            </nav>
+
             {/* Date & Time */}
-            <div className="flex items-center gap-4 text-sm text-gray-600">
+            <div className="flex items-center gap-3 text-xs text-gray-500 bg-gray-50 px-3 py-1 rounded-lg">
               <div className="flex items-center gap-1">
-                <Calendar className="w-4 h-4" />
+                <Calendar className="w-3 h-3" />
                 <span className="hidden xl:inline">{formatDate(currentTime)}</span>
               </div>
               <div className="flex items-center gap-1">
-                <Clock className="w-4 h-4" />
+                <Clock className="w-3 h-3" />
                 <span>{formatTime(currentTime)}</span>
               </div>
             </div>
 
-            {/* Selectors */}
+            {/* Settings & Language */}
             <div className="flex items-center gap-2">
               <LanguageSelector />
-
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="gap-1">
-                    <MapPin className="w-4 h-4" />
-                    <span className="hidden xl:inline">US</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem>🇺🇸 United States</DropdownMenuItem>
-                  <DropdownMenuItem>🇬🇧 United Kingdom</DropdownMenuItem>
-                  <DropdownMenuItem>🇨🇦 Canada</DropdownMenuItem>
-                  <DropdownMenuItem>🇦🇺 Australia</DropdownMenuItem>
-                  <DropdownMenuItem>🇩🇪 Germany</DropdownMenuItem>
-                  <DropdownMenuItem>🇸🇦 Saudi Arabia</DropdownMenuItem>
-                  <DropdownMenuItem>🇦🇪 United Arab Emirates</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="gap-1">
-                    <DollarSign className="w-4 h-4" />
-                    <span className="hidden xl:inline">USD</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem>USD - US Dollar</DropdownMenuItem>
-                  <DropdownMenuItem>EUR - Euro</DropdownMenuItem>
-                  <DropdownMenuItem>GBP - British Pound</DropdownMenuItem>
-                  <DropdownMenuItem>CAD - Canadian Dollar</DropdownMenuItem>
-                  <DropdownMenuItem>SAR - Saudi Riyal</DropdownMenuItem>
-                  <DropdownMenuItem>AED - UAE Dirham</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              
+              {/* Install App Button */}
+              {showInstallPrompt && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleInstallApp}
+                  className="gap-1 text-blue-600 border-blue-200 hover:bg-blue-50"
+                >
+                  <Download className="w-4 h-4" />
+                  <span className="hidden xl:inline">Install App</span>
+                </Button>
+              )}
             </div>
-
-            {/* Quick Links */}
-            <nav className="hidden xl:flex items-center gap-4 text-sm">
-              <a href="#about" className="text-gray-600 hover:text-gray-900 transition-colors">About Us</a>
-              <a href="#how-it-works" className="text-gray-600 hover:text-gray-900 transition-colors">How It Works</a>
-              <a href="#founders-message" className="text-gray-600 hover:text-gray-900 transition-colors">Founder's Message</a>
-              <a href="#support" className="text-gray-600 hover:text-gray-900 transition-colors">Support</a>
-            </nav>
 
             {/* Auth Section */}
             <div className="flex items-center gap-2">
@@ -139,7 +161,9 @@ const Header = () => {
                     <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                       <Avatar className="h-8 w-8">
                         <AvatarImage src={profile?.avatar_url} alt={profile?.full_name} />
-                        <AvatarFallback>{getInitials(profile?.full_name)}</AvatarFallback>
+                        <AvatarFallback className="bg-blue-600 text-white text-xs">
+                          {getInitials(profile?.full_name)}
+                        </AvatarFallback>
                       </Avatar>
                     </Button>
                   </DropdownMenuTrigger>
@@ -176,11 +200,20 @@ const Header = () => {
                 </DropdownMenu>
               ) : (
                 <>
-                  <Button variant="ghost" size="sm" onClick={() => setShowAuthModal(true)}>
-                    Login
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => setShowAuthModal(true)}
+                    className="text-gray-600 hover:text-blue-600"
+                  >
+                    Join now
                   </Button>
-                  <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={() => setShowAuthModal(true)}>
-                    Create Account
+                  <Button 
+                    size="sm" 
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-6" 
+                    onClick={() => setShowAuthModal(true)}
+                  >
+                    Sign in
                   </Button>
                 </>
               )}
@@ -200,28 +233,31 @@ const Header = () => {
 
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
-          <div className="lg:hidden border-t border-gray-200 py-4">
+          <div className="lg:hidden border-t border-gray-200 py-4 bg-white">
             <div className="flex flex-col gap-4">
               <div className="flex flex-col gap-2">
-                <span className="text-sm font-medium text-gray-700">Quick Links</span>
-                <a href="#about" className="text-sm text-gray-600 hover:text-gray-900">About Us</a>
-                <a href="#how-it-works" className="text-sm text-gray-600 hover:text-gray-900">How It Works</a>
-                <a href="#founders-message" className="text-sm text-gray-600 hover:text-gray-900">Founder's Message</a>
-                <a href="#support" className="text-sm text-gray-600 hover:text-gray-900">Support</a>
+                <span className="text-sm font-medium text-gray-700">Navigation</span>
+                <a href="#" className="text-sm text-gray-600 hover:text-blue-600 py-2">Home</a>
+                <a href="#" className="text-sm text-gray-600 hover:text-blue-600 py-2">My Network</a>
+                <a href="#" className="text-sm text-gray-600 hover:text-blue-600 py-2">Jobs</a>
+                <a href="#" className="text-sm text-gray-600 hover:text-blue-600 py-2">Messaging</a>
               </div>
               
               <div className="flex flex-col gap-2">
                 <span className="text-sm font-medium text-gray-700">Settings</span>
                 <div className="flex gap-2">
                   <LanguageSelector />
-                  <Button variant="ghost" size="sm" className="gap-1 flex-1">
-                    <MapPin className="w-4 h-4" />
-                    US
-                  </Button>
-                  <Button variant="ghost" size="sm" className="gap-1 flex-1">
-                    <DollarSign className="w-4 h-4" />
-                    USD
-                  </Button>
+                  {showInstallPrompt && (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={handleInstallApp}
+                      className="gap-1 text-blue-600"
+                    >
+                      <Download className="w-4 h-4" />
+                      Install App
+                    </Button>
+                  )}
                 </div>
               </div>
               
@@ -243,10 +279,10 @@ const Header = () => {
               {!user && (
                 <div className="flex gap-2">
                   <Button variant="ghost" size="sm" onClick={() => setShowAuthModal(true)}>
-                    Login
+                    Join now
                   </Button>
                   <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={() => setShowAuthModal(true)}>
-                    Create Account
+                    Sign in
                   </Button>
                 </div>
               )}
