@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -33,7 +32,7 @@ const mockUser: User = {
   company_name: 'GPODO Demo',
   role: 'user' as UserRole,
   country_code: 'SA',
-  industry_sector: 'Technology',
+  industry_sector: 'التكنولوجيا',
   phone: '+966501234567',
   is_verified: true,
   kyc_status: 'approved' as KycStatus,
@@ -89,10 +88,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const updateProfile = async (updates: Partial<User>) => {
     try {
-      setUser(prev => prev ? { ...prev, ...updates } : null);
-      toast.success('Profile updated successfully');
+      setUser(prev => prev ? { 
+        ...prev, 
+        ...updates, 
+        updated_at: new Date().toISOString() 
+      } : null);
+      toast.success('تم تحديث الملف الشخصي بنجاح');
     } catch (error: any) {
-      toast.error('Error updating profile');
+      toast.error('حدث خطأ في تحديث الملف الشخصي');
       throw error;
     }
   };

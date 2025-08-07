@@ -1,19 +1,4 @@
-
-export type UserRole = 'user' | 'supplier' | 'freelancer' | 'admin' | 'api';
-
-export type KycStatus = 'pending' | 'submitted' | 'approved' | 'rejected';
-
-export type GroupStatus = 'pending' | 'active' | 'closed' | 'archived';
-
-// Updated to match database schema
-export type GatewayType = 
-  | 'purchasing' 
-  | 'marketing' 
-  | 'suppliers' 
-  | 'freelancers' 
-  | 'formation' 
-  | 'legal';
-
+// Database types based on the updated schema
 export interface User {
   id: string;
   email: string;
@@ -32,26 +17,25 @@ export interface User {
   updated_at: string;
 }
 
+export type UserRole = 'user' | 'supplier' | 'freelancer' | 'admin' | 'api';
+export type KycStatus = 'pending' | 'submitted' | 'approved' | 'rejected';
+export type GroupStatus = 'pending' | 'active' | 'closed' | 'archived';
+export type GatewayType = 'purchasing' | 'marketing' | 'suppliers' | 'freelancers' | 'formation' | 'legal';
+export type DocumentType = 'passport' | 'national_id' | 'license' | 'certificate' | 'other';
+
 export interface Group {
   id: string;
   name: string;
   description?: string;
   gateway_type: GatewayType;
-  creator_id: string;
-  is_public: boolean;
-  max_members: number;
-  current_members: number;
   status: GroupStatus;
+  is_public: boolean;
+  creator_id: string;
   country_id?: string;
   industry_sector_id?: string;
-  countries?: {
-    name: string;
-    flag_emoji: string;
-  };
-  industry_sectors?: {
-    name: string;
-    icon: string;
-  };
+  current_members: number;
+  max_members: number;
+  group_number?: string;
   created_at: string;
   updated_at: string;
 }
@@ -60,8 +44,7 @@ export interface GroupMember {
   id: string;
   group_id: string;
   user_id: string;
-  role: 'founder' | 'admin' | 'member' | 'observer';
-  status: 'pending' | 'active' | 'suspended';
+  role: string;
   joined_at: string;
 }
 
@@ -69,9 +52,9 @@ export interface Vote {
   id: string;
   group_id: string;
   title: string;
-  description: string;
-  type: 'simple' | 'weighted' | 'consensus';
-  status: 'draft' | 'active' | 'completed' | 'cancelled';
+  description?: string;
+  type: string;
+  status: string;
   start_date: string;
   end_date: string;
   threshold: number;
@@ -80,16 +63,20 @@ export interface Vote {
   updated_at: string;
 }
 
-export interface Proposal {
+export interface VoteOption {
   id: string;
-  group_id: string;
-  title: string;
-  description?: string;
-  document_url?: string;
-  status: 'draft' | 'submitted' | 'approved' | 'rejected';
-  created_by: string;
+  vote_id: string;
+  option_text: string;
+  vote_count: number;
   created_at: string;
-  updated_at: string;
+}
+
+export interface UserVote {
+  id: string;
+  vote_id: string;
+  user_id: string;
+  option_id: string;
+  created_at: string;
 }
 
 export interface Contract {
@@ -97,8 +84,8 @@ export interface Contract {
   group_id?: string;
   title: string;
   content: string;
-  status: 'draft' | 'active' | 'completed' | 'terminated';
-  parties: string[];
+  status: string;
+  parties: any[];
   created_by: string;
   created_at: string;
   updated_at: string;
@@ -109,22 +96,50 @@ export interface ArbitrationCase {
   case_number: string;
   title: string;
   description: string;
-  type: 'contract' | 'payment' | 'service' | 'ip' | 'partnership' | 'voting';
+  type: string;
   complainant_id: string;
   respondent_id: string;
   group_id?: string;
-  status: 'filed' | 'assigned' | 'investigation' | 'hearing' | 'decision' | 'appeal' | 'closed';
-  priority: 'low' | 'medium' | 'high' | 'urgent';
+  status: string;
+  priority: string;
   created_at: string;
   updated_at: string;
+}
+
+export interface WalletTransaction {
+  id: string;
+  user_id: string;
+  amount: number;
+  type: 'credit' | 'debit';
+  description?: string;
+  payment_method?: string;
+  transaction_reference?: string;
+  status: string;
+  created_at: string;
+}
+
+export interface UserBalance {
+  user_id: string;
+  balance: number;
+  updated_at: string;
+}
+
+export interface GroupInvitation {
+  id: string;
+  group_id: string;
+  invited_user_id: string;
+  invited_by: string;
+  status: string;
+  created_at: string;
+  expires_at: string;
 }
 
 export interface Task {
   id: string;
   title: string;
   description?: string;
-  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
-  priority: 'low' | 'medium' | 'high';
+  status: string;
+  priority: string;
   assigned_to?: string;
   created_by: string;
   group_id?: string;
@@ -134,25 +149,54 @@ export interface Task {
   updated_at: string;
 }
 
+export interface Proposal {
+  id: string;
+  group_id: string;
+  title: string;
+  description?: string;
+  document_url?: string;
+  status: string;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Country {
+  id: string;
+  name: string;
+  code: string;
+  flag_emoji?: string;
+  currency_code?: string;
+  created_at: string;
+}
+
+export interface IndustrySector {
+  id: string;
+  name: string;
+  icon?: string;
+  description?: string;
+  created_at: string;
+}
+
 export interface Notification {
   id: string;
   user_id: string;
   title: string;
   message: string;
-  type: 'info' | 'warning' | 'success' | 'error';
+  type: string;
   is_read: boolean;
   action_url?: string;
   created_at: string;
 }
 
-export interface MCPTest {
+export interface Message {
   id: string;
-  user_id: string;
-  test_score: number;
-  test_data: any;
-  status: KycStatus;
-  reviewer_notes?: string;
-  completed_at: string;
-  reviewed_at?: string;
+  sender_id: string;
+  receiver_id?: string;
+  group_id?: string;
+  content: string;
+  message_type: string;
+  file_url?: string;
+  is_read: boolean;
   created_at: string;
 }
