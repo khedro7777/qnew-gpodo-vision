@@ -29,9 +29,9 @@ export const useAdminAuth = () => {
   return context;
 };
 
-// Simple hash function for demonstration - في بيئة الإنتاج، استخدم bcrypt أو مكتبة تشفير مناسبة
+// Simple hash function for demonstration
 const simpleHash = (password: string) => {
-  return password; // مؤقتاً نحتفظ بكلمة المرور كما هي للاختبار
+  return password; // For testing purposes
 };
 
 export const AdminAuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -45,12 +45,13 @@ export const AdminAuthProvider = ({ children }: { children: React.ReactNode }) =
 
       console.log('Checking auth with token:', token);
 
+      // Check if admin_sessions table exists and query it
       const { data, error } = await supabase
         .from('admin_sessions')
         .select(`
           admin_id,
           expires_at,
-          admin_users (
+          admin_users!inner (
             id,
             email,
             role,
@@ -63,6 +64,11 @@ export const AdminAuthProvider = ({ children }: { children: React.ReactNode }) =
 
       if (error) {
         console.error('Auth check error:', error);
+        if (error.code === 'PGRST116' || error.code === '42P01') {
+          console.log('Admin tables not properly configured');
+          localStorage.removeItem('admin_token');
+          return false;
+        }
         localStorage.removeItem('admin_token');
         return false;
       }
@@ -95,7 +101,23 @@ export const AdminAuthProvider = ({ children }: { children: React.ReactNode }) =
     try {
       console.log('Attempting to sign in with email:', email);
 
-      // Check if admin_users table exists by trying to query it
+      // First, let's test if we can access the admin_users table
+      const { data: testData, error: testError } = await supabase
+        .from('admin_users')
+        .select('id')
+        .limit(1);
+
+      if (testError) {
+        console.error('Cannot access admin_users table:', testError);
+        if (testError.code === '42P01') {
+          throw new Error('جداول الإدارة غير مهيأة بشكل صحيح. يرجى التواصل مع المطور.');
+        }
+        throw new Error('خطأ في الوصول لقاعدة البيانات: ' + testError.message);
+      }
+
+      console.log('Admin table access test successful');
+
+      // Now try to find the admin user
       const { data: adminData, error: adminError } = await supabase
         .from('admin_users')
         .select('*')
@@ -106,19 +128,11 @@ export const AdminAuthProvider = ({ children }: { children: React.ReactNode }) =
 
       if (adminError) {
         console.error('Admin query error:', adminError);
-        
-        if (adminError.code === 'PGRST116') {
-          throw new Error('بيانات تسجيل الدخول غير صحيحة');
-        }
-        
-        if (adminError.code === 'PGRST205') {
-          throw new Error('جداول الإدارة غير مهيأة بشكل صحيح. يرجى التواصل مع المطور.');
-        }
-        
         throw new Error('خطأ في الاستعلام: ' + adminError.message);
       }
 
       if (!adminData) {
+        console.log('No admin user found for email:', email);
         throw new Error('بيانات تسجيل الدخول غير صحيحة');
       }
 
@@ -127,7 +141,7 @@ export const AdminAuthProvider = ({ children }: { children: React.ReactNode }) =
       // Create session
       const token = crypto.randomUUID();
       const expiresAt = new Date();
-      expiresAt.setHours(expiresAt.getHours() + 24); // 24 hour session
+      expiresAt.setHours(expiresAt.getHours() + 24);
 
       const { error: sessionError } = await supabase
         .from('admin_sessions')

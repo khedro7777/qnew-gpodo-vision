@@ -6,14 +6,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Shield, AlertTriangle } from 'lucide-react';
+import { Loader2, Shield, AlertTriangle, CheckCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const AdminLogin = () => {
   const { adminUser, signIn, loading } = useAdminAuth();
   const [formData, setFormData] = useState({
-    email: '',
-    password: '',
+    email: 'admin@gpodo.com',
+    password: 'admin123',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -28,8 +28,10 @@ const AdminLogin = () => {
     setError(null);
     
     try {
+      console.log('Attempting login with:', formData.email);
       await signIn(formData.email, formData.password);
     } catch (error: any) {
+      console.error('Login failed:', error);
       setError(error.message);
     } finally {
       setIsSubmitting(false);
@@ -38,35 +40,54 @@ const AdminLogin = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin" />
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto mb-4" />
+          <p className="text-gray-600">جاري التحقق من صلاحيات الدخول...</p>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
+      <Card className="w-full max-w-md shadow-lg">
+        <CardHeader className="text-center pb-6">
           <div className="flex items-center justify-center mb-4">
-            <Shield className="w-10 h-10 text-blue-600" />
+            <Shield className="w-12 h-12 text-blue-600" />
           </div>
-          <CardTitle className="text-2xl font-bold">Admin Login</CardTitle>
-          <p className="text-gray-600">GPODO Platform Administration</p>
+          <CardTitle className="text-2xl font-bold text-gray-900">لوحة تحكم الإدارة</CardTitle>
+          <p className="text-gray-600 mt-2">منصة GPODO - تسجيل دخول المدير</p>
         </CardHeader>
-        <CardContent>
+        
+        <CardContent className="space-y-6">
           {error && (
-            <Alert className="mb-4 border-red-200 bg-red-50">
+            <Alert className="border-red-200 bg-red-50">
               <AlertTriangle className="h-4 w-4 text-red-600" />
-              <AlertDescription className="text-red-700">
+              <AlertDescription className="text-red-700 text-right">
                 {error}
               </AlertDescription>
             </Alert>
           )}
           
+          <Alert className="border-blue-200 bg-blue-50">
+            <CheckCircle className="h-4 w-4 text-blue-600" />
+            <AlertDescription className="text-blue-700 text-right">
+              <strong>بيانات الدخول التجريبية:</strong>
+              <div className="mt-2 space-y-1 text-sm">
+                <div>📧 admin@gpodo.com</div>
+                <div>🔑 admin123</div>
+                <div className="border-t pt-1 mt-2">
+                  <div>📧 khedrodo@gmail.com</div>
+                  <div>🔑 Omarlo</div>
+                </div>
+              </div>
+            </AlertDescription>
+          </Alert>
+          
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">البريد الإلكتروني</Label>
+              <Label htmlFor="email" className="text-right block">البريد الإلكتروني</Label>
               <Input
                 id="email"
                 type="email"
@@ -75,11 +96,12 @@ const AdminLogin = () => {
                 placeholder="admin@gpodo.com"
                 required
                 dir="ltr"
+                className="text-left"
               />
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="password">كلمة المرور</Label>
+              <Label htmlFor="password" className="text-right block">كلمة المرور</Label>
               <Input
                 id="password"
                 type="password"
@@ -88,36 +110,34 @@ const AdminLogin = () => {
                 placeholder="أدخل كلمة المرور"
                 required
                 dir="ltr"
+                className="text-left"
               />
             </div>
 
             <Button 
               type="submit" 
-              className="w-full" 
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white" 
               disabled={isSubmitting}
             >
               {isSubmitting ? (
                 <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  <Loader2 className="w-4 h-4 ml-2 animate-spin" />
                   جاري تسجيل الدخول...
                 </>
               ) : (
-                'تسجيل الدخول'
+                <>
+                  <Shield className="w-4 h-4 ml-2" />
+                  تسجيل الدخول
+                </>
               )}
             </Button>
           </form>
-          
-          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
-            <p className="text-sm text-blue-800 font-medium mb-2">بيانات الدخول التجريبية:</p>
-            <p className="text-xs text-blue-600">
-              البريد: admin@gpodo.com<br />
-              كلمة المرور: admin123
-            </p>
-            <p className="text-xs text-blue-600 mt-1">
-              أو<br />
-              البريد: khedrodo@gmail.com<br />
-              كلمة المرور: Omarlo
-            </p>
+
+          <div className="text-center text-sm text-gray-500">
+            تحتاج مساعدة؟{' '}
+            <a href="mailto:support@gpodo.com" className="text-blue-600 hover:underline">
+              تواصل مع الدعم
+            </a>
           </div>
         </CardContent>
       </Card>
