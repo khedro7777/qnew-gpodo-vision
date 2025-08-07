@@ -49,7 +49,6 @@ export const AdminAuthProvider = ({ children }: { children: React.ReactNode }) =
             id,
             email,
             role,
-            full_name,
             last_login
           )
         `)
@@ -75,7 +74,6 @@ export const AdminAuthProvider = ({ children }: { children: React.ReactNode }) =
         id: data.admin_users.id,
         email: data.admin_users.email,
         role: data.admin_users.role,
-        full_name: data.admin_users.full_name,
         last_login: data.admin_users.last_login,
       });
 
@@ -94,7 +92,7 @@ export const AdminAuthProvider = ({ children }: { children: React.ReactNode }) =
 
       const { data: adminData, error: adminError } = await supabase
         .from('admin_users')
-        .select('*')
+        .select('id, email, role, is_active, last_login')
         .eq('email', email)
         .eq('password_hash', password)
         .eq('is_active', true)
@@ -148,7 +146,6 @@ export const AdminAuthProvider = ({ children }: { children: React.ReactNode }) =
         id: adminData.id,
         email: adminData.email,
         role: adminData.role,
-        full_name: adminData.full_name,
         last_login: adminData.last_login,
       });
 
