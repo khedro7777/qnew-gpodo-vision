@@ -1,9 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
 import { 
   Bot, 
   FileText, 
@@ -13,12 +12,16 @@ import {
   MessageSquare,
   Vote,
   User,
-  RefreshCw
+  RefreshCw,
+  Sparkles
 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 import { useTranslation } from '@/hooks/useTranslation';
+import { toast } from 'sonner';
 
 interface MCPProposalCollectorProps {
   groupId: string;
+  group?: any;
 }
 
 interface ProposalSubmission {
@@ -33,7 +36,7 @@ interface ProposalSubmission {
   submitted_at: string;
 }
 
-const MCPProposalCollector = ({ groupId }: MCPProposalCollectorProps) => {
+const MCPProposalCollector = ({ groupId, group }: MCPProposalCollectorProps) => {
   const { t, isRTL } = useTranslation();
   
   const [submissions, setSubmissions] = useState<ProposalSubmission[]>([
@@ -42,10 +45,10 @@ const MCPProposalCollector = ({ groupId }: MCPProposalCollectorProps) => {
       member_id: 'member-1',
       member_name: 'Ahmed Al-Saudi',
       title: 'Equipment Bulk Purchase Program',
-      description: 'Propose a structured program for bulk purchasing medical equipment to achieve 25-30% cost savings',
+      description: 'Propose a structured program for bulk purchasing medical equipment to achieve 25-30% cost savings across all group members through coordinated procurement.',
       category: 'purchasing',
       status: 'collected',
-      mcp_notes: 'Excellent proposal with clear financial benefits. Recommend proceeding to voting.',
+      mcp_notes: '',
       submitted_at: '2024-01-15T10:00:00Z'
     }
   ]);
@@ -55,20 +58,48 @@ const MCPProposalCollector = ({ groupId }: MCPProposalCollectorProps) => {
   const processMCPAnalysis = async (submissionId: string) => {
     setProcessing(true);
     
-    // Simulate MCP processing
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    setSubmissions(prev => prev.map(sub => 
-      sub.id === submissionId 
-        ? {
-            ...sub,
-            status: 'sent_to_voting' as const,
-            mcp_notes: 'MCP has analyzed this proposal and recommends proceeding to group voting. The proposal shows strong merit and alignment with group objectives.'
-          }
-        : sub
-    ));
-    
-    setProcessing(false);
+    try {
+      const submission = submissions.find(s => s.id === submissionId);
+      if (!submission) {
+        throw new Error('Proposal not found');
+      }
+
+      console.log('Analyzing proposal with DeepSeek MCP...');
+      
+      const { data, error } = await supabase.functions.invoke('deepseek-mcp', {
+        body: {
+          action: 'analyze_proposal',
+          groupData: group,
+          content: `Title: ${submission.title}\n\nDescription: ${submission.description}\n\nCategory: ${submission.category}`
+        }
+      });
+
+      if (error) {
+        console.error('DeepSeek MCP error:', error);
+        throw error;
+      }
+
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to analyze proposal');
+      }
+      
+      setSubmissions(prev => prev.map(sub => 
+        sub.id === submissionId 
+          ? {
+              ...sub,
+              status: 'sent_to_voting' as const,
+              mcp_notes: data.content
+            }
+          : sub
+      ));
+      
+      toast.success('Proposal analyzed successfully by DeepSeek R1');
+    } catch (error) {
+      console.error('MCP analysis error:', error);
+      toast.error('Failed to analyze proposal. Please check your DeepSeek API configuration.');
+    } finally {
+      setProcessing(false);
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -93,22 +124,26 @@ const MCPProposalCollector = ({ groupId }: MCPProposalCollectorProps) => {
 
   return (
     <div className="space-y-6" dir={isRTL ? 'rtl' : 'ltr'}>
-      {/* MCP Assistant Header */}
-      <Card className="bg-gradient-to-r from-blue-500 to-purple-600 text-white">
+      {/* Enhanced MCP Assistant Header */}
+      <Card className="bg-gradient-to-r from-blue-500 via-purple-600 to-indigo-600 text-white">
         <CardContent className="p-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
               <Bot className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-xl font-bold">{t('MCP Assistant')}</h3>
-              <p className="text-white/80">Automated Proposal Collection & Analysis</p>
+              <h3 className="text-xl font-bold flex items-center gap-2">
+                {t('MCP Assistant')}
+                <Sparkles className="w-5 h-5 text-yellow-300" />
+              </h3>
+              <p className="text-white/80">Powered by DeepSeek R1 - Intelligent Proposal Analysis</p>
             </div>
           </div>
-          <p className="text-white/90 text-sm">
-            MCP Assistant collects member proposals, analyzes them for feasibility and impact, 
-            then routes them to appropriate workflows (voting or discussion) before making final decisions.
-          </p>
+          <div className="bg-white/10 rounded-lg p-3">
+            <p className="text-white/90 text-sm">
+              ✨ Advanced AI reasoning for comprehensive proposal evaluation, feasibility analysis, and strategic recommendations
+            </p>
+          </div>
         </CardContent>
       </Card>
 
@@ -146,14 +181,21 @@ const MCPProposalCollector = ({ groupId }: MCPProposalCollectorProps) => {
                       </div>
                     </div>
 
-                    {/* MCP Analysis */}
+                    {/* Enhanced MCP Analysis with DeepSeek */}
                     {submission.mcp_notes && (
-                      <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4">
+                      <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-lg p-4 mb-4">
                         <div className="flex items-start gap-3">
-                          <Bot className="w-5 h-5 text-purple-600 mt-0.5" />
+                          <div className="flex items-center gap-1">
+                            <Bot className="w-5 h-5 text-purple-600" />
+                            <Sparkles className="w-4 h-4 text-yellow-500" />
+                          </div>
                           <div>
-                            <p className="text-purple-900 font-medium mb-1">{t('MCP Recommendation')}</p>
-                            <p className="text-purple-800 text-sm">{submission.mcp_notes}</p>
+                            <p className="text-purple-900 font-medium mb-1 flex items-center gap-2">
+                              {t('DeepSeek R1 Analysis')}
+                            </p>
+                            <div className="text-purple-800 text-sm whitespace-pre-wrap leading-relaxed">
+                              {submission.mcp_notes}
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -167,13 +209,14 @@ const MCPProposalCollector = ({ groupId }: MCPProposalCollectorProps) => {
                       size="sm"
                       onClick={() => processMCPAnalysis(submission.id)}
                       disabled={processing}
+                      className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
                     >
                       {processing ? (
                         <RefreshCw className="w-4 h-4 mr-1 animate-spin" />
                       ) : (
-                        <Send className="w-4 h-4 mr-1" />
+                        <Sparkles className="w-4 h-4 mr-1" />
                       )}
-                      {t('Submit to MCP')}
+                      {t('Analyze with DeepSeek')}
                     </Button>
                   )}
                   
@@ -193,12 +236,15 @@ const MCPProposalCollector = ({ groupId }: MCPProposalCollectorProps) => {
       {submissions.length === 0 && (
         <Card>
           <CardContent className="p-8 text-center">
-            <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+            <div className="flex items-center justify-center mb-4">
+              <Bot className="w-12 h-12 text-gray-400 mr-2" />
+              <Sparkles className="w-6 h-6 text-yellow-500" />
+            </div>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
               No proposals collected yet
             </h3>
             <p className="text-gray-600">
-              MCP Assistant is waiting for member proposals to analyze and process.
+              MCP Assistant powered by DeepSeek R1 is ready to analyze member proposals with advanced reasoning capabilities.
             </p>
           </CardContent>
         </Card>
