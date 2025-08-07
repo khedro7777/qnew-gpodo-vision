@@ -75,9 +75,11 @@ const GroupInvitations = () => {
               className="p-4 border rounded-lg space-y-3"
             >
               <div>
-                <h4 className="font-medium">{invitation.groups?.name}</h4>
+                <h4 className="font-medium">
+                  {invitation.groups?.name || 'مجموعة غير محددة'}
+                </h4>
                 <p className="text-sm text-muted-foreground">
-                  دعوة من {invitation.invited_by_profile?.full_name}
+                  دعوة من {invitation.invited_by_profile?.full_name || 'مستخدم غير معروف'}
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {new Date(invitation.created_at).toLocaleDateString('ar-SA')}

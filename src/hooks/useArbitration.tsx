@@ -2,47 +2,41 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import type { ArbitrationCase } from '@/types';
+
+// Mock arbitration case structure until the table is properly set up
+interface ArbitrationCase {
+  id: string;
+  case_number: string;
+  title: string;
+  description: string;
+  type: string;
+  complainant_id: string;
+  respondent_id: string;
+  group_id?: string;
+  status: string;
+  priority: string;
+  created_at: string;
+  updated_at: string;
+}
 
 export const useArbitration = () => {
   const queryClient = useQueryClient();
 
-  // Get arbitration cases
+  // Get arbitration cases - using mock data until table exists
   const { data: cases, isLoading } = useQuery({
     queryKey: ['arbitration_cases'],
     queryFn: async () => {
-      const { data: user } = await supabase.auth.getUser();
-      if (!user.user) return [];
-
-      const { data, error } = await supabase
-        .from('arbitration_cases')
-        .select('*')
-        .or(`complainant_id.eq.${user.user.id},respondent_id.eq.${user.user.id}`)
-        .order('created_at', { ascending: false });
-      
-      if (error) {
-        console.error('Error fetching arbitration cases:', error);
-        return [];
-      }
-      
-      return data as ArbitrationCase[];
+      console.log('Arbitration cases feature is not yet fully implemented');
+      return [] as ArbitrationCase[];
     },
   });
 
   // Create arbitration case mutation
   const createCase = useMutation({
     mutationFn: async (caseData: Omit<ArbitrationCase, 'id' | 'case_number' | 'created_at' | 'updated_at'>) => {
-      // Generate case number
-      const caseNumber = `ARB-${Date.now()}`;
-      
-      const { data, error } = await supabase
-        .from('arbitration_cases')
-        .insert([{ ...caseData, case_number: caseNumber }])
-        .select()
-        .single();
-      
-      if (error) throw error;
-      return data;
+      console.log('Create arbitration case:', caseData);
+      toast.info('ميزة التحكيم قيد التطوير');
+      throw new Error('Feature not implemented yet');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['arbitration_cases'] });
@@ -57,15 +51,9 @@ export const useArbitration = () => {
   // Update case status mutation
   const updateCaseStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
-      const { data, error } = await supabase
-        .from('arbitration_cases')
-        .update({ status, updated_at: new Date().toISOString() })
-        .eq('id', id)
-        .select()
-        .single();
-      
-      if (error) throw error;
-      return data;
+      console.log('Update case status:', { id, status });
+      toast.info('ميزة التحكيم قيد التطوير');
+      throw new Error('Feature not implemented yet');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['arbitration_cases'] });

@@ -2,7 +2,24 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import type { WalletTransaction, UserBalance } from '@/types';
+
+interface WalletTransaction {
+  id: string;
+  user_id: string;
+  amount: number;
+  type: 'credit' | 'debit';
+  description?: string;
+  payment_method?: string;
+  transaction_reference?: string;
+  status: string;
+  created_at: string;
+}
+
+interface UserBalance {
+  user_id: string;
+  balance: number;
+  updated_at: string;
+}
 
 export const useWallet = (userId?: string) => {
   const queryClient = useQueryClient();
@@ -17,14 +34,14 @@ export const useWallet = (userId?: string) => {
         .from('user_balances')
         .select('*')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
       
       if (error && error.code !== 'PGRST116') {
         console.error('Error fetching balance:', error);
         return null;
       }
       
-      return data as UserBalance;
+      return data as UserBalance | null;
     },
     enabled: !!userId,
   });

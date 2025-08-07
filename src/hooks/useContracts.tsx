@@ -2,46 +2,38 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import type { Contract } from '@/types';
+
+// Mock contract structure until the table is properly set up
+interface Contract {
+  id: string;
+  group_id?: string;
+  title: string;
+  content: string;
+  status: string;
+  parties: any[];
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
 
 export const useContracts = (groupId?: string) => {
   const queryClient = useQueryClient();
 
-  // Get contracts
+  // Get contracts - using mock data until table exists
   const { data: contracts, isLoading } = useQuery({
     queryKey: ['contracts', groupId],
     queryFn: async () => {
-      let query = supabase
-        .from('contracts')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (groupId) {
-        query = query.eq('group_id', groupId);
-      }
-      
-      const { data, error } = await query;
-      
-      if (error) {
-        console.error('Error fetching contracts:', error);
-        return [];
-      }
-      
-      return data as Contract[];
+      console.log('Contracts feature is not yet fully implemented');
+      return [] as Contract[];
     },
   });
 
   // Create contract mutation
   const createContract = useMutation({
     mutationFn: async (contractData: Omit<Contract, 'id' | 'created_at' | 'updated_at'>) => {
-      const { data, error } = await supabase
-        .from('contracts')
-        .insert([contractData])
-        .select()
-        .single();
-      
-      if (error) throw error;
-      return data;
+      console.log('Create contract:', contractData);
+      toast.info('ميزة العقود قيد التطوير');
+      throw new Error('Feature not implemented yet');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['contracts', groupId] });
@@ -56,15 +48,9 @@ export const useContracts = (groupId?: string) => {
   // Update contract mutation
   const updateContract = useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Contract> & { id: string }) => {
-      const { data, error } = await supabase
-        .from('contracts')
-        .update({ ...updates, updated_at: new Date().toISOString() })
-        .eq('id', id)
-        .select()
-        .single();
-      
-      if (error) throw error;
-      return data;
+      console.log('Update contract:', { id, ...updates });
+      toast.info('ميزة العقود قيد التطوير');
+      throw new Error('Feature not implemented yet');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['contracts', groupId] });
