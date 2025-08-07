@@ -2,38 +2,35 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-
-// Mock contract structure until the table is properly set up
-interface Contract {
-  id: string;
-  group_id?: string;
-  title: string;
-  content: string;
-  status: string;
-  parties: any[];
-  created_by: string;
-  created_at: string;
-  updated_at: string;
-}
+import type { Contract } from '@/types';
 
 export const useContracts = (groupId?: string) => {
   const queryClient = useQueryClient();
 
-  // Get contracts - using mock data until table exists
+  // Get contracts (mock data for now)
   const { data: contracts, isLoading } = useQuery({
     queryKey: ['contracts', groupId],
     queryFn: async () => {
-      console.log('Contracts feature is not yet fully implemented');
+      if (!groupId) return [];
+      
+      console.log('Fetching contracts for group:', groupId);
+      // Return empty array for now until Supabase types are updated
       return [] as Contract[];
     },
+    enabled: !!groupId,
   });
 
-  // Create contract mutation
+  // Create contract mutation (mock for now)
   const createContract = useMutation({
     mutationFn: async (contractData: Omit<Contract, 'id' | 'created_at' | 'updated_at'>) => {
-      console.log('Create contract:', contractData);
-      toast.info('ميزة العقود قيد التطوير');
-      throw new Error('Feature not implemented yet');
+      console.log('Creating contract:', contractData);
+      // Mock implementation
+      return { 
+        id: 'mock-contract-id', 
+        ...contractData, 
+        created_at: new Date().toISOString(), 
+        updated_at: new Date().toISOString() 
+      } as Contract;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['contracts', groupId] });
@@ -45,29 +42,10 @@ export const useContracts = (groupId?: string) => {
     },
   });
 
-  // Update contract mutation
-  const updateContract = useMutation({
-    mutationFn: async ({ id, ...updates }: Partial<Contract> & { id: string }) => {
-      console.log('Update contract:', { id, ...updates });
-      toast.info('ميزة العقود قيد التطوير');
-      throw new Error('Feature not implemented yet');
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['contracts', groupId] });
-      toast.success('تم تحديث العقد بنجاح');
-    },
-    onError: (error: any) => {
-      console.error('Update contract error:', error);
-      toast.error('حدث خطأ في تحديث العقد');
-    },
-  });
-
   return {
     contracts: contracts || [],
     isLoading,
     createContract: createContract.mutate,
-    updateContract: updateContract.mutate,
-    isCreatingContract: createContract.isPending,
-    isUpdatingContract: updateContract.isPending,
+    isCreating: createContract.isPending,
   };
 };
