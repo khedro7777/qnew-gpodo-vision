@@ -76,53 +76,50 @@ export const AdminAuthProvider = ({ children }: { children: React.ReactNode }) =
   const signIn = async (email: string, password: string) => {
     setLoading(true);
     try {
-      // For demo purposes, we'll use simple email/password check
-      // In production, this should use proper password hashing
-      if (email === 'khedrodo@gmail.com' && password === 'Omarlo') {
-        const { data: adminData, error: adminError } = await supabase
-          .from('admin_users')
-          .select('*')
-          .eq('email', email)
-          .single();
+      // Check credentials against admin_users table
+      const { data: adminData, error: adminError } = await supabase
+        .from('admin_users')
+        .select('*')
+        .eq('email', email)
+        .eq('password_hash', password) // In production, this should be properly hashed
+        .eq('is_active', true)
+        .single();
 
-        if (adminError || !adminData) {
-          throw new Error('Invalid credentials');
-        }
+      if (adminError || !adminData) {
+        throw new Error('Invalid credentials or inactive account');
+      }
 
-        // Create session
-        const token = crypto.randomUUID();
-        const expiresAt = new Date();
-        expiresAt.setHours(expiresAt.getHours() + 24); // 24 hour session
+      // Create session
+      const token = crypto.randomUUID();
+      const expiresAt = new Date();
+      expiresAt.setHours(expiresAt.getHours() + 24); // 24 hour session
 
-        const { error: sessionError } = await supabase
-          .from('admin_sessions')
-          .insert({
-            admin_id: adminData.id,
-            token,
-            expires_at: expiresAt.toISOString(),
-          });
-
-        if (sessionError) throw sessionError;
-
-        // Update last login
-        await supabase
-          .from('admin_users')
-          .update({ last_login: new Date().toISOString() })
-          .eq('id', adminData.id);
-
-        localStorage.setItem('admin_token', token);
-        
-        setAdminUser({
-          id: adminData.id,
-          email: adminData.email,
-          role: adminData.role,
-          last_login: adminData.last_login,
+      const { error: sessionError } = await supabase
+        .from('admin_sessions')
+        .insert({
+          admin_id: adminData.id,
+          token,
+          expires_at: expiresAt.toISOString(),
         });
 
-        toast.success('Welcome to Admin Dashboard');
-      } else {
-        throw new Error('Invalid credentials');
-      }
+      if (sessionError) throw sessionError;
+
+      // Update last login
+      await supabase
+        .from('admin_users')
+        .update({ last_login: new Date().toISOString() })
+        .eq('id', adminData.id);
+
+      localStorage.setItem('admin_token', token);
+      
+      setAdminUser({
+        id: adminData.id,
+        email: adminData.email,
+        role: adminData.role,
+        last_login: adminData.last_login,
+      });
+
+      toast.success('Welcome to Admin Dashboard');
     } catch (error: any) {
       toast.error('Login failed: ' + error.message);
       throw error;
