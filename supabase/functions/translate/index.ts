@@ -8,61 +8,71 @@ const corsHeaders = {
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    const { text, targetLang, sourceLang = 'auto' } = await req.json();
-    
-    console.log('Translation request:', { text: text.substring(0, 50) + '...', targetLang, sourceLang });
+    const { targetLanguage, currentLanguage, texts } = await req.json()
 
-    const apiKey = Deno.env.get('DEEPL_API_KEY');
-    if (!apiKey) {
-      throw new Error('DeepL API key not configured');
-    }
-
-    const response = await fetch('https://api-free.deepl.com/v2/translate', {
+    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `DeepL-Auth-Key ${apiKey}`,
-        'Content-Type': 'application/x-www-form-urlencoded',
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${Deno.env.get('DEEPSEEK_API_KEY')}`,
       },
-      body: new URLSearchParams({
-        text: text,
-        target_lang: targetLang.toUpperCase(),
-        ...(sourceLang !== 'auto' && { source_lang: sourceLang.toUpperCase() })
-      }),
-    });
+      body: JSON.stringify({
+        model: 'deepseek-r1-distill-llama-70b',
+        messages: [
+          {
+            role: 'system',
+            content: `You are a professional translator. Translate the following text from ${currentLanguage} to ${targetLanguage}. Maintain the original meaning and context. For UI elements, keep translations concise and appropriate for interface use. Only return the translated text, nothing else.`
+          },
+          {
+            role: 'user',
+            content: `Translate: ${JSON.stringify(texts || 'Hello World')}`
+          }
+        ],
+        temperature: 0.3,
+        max_tokens: 1000
+      })
+    })
 
+    const data = await response.json()
+    
     if (!response.ok) {
-      throw new Error(`DeepL API error: ${response.status}`);
+      throw new Error(data.error?.message || 'Translation failed')
     }
 
-    const data = await response.json();
-    console.log('Translation successful');
+    const translatedText = data.choices[0]?.message?.content || 'Translation not available'
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        translatedText: data.translations[0].text,
-        detectedSourceLang: data.translations[0].detected_source_language,
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    );
-
-  } catch (error) {
-    console.error('Translation error:', error);
     return new Response(
       JSON.stringify({ 
-        success: false, 
-        error: error.message || 'Translation failed' 
+        success: true, 
+        translatedText,
+        targetLanguage,
+        sourceLanguage: currentLanguage 
       }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      { 
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json' 
+        } 
       }
-    );
+    )
+  } catch (error) {
+    console.error('Translation error:', error)
+    return new Response(
+      JSON.stringify({ 
+        error: error.message,
+        success: false 
+      }),
+      { 
+        status: 500,
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json' 
+        } 
+      }
+    )
   }
-});
+})

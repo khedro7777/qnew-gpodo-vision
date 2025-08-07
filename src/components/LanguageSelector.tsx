@@ -36,7 +36,8 @@ const LanguageSelector = () => {
       const { data, error } = await supabase.functions.invoke('translate', {
         body: { 
           targetLanguage: newLocale,
-          currentLanguage: locale 
+          currentLanguage: locale,
+          texts: 'Interface language changed'
         }
       });
 
