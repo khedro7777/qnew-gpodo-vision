@@ -43,7 +43,7 @@ const AdminLogin = () => {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
         <div className="text-center">
           <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600">جاري التحقق من صلاحيات الدخول...</p>
+          <p className="text-gray-600">Verifying access permissions...</p>
         </div>
       </div>
     );
@@ -56,16 +56,16 @@ const AdminLogin = () => {
           <div className="flex items-center justify-center mb-4">
             <Shield className="w-12 h-12 text-blue-600" />
           </div>
-          <CardTitle className="text-2xl font-bold text-gray-900">لوحة تحكم الإدارة</CardTitle>
-          <p className="text-gray-600 mt-2">منصة GPODO - تسجيل دخول المدير</p>
+          <CardTitle className="text-2xl font-bold text-gray-900">Admin Dashboard</CardTitle>
+          <p className="text-gray-600 mt-2">GPODO Platform - Admin Login</p>
         </CardHeader>
         
         <CardContent className="space-y-6">
           {error && (
             <Alert className="border-red-200 bg-red-50">
               <AlertTriangle className="h-4 w-4 text-red-600" />
-              <AlertDescription className="text-red-700 text-right">
-                <div className="font-semibold mb-2">خطأ في تسجيل الدخول:</div>
+              <AlertDescription className="text-red-700">
+                <div className="font-semibold mb-2">Login Error:</div>
                 <div className="text-sm">{error}</div>
               </AlertDescription>
             </Alert>
@@ -73,16 +73,16 @@ const AdminLogin = () => {
           
           <Alert className="border-blue-200 bg-blue-50">
             <CheckCircle className="h-4 w-4 text-blue-600" />
-            <AlertDescription className="text-blue-700 text-right">
-              <strong>بيانات الدخول المتاحة:</strong>
+            <AlertDescription className="text-blue-700">
+              <strong>Available Login Credentials:</strong>
               <div className="mt-3 space-y-3 text-sm">
                 <div className="bg-blue-100 p-3 rounded-lg">
-                  <div className="font-semibold text-blue-800">الحساب الأول:</div>
+                  <div className="font-semibold text-blue-800">First Account:</div>
                   <div className="flex items-center mt-1">📧 admin@gpodo.com</div>
                   <div className="flex items-center">🔑 admin123</div>
                 </div>
                 <div className="bg-blue-100 p-3 rounded-lg">
-                  <div className="font-semibold text-blue-800">الحساب الثاني:</div>
+                  <div className="font-semibold text-blue-800">Second Account:</div>
                   <div className="flex items-center mt-1">📧 khedrodo@gmail.com</div>
                   <div className="flex items-center">🔑 Omarlo</div>
                 </div>
@@ -92,7 +92,7 @@ const AdminLogin = () => {
           
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-right block">البريد الإلكتروني</Label>
+              <Label htmlFor="email" className="block">Email Address</Label>
               <Input
                 id="email"
                 type="email"
@@ -106,13 +106,13 @@ const AdminLogin = () => {
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-right block">كلمة المرور</Label>
+              <Label htmlFor="password" className="block">Password</Label>
               <Input
                 id="password"
                 type="password"
                 value={formData.password}
                 onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                placeholder="أدخل كلمة المرور"
+                placeholder="Enter your password"
                 required
                 dir="ltr"
                 className="text-left"
@@ -126,22 +126,22 @@ const AdminLogin = () => {
             >
               {isSubmitting ? (
                 <>
-                  <Loader2 className="w-4 h-4 ml-2 animate-spin" />
-                  جاري تسجيل الدخول...
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Signing in...
                 </>
               ) : (
                 <>
-                  <Shield className="w-4 h-4 ml-2" />
-                  تسجيل الدخول
+                  <Shield className="w-4 h-4 mr-2" />
+                  Sign In
                 </>
               )}
             </Button>
           </form>
 
           <div className="text-center text-sm text-gray-500">
-            تحتاج مساعدة؟{' '}
+            Need help?{' '}
             <a href="mailto:support@gpodo.com" className="text-blue-600 hover:underline">
-              تواصل مع الدعم
+              Contact Support
             </a>
           </div>
         </CardContent>
