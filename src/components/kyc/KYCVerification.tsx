@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -9,8 +8,14 @@ import DocumentUpload from './DocumentUpload';
 import MCPTest from './MCPTest';
 
 const KYCVerification = () => {
-  const { profile } = useAuth();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('documents');
+
+  // Mock profile data for KYC since we don't have profile structure yet
+  const mockProfile = {
+    role: 'freelancer',
+    kyc_status: 'pending'
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -26,7 +31,7 @@ const KYCVerification = () => {
   };
 
   const getRequiredDocuments = () => {
-    switch (profile?.role) {
+    switch (mockProfile?.role) {
       case 'supplier':
         return ['Company Registration', 'Business License'];
       case 'freelancer':
@@ -47,7 +52,7 @@ const KYCVerification = () => {
           <p className="text-gray-600 mb-4">
             Please complete your verification to access the dashboard
           </p>
-          {getStatusBadge(profile?.kyc_status || 'pending')}
+          {getStatusBadge(mockProfile?.kyc_status || 'pending')}
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
@@ -62,7 +67,7 @@ const KYCVerification = () => {
               ))}
             </div>
 
-            {profile?.role === 'freelancer' && (
+            {mockProfile?.role === 'freelancer' && (
               <div className="mt-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Additional Requirements</h3>
                 <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
@@ -74,7 +79,7 @@ const KYCVerification = () => {
           </div>
 
           <div className="lg:col-span-2">
-            {profile?.role === 'freelancer' ? (
+            {mockProfile?.role === 'freelancer' ? (
               <div className="space-y-6">
                 <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
                   <button

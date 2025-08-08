@@ -1,12 +1,12 @@
 
 import React from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Calendar, Clock, MapPin } from 'lucide-react';
 
 const WelcomeSection = () => {
-  const { profile } = useAuth();
+  const { user } = useAuth();
   const currentTime = new Date();
   
   const getGreeting = () => {
@@ -37,7 +37,7 @@ const WelcomeSection = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold mb-2">
-            {getGreeting()}, {profile?.full_name || 'User'}!
+            {getGreeting()}, {user?.user_metadata?.full_name || user?.email || 'User'}!
           </h1>
           <p className="text-blue-100 mb-4">
             Welcome back to your GPODO dashboard. Ready to be productive?

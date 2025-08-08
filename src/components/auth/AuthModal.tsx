@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   Dialog,
@@ -11,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { Loader2 } from 'lucide-react';
 
 interface AuthModalProps {
@@ -38,13 +37,9 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await signUp(formData.email, formData.password, {
-        full_name: formData.fullName,
-        company_name: formData.companyName,
-        role: formData.role,
-        country_code: formData.countryCod,
-        industry_sector: formData.industrySector,
-      });
+      const redirectUrl = `${window.location.origin}/`;
+      
+      const { error } = await signUp(formData.email, formData.password, formData.fullName);
       onClose();
     } catch (error) {
       // Error is handled in the context
