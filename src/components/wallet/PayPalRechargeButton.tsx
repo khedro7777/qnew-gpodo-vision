@@ -13,7 +13,7 @@ const PayPalRechargeButton = ({ onSuccess }: { onSuccess?: () => void }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [amount, setAmount] = useState('');
   const [currency, setCurrency] = useState('USD');
-  const { createOrder, loading } = usePayPalPayment();
+  const { createPayment, loading } = usePayPalPayment();
 
   const predefinedAmounts = [
     { points: 100, usd: 10 },
@@ -33,21 +33,16 @@ const PayPalRechargeButton = ({ onSuccess }: { onSuccess?: () => void }) => {
     }
 
     try {
-      const orderID = await createOrder(parseFloat(amount));
+      const response = await createPayment(parseFloat(amount), currency);
       
-      if (orderID) {
-        // In a real implementation, you would redirect to PayPal
-        toast.success('Payment order created successfully!');
-        if (onSuccess) {
-          onSuccess();
-        }
-        setIsOpen(false);
+      if (response.success && response.approvalUrl) {
+        // Redirect to PayPal for approval
+        window.location.href = response.approvalUrl;
       } else {
-        toast.error('Failed to create payment order');
+        toast.error('Failed to create payment');
       }
     } catch (error) {
       console.error('Payment error:', error);
-      toast.error('Payment failed');
     }
   };
 

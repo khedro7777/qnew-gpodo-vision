@@ -1,90 +1,93 @@
 
-import { useState, useCallback } from 'react';
-import { toast } from 'sonner';
+import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
 
-interface PayPalHook {
-  loading: boolean;
-  error: string | null;
-  createOrder: (amount: number) => Promise<string | null>;
-  captureOrder: (orderID: string) => Promise<boolean>;
+interface PayPalPaymentResponse {
+  success: boolean;
+  orderId?: string;
+  approvalUrl?: string;
+  error?: string;
 }
 
-export const usePayPalPayment = (): PayPalHook => {
+interface PayPalCaptureResponse {
+  success: boolean;
+  status?: string;
+  amount?: number;
+  error?: string;
+}
+
+export const usePayPalPayment = () => {
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
 
-  const createOrder = useCallback(async (amount: number): Promise<string | null> => {
-    setLoading(true);
-    setError(null);
+  const createPayment = async (amount: number, currency = 'USD'): Promise<PayPalPaymentResponse> => {
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
 
+    setLoading(true);
     try {
-      const response = await fetch('/api/paypal/create-order', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      console.log('Creating PayPal payment:', { amount, currency, userId: user.id });
+
+      const { data, error } = await supabase.functions.invoke('paypal-payment', {
+        body: {
+          amount,
+          currency,
+          userId: user.id,
         },
-        body: JSON.stringify({ amount }),
       });
 
-      const data = await response.json();
-
-      if (response.ok && data.orderID) {
-        return data.orderID;
-      } else {
-        setError(data.message || 'Failed to create order.');
-        toast.error(data.message || 'Failed to create order.');
-        return null;
+      if (error) {
+        throw error;
       }
-    } catch (err: any) {
-      setError(err.message || 'An unexpected error occurred.');
-      toast.error(err.message || 'An unexpected error occurred.');
-      return null;
+
+      console.log('PayPal payment created:', data);
+      return data;
+    } catch (error: any) {
+      console.error('PayPal payment creation failed:', error);
+      toast.error('Failed to create payment: ' + error.message);
+      throw error;
     } finally {
       setLoading(false);
     }
-  }, []);
+  };
 
-  const captureOrder = useCallback(async (orderID: string): Promise<boolean> => {
+  const capturePayment = async (orderId: string): Promise<PayPalCaptureResponse> => {
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
     setLoading(true);
-    setError(null);
-
     try {
-      const response = await fetch('/api/paypal/capture-order', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      console.log('Capturing PayPal payment:', orderId);
+
+      const { data, error } = await supabase.functions.invoke('paypal-capture', {
+        body: {
+          orderId,
+          userId: user.id,
         },
-        body: JSON.stringify({ orderID }),
       });
 
-      const data = await response.json();
-
-      if (response.ok && data.status === 'COMPLETED') {
-        toast.success('Payment successful!');
-        // Update user profile - remove the non-existent has_paid field
-        if (user?.id) {
-          await supabase
-            .from('profiles')
-            .update({ is_verified: true })
-            .eq('id', user.id);
-        }
-        return true;
-      } else {
-        setError(data.message || 'Failed to capture order.');
-        toast.error(data.message || 'Failed to capture order.');
-        return false;
+      if (error) {
+        throw error;
       }
-    } catch (err: any) {
-      setError(err.message || 'An unexpected error occurred.');
-      toast.error(err.message || 'An unexpected error occurred.');
-      return false;
+
+      console.log('PayPal payment captured:', data);
+      return data;
+    } catch (error: any) {
+      console.error('PayPal payment capture failed:', error);
+      toast.error('Failed to capture payment: ' + error.message);
+      throw error;
     } finally {
       setLoading(false);
     }
-  }, [user?.id]);
+  };
 
-  return { loading, error, createOrder, captureOrder };
+  return {
+    createPayment,
+    capturePayment,
+    loading,
+  };
 };

@@ -1,117 +1,290 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
+import React, { useState } from 'react';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { Progress } from '@/components/ui/progress';
-import { Plus, Calendar, Clock, Flag, Trash2 } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { 
+  Plus, 
+  Filter, 
+  CheckCircle2, 
+  Circle, 
+  Clock,
+  AlertCircle,
+  Calendar
+} from 'lucide-react';
+import { toast } from 'sonner';
+
+interface Task {
+  id: string;
+  title: string;
+  description?: string;
+  status: string;
+  priority: string;
+  due_date?: string;
+  created_at: string;
+  created_by: string;
+  assigned_to?: string;
+  group_id?: string;
+}
 
 const EnhancedTaskList = () => {
   const { user } = useAuth();
-  const [tasks, setTasks] = useState([
-    { id: '1', title: 'Draft initial project proposal', completed: false, priority: 'high', dueDate: '2024-08-15' },
-    { id: '2', title: 'Schedule team kickoff meeting', completed: true, priority: 'medium', dueDate: '2024-08-10' },
-    { id: '3', title: 'Finalize budget allocation', completed: false, priority: 'high', dueDate: '2024-08-20' },
-    { id: '4', title: 'Design UI/UX wireframes', completed: false, priority: 'medium', dueDate: '2024-08-22' },
-    { id: '5', title: 'Develop backend API endpoints', completed: true, priority: 'high', dueDate: '2024-08-25' },
-  ]);
-  const [newTask, setNewTask] = useState('');
+  const queryClient = useQueryClient();
   const [filter, setFilter] = useState('all');
+  const [newTaskTitle, setNewTaskTitle] = useState('');
 
-  useEffect(() => {
-    console.log('EnhancedTaskList - User:', user);
-  }, [user]);
+  console.log('EnhancedTaskList render:', { user: !!user });
 
-  const addTask = () => {
-    if (newTask.trim() !== '') {
-      const newTaskItem = {
-        id: String(Date.now()),
-        title: newTask,
-        completed: false,
-        priority: 'medium',
-        dueDate: new Date().toISOString().split('T')[0],
-      };
-      setTasks([...tasks, newTaskItem]);
-      setNewTask('');
+  const { data: tasks = [], isLoading, error } = useQuery({
+    queryKey: ['tasks', user?.id, filter],
+    queryFn: async (): Promise<Task[]> => {
+      if (!user?.id) {
+        console.log('No user ID, returning mock data');
+        // Return mock tasks for demo mode
+        return [
+          {
+            id: '1',
+            title: 'Review supplier proposals',
+            description: 'Analyze pricing and terms for office supplies',
+            status: 'pending',
+            priority: 'high',
+            due_date: '2025-08-06',
+            created_at: '2025-08-05T10:00:00Z',
+            created_by: 'demo'
+          },
+          {
+            id: '2',
+            title: 'Schedule team meeting',
+            description: 'Quarterly planning session',
+            status: 'completed',
+            priority: 'medium',
+            due_date: '2025-08-05',
+            created_at: '2025-08-05T09:00:00Z',
+            created_by: 'demo'
+          }
+        ];
+      }
+
+      try {
+        let query = supabase
+          .from('tasks')
+          .select('*')
+          .eq('created_by', user.id)
+          .order('created_at', { ascending: false });
+
+        if (filter !== 'all') {
+          query = query.eq('status', filter);
+        }
+
+        const { data, error } = await query;
+        
+        if (error) {
+          console.error('Tasks query error:', error);
+          throw error;
+        }
+
+        console.log('Tasks loaded successfully:', data?.length || 0);
+        return data || [];
+      } catch (err) {
+        console.error('Failed to load tasks:', err);
+        throw err;
+      }
+    },
+    retry: false,
+  });
+
+  const addTaskMutation = useMutation({
+    mutationFn: async (title: string) => {
+      if (!user?.id) {
+        throw new Error('Authentication required');
+      }
+      
+      const { error } = await supabase
+        .from('tasks')
+        .insert({
+          created_by: user.id,
+          title: title,
+          status: 'pending',
+          priority: 'medium'
+        });
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      setNewTaskTitle('');
+      toast.success('Task added successfully');
+    },
+    onError: (error: Error) => {
+      toast.error('Failed to add task: ' + error.message);
+    },
+  });
+
+  const toggleTaskMutation = useMutation({
+    mutationFn: async ({ taskId, currentStatus }: { taskId: string; currentStatus: string }) => {
+      if (!user?.id) {
+        throw new Error('Authentication required');
+      }
+
+      const newStatus = currentStatus === 'completed' ? 'pending' : 'completed';
+      const { error } = await supabase
+        .from('tasks')
+        .update({ status: newStatus })
+        .eq('id', taskId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      toast.success('Task updated');
+    },
+    onError: (error: Error) => {
+      toast.error('Failed to update task: ' + error.message);
+    },
+  });
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'high': return 'bg-red-100 text-red-800';
+      case 'medium': return 'bg-yellow-100 text-yellow-800';
+      case 'low': return 'bg-green-100 text-green-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const toggleComplete = (id: string) => {
-    setTasks(
-      tasks.map((task) =>
-        task.id === id ? { ...task, completed: !task.completed } : task
-      )
+  const handleAddTask = () => {
+    if (!newTaskTitle.trim()) return;
+    addTaskMutation.mutate(newTaskTitle);
+  };
+
+  const handleToggleTask = (taskId: string, currentStatus: string) => {
+    toggleTaskMutation.mutate({ taskId, currentStatus });
+  };
+
+  if (error) {
+    console.error('EnhancedTaskList error:', error);
+    return (
+      <Card className="p-6">
+        <div className="text-center py-8">
+          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Unable to Load Tasks</h3>
+          <p className="text-gray-600 mb-4">There was an error loading your tasks. Please try again.</p>
+          <Button onClick={() => queryClient.invalidateQueries({ queryKey: ['tasks'] })}>
+            Try Again
+          </Button>
+        </div>
+      </Card>
     );
-  };
-
-  const deleteTask = (id: string) => {
-    setTasks(tasks.filter((task) => task.id !== id));
-  };
-
-  const filteredTasks = tasks.filter((task) => {
-    if (filter === 'completed') return task.completed;
-    if (filter === 'incomplete') return !task.completed;
-    return true;
-  });
+  }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <span>Enhanced Task Management</span>
-          <Badge variant="secondary">{tasks.length} Tasks</Badge>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex items-center">
-          <Input
-            type="text"
-            placeholder="Add a new task..."
-            value={newTask}
-            onChange={(e) => setNewTask(e.target.value)}
-            className="mr-2"
-          />
-          <Button onClick={addTask}><Plus className="w-4 h-4 mr-2" /> Add Task</Button>
+    <Card className="p-6">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h3 className="text-xl font-semibold text-gray-900">Task Management</h3>
+          <p className="text-gray-600 text-sm">Stay organized and productive</p>
         </div>
-
-        <div className="flex items-center space-x-2">
-          <Button variant={filter === 'all' ? 'default' : 'outline'} size="sm" onClick={() => setFilter('all')}>All</Button>
-          <Button variant={filter === 'completed' ? 'default' : 'outline'} size="sm" onClick={() => setFilter('completed')}>Completed</Button>
-          <Button variant={filter === 'incomplete' ? 'default' : 'outline'} size="sm" onClick={() => setFilter('incomplete')}>Incomplete</Button>
+        <div className="flex items-center gap-3">
+          <Select value={filter} onValueChange={setFilter}>
+            <SelectTrigger className="w-32">
+              <Filter className="w-4 h-4 mr-2" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Tasks</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="completed">Completed</SelectItem>
+              <SelectItem value="in_progress">In Progress</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
+      </div>
 
-        <Separator />
+      {/* Add New Task */}
+      <div className="flex gap-2 mb-6">
+        <Input
+          placeholder="Add a new task..."
+          value={newTaskTitle}
+          onChange={(e) => setNewTaskTitle(e.target.value)}
+          onKeyPress={(e) => e.key === 'Enter' && handleAddTask()}
+          className="flex-1"
+        />
+        <Button 
+          onClick={handleAddTask}
+          disabled={!newTaskTitle.trim() || addTaskMutation.isPending}
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Add
+        </Button>
+      </div>
 
-        <div className="space-y-2">
-          {filteredTasks.map((task) => (
-            <div key={task.id} className="flex items-center justify-between">
-              <div className="flex items-center">
-                <Checkbox
-                  id={`task-${task.id}`}
-                  checked={task.completed}
-                  onCheckedChange={() => toggleComplete(task.id)}
-                />
-                <label htmlFor={`task-${task.id}`} className="ml-2 font-medium">
-                  {task.title}
-                </label>
-                <Badge variant="outline" className="ml-2">{task.priority}</Badge>
-                <Calendar className="w-4 h-4 ml-2" />
-                <span className="text-xs text-gray-500">{task.dueDate}</span>
+      {/* Tasks List */}
+      <div className="space-y-3">
+        {isLoading ? (
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="text-gray-600 mt-2">Loading tasks...</p>
+          </div>
+        ) : tasks.length === 0 ? (
+          <div className="text-center py-8">
+            <CheckCircle2 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No tasks found</h3>
+            <p className="text-gray-600">Add your first task to get started!</p>
+          </div>
+        ) : (
+          tasks.map((task) => (
+            <div
+              key={task.id}
+              className="flex items-start gap-3 p-4 border rounded-lg hover:shadow-sm transition-shadow"
+            >
+              <button
+                onClick={() => handleToggleTask(task.id, task.status)}
+                className="mt-1"
+                disabled={toggleTaskMutation.isPending}
+              >
+                {task.status === 'completed' ? (
+                  <CheckCircle2 className="w-5 h-5 text-green-500" />
+                ) : (
+                  <Circle className="w-5 h-5 text-gray-400 hover:text-blue-500" />
+                )}
+              </button>
+              
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <h4 className={`font-medium ${task.status === 'completed' ? 'line-through text-gray-500' : 'text-gray-900'}`}>
+                    {task.title}
+                  </h4>
+                  <Badge className={`${getPriorityColor(task.priority)} border-0 text-xs`}>
+                    {task.priority}
+                  </Badge>
+                </div>
+                
+                {task.description && (
+                  <p className="text-sm text-gray-600 mb-2">{task.description}</p>
+                )}
+                
+                <div className="flex items-center gap-4 text-xs text-gray-500">
+                  {task.due_date && (
+                    <div className="flex items-center gap-1">
+                      <Calendar className="w-3 h-3" />
+                      <span>Due: {new Date(task.due_date).toLocaleDateString()}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    <span>Created: {new Date(task.created_at).toLocaleDateString()}</span>
+                  </div>
+                </div>
               </div>
-              <Button variant="ghost" size="sm" onClick={() => deleteTask(task.id)}>
-                <Trash2 className="w-4 h-4" />
-              </Button>
             </div>
-          ))}
-        </div>
-
-        {filteredTasks.length === 0 && (
-          <div className="text-center text-gray-500">No tasks found.</div>
+          ))
         )}
-      </CardContent>
+      </div>
     </Card>
   );
 };

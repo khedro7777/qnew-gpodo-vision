@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Card } from '@/components/ui/card';
@@ -24,14 +25,14 @@ import {
 import { toast } from 'sonner';
 
 const UserProfile = () => {
-  const { user } = useAuth();
+  const { user, profile, updateProfile } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    full_name: user?.user_metadata?.full_name || '',
-    company_name: user?.user_metadata?.company_name || '',
-    phone: user?.user_metadata?.phone || '',
-    industry_sector: user?.user_metadata?.industry_sector || '',
-    country_code: user?.user_metadata?.country_code || '',
+    full_name: profile?.full_name || '',
+    company_name: profile?.company_name || '',
+    phone: profile?.phone || '',
+    industry_sector: profile?.industry_sector || '',
+    country_code: profile?.country_code || '',
   });
 
   const handleInputChange = (field: string, value: string) => {
@@ -40,7 +41,7 @@ const UserProfile = () => {
 
   const handleSave = async () => {
     try {
-      // In a real app, you would update the user profile here
+      await updateProfile(formData);
       setIsEditing(false);
       toast.success('Profile updated successfully!');
     } catch (error) {
@@ -50,11 +51,11 @@ const UserProfile = () => {
 
   const handleCancel = () => {
     setFormData({
-      full_name: user?.user_metadata?.full_name || '',
-      company_name: user?.user_metadata?.company_name || '',
-      phone: user?.user_metadata?.phone || '',
-      industry_sector: user?.user_metadata?.industry_sector || '',
-      country_code: user?.user_metadata?.country_code || '',
+      full_name: profile?.full_name || '',
+      company_name: profile?.company_name || '',
+      phone: profile?.phone || '',
+      industry_sector: profile?.industry_sector || '',
+      country_code: profile?.country_code || '',
     });
     setIsEditing(false);
   };
@@ -65,6 +66,9 @@ const UserProfile = () => {
   };
 
   const getStatusBadge = () => {
+    if (profile?.kyc_status === 'approved') {
+      return <Badge className="bg-green-100 text-green-800">Verified</Badge>;
+    }
     return <Badge variant="outline">Pending Verification</Badge>;
   };
 
@@ -104,38 +108,38 @@ const UserProfile = () => {
               <Card className="p-6">
                 <div className="text-center space-y-4">
                   <Avatar className="w-24 h-24 mx-auto">
-                    <AvatarImage src={user?.user_metadata?.avatar_url} alt={user?.user_metadata?.full_name} />
+                    <AvatarImage src={profile?.avatar_url} alt={profile?.full_name} />
                     <AvatarFallback className="text-2xl">
-                      {getInitials(user?.user_metadata?.full_name)}
+                      {getInitials(profile?.full_name)}
                     </AvatarFallback>
                   </Avatar>
                   
                   <div>
                     <h3 className="text-xl font-semibold text-gray-900">
-                      {user?.user_metadata?.full_name || 'User'}
+                      {profile?.full_name || 'User'}
                     </h3>
-                    <p className="text-gray-600">{user?.email}</p>
+                    <p className="text-gray-600">{profile?.email}</p>
                     <div className="mt-2">
                       {getStatusBadge()}
                     </div>
                   </div>
 
                   <div className="space-y-2 text-sm text-gray-600">
-                    {user?.user_metadata?.company_name && (
+                    {profile?.company_name && (
                       <div className="flex items-center gap-2">
                         <Building2 className="w-4 h-4" />
-                        <span>{user.user_metadata.company_name}</span>
+                        <span>{profile.company_name}</span>
                       </div>
                     )}
-                    {user?.user_metadata?.industry_sector && (
+                    {profile?.industry_sector && (
                       <div className="flex items-center gap-2">
                         <Shield className="w-4 h-4" />
-                        <span>{user.user_metadata.industry_sector}</span>
+                        <span>{profile.industry_sector}</span>
                       </div>
                     )}
                     <div className="flex items-center gap-2">
                       <Calendar className="w-4 h-4" />
-                      <span>Joined {new Date(user?.created_at || '').toLocaleDateString()}</span>
+                      <span>Joined {new Date(profile?.created_at || '').toLocaleDateString()}</span>
                     </div>
                   </div>
                 </div>
@@ -147,15 +151,15 @@ const UserProfile = () => {
                 <div className="space-y-3">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Points Balance</span>
-                    <span className="font-medium">0</span>
+                    <span className="font-medium">{profile?.points || 0}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Account Status</span>
-                    <span className="font-medium capitalize">pending</span>
+                    <span className="font-medium capitalize">{profile?.kyc_status || 'pending'}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Account Type</span>
-                    <span className="font-medium capitalize">user</span>
+                    <span className="font-medium capitalize">{profile?.role || 'user'}</span>
                   </div>
                 </div>
               </Card>
@@ -180,7 +184,7 @@ const UserProfile = () => {
                     ) : (
                       <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-md">
                         <User className="w-4 h-4 text-gray-400" />
-                        <span>{user?.user_metadata?.full_name || 'Not provided'}</span>
+                        <span>{profile?.full_name || 'Not provided'}</span>
                       </div>
                     )}
                   </div>
@@ -190,7 +194,7 @@ const UserProfile = () => {
                     <Label>Email Address</Label>
                     <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-md">
                       <Mail className="w-4 h-4 text-gray-400" />
-                      <span>{user?.email}</span>
+                      <span>{profile?.email}</span>
                     </div>
                   </div>
 
@@ -207,7 +211,7 @@ const UserProfile = () => {
                     ) : (
                       <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-md">
                         <Phone className="w-4 h-4 text-gray-400" />
-                        <span>{user?.user_metadata?.phone || 'Not provided'}</span>
+                        <span>{profile?.phone || 'Not provided'}</span>
                       </div>
                     )}
                   </div>
@@ -225,7 +229,7 @@ const UserProfile = () => {
                     ) : (
                       <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-md">
                         <Building2 className="w-4 h-4 text-gray-400" />
-                        <span>{user?.user_metadata?.company_name || 'Not provided'}</span>
+                        <span>{profile?.company_name || 'Not provided'}</span>
                       </div>
                     )}
                   </div>
@@ -243,7 +247,7 @@ const UserProfile = () => {
                     ) : (
                       <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-md">
                         <Shield className="w-4 h-4 text-gray-400" />
-                        <span>{user?.user_metadata?.industry_sector || 'Not provided'}</span>
+                        <span>{profile?.industry_sector || 'Not provided'}</span>
                       </div>
                     )}
                   </div>
@@ -261,7 +265,7 @@ const UserProfile = () => {
                     ) : (
                       <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-md">
                         <MapPin className="w-4 h-4 text-gray-400" />
-                        <span>{user?.user_metadata?.country_code || 'Not provided'}</span>
+                        <span>{profile?.country_code || 'Not provided'}</span>
                       </div>
                     )}
                   </div>
