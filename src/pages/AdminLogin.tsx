@@ -6,14 +6,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Shield, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Loader2, Shield, AlertTriangle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const AdminLogin = () => {
   const { adminUser, signIn, loading } = useAdminAuth();
   const [formData, setFormData] = useState({
-    email: 'admin@gpodo.com',
-    password: 'admin123',
+    email: '',
+    password: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -71,25 +71,6 @@ const AdminLogin = () => {
             </Alert>
           )}
           
-          <Alert className="border-blue-200 bg-blue-50">
-            <CheckCircle className="h-4 w-4 text-blue-600" />
-            <AlertDescription className="text-blue-700">
-              <strong>Available Login Credentials:</strong>
-              <div className="mt-3 space-y-3 text-sm">
-                <div className="bg-blue-100 p-3 rounded-lg">
-                  <div className="font-semibold text-blue-800">First Account:</div>
-                  <div className="flex items-center mt-1">📧 admin@gpodo.com</div>
-                  <div className="flex items-center">🔑 admin123</div>
-                </div>
-                <div className="bg-blue-100 p-3 rounded-lg">
-                  <div className="font-semibold text-blue-800">Second Account:</div>
-                  <div className="flex items-center mt-1">📧 khedrodo@gmail.com</div>
-                  <div className="flex items-center">🔑 Omarlo</div>
-                </div>
-              </div>
-            </AlertDescription>
-          </Alert>
-          
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email" className="block">Email Address</Label>
@@ -98,7 +79,7 @@ const AdminLogin = () => {
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                placeholder="admin@gpodo.com"
+                placeholder="Enter your admin email"
                 required
                 dir="ltr"
                 className="text-left"
