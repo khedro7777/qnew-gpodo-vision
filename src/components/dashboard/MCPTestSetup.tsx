@@ -1,294 +1,280 @@
-
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { Separator } from '@/components/ui/separator';
 import { 
-  Shield, 
-  Database, 
-  Users, 
-  Vote, 
+  TestTube, 
+  Play, 
+  Pause, 
+  RotateCcw, 
+  CheckCircle, 
+  XCircle, 
+  Clock, 
+  Settings,
   FileText,
-  CheckCircle,
-  AlertCircle
+  BarChart3
 } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import type { GatewayType } from '@/types';
+
+interface TestResult {
+  id: string;
+  name: string;
+  status: 'pending' | 'running' | 'completed' | 'failed';
+  progress: number;
+  log: string;
+}
 
 const MCPTestSetup = () => {
   const { user } = useAuth();
-  const [setupStatus, setSetupStatus] = useState({
-    mcpAgent: false,
-    sampleGroups: false,
-    sampleElections: false,
-    sampleOffers: false,
-    sampleReports: false
-  });
-  const [isLoading, setIsLoading] = useState(false);
+  const [testName, setTestName] = useState('');
+  const [testDescription, setTestDescription] = useState('');
+  const [testScript, setTestScript] = useState('');
+  const [tests, setTests] = useState<TestResult[]>([]);
+  const [runningTestId, setRunningTestId] = useState<string | null>(null);
 
-  const createMCPAgent = async () => {
-    try {
-      // Create MCP agent for current user
-      const { error } = await supabase
-        .from('mcp_agents')
-        .insert({
-          user_id: user?.id,
-          agent_code: 'MCP' + Math.floor(Math.random() * 1000).toString().padStart(3, '0'),
-          full_name: user?.full_name || 'Test MCP Agent',
-          specialization: 'Group Management & Operations'
-        });
-
-      if (error) throw error;
-
-      setSetupStatus(prev => ({ ...prev, mcpAgent: true }));
-      toast.success('MCP Agent created successfully!');
-    } catch (error) {
-      console.error('Error creating MCP agent:', error);
-      toast.error('Failed to create MCP agent');
+  useEffect(() => {
+    // Load existing tests from local storage or database
+    const storedTests = localStorage.getItem('mcpTests');
+    if (storedTests) {
+      setTests(JSON.parse(storedTests));
     }
+  }, []);
+
+  useEffect(() => {
+    // Save tests to local storage whenever tests state changes
+    localStorage.setItem('mcpTests', JSON.stringify(tests));
+  }, [tests]);
+
+  const handleCreateTest = () => {
+    if (!testName || !testDescription || !testScript) {
+      toast.error('Please fill in all fields');
+      return;
+    }
+
+    const newTest: TestResult = {
+      id: Date.now().toString(),
+      name: testName,
+      status: 'pending',
+      progress: 0,
+      log: '',
+    };
+
+    setTests([...tests, newTest]);
+    setTestName('');
+    setTestDescription('');
+    setTestScript('');
+    toast.success('Test created successfully!');
   };
 
-  const createSampleGroups = async () => {
-    try {
-      // Create sample groups with proper typing
-      const sampleGroups = [
-        {
-          name: 'Medical Equipment Purchasing',
-          gateway_type: 'purchasing' as GatewayType,
-          description: 'Group focused on purchasing medical equipment',
-          creator_id: user?.id!,
-          country_id: null,
-          industry_sector_id: null
-        },
-        {
-          name: 'Tech Startup Investment',
-          gateway_type: 'formation' as GatewayType, 
-          description: 'Investment opportunities in tech startups',
-          creator_id: user?.id!,
-          country_id: null,
-          industry_sector_id: null
+  const handleRunTest = (testId: string) => {
+    setRunningTestId(testId);
+    const testIndex = tests.findIndex(test => test.id === testId);
+    if (testIndex === -1) return;
+
+    const updatedTests = [...tests];
+    updatedTests[testIndex] = { ...updatedTests[testIndex], status: 'running', progress: 0, log: '' };
+    setTests(updatedTests);
+
+    // Simulate test execution
+    const interval = setInterval(() => {
+      setTests(prevTests => {
+        const currentTestIndex = prevTests.findIndex(test => test.id === testId);
+        if (currentTestIndex === -1) {
+          clearInterval(interval);
+          return prevTests;
         }
-      ];
 
-      for (const group of sampleGroups) {
-        const { error } = await supabase
-          .from('groups')
-          .insert(group);
-        
-        if (error) throw error;
-      }
+        const currentTest = prevTests[currentTestIndex];
+        if (currentTest.status === 'completed' || currentTest.status === 'failed') {
+          clearInterval(interval);
+          return prevTests;
+        }
 
-      setSetupStatus(prev => ({ ...prev, sampleGroups: true }));
-      toast.success('Sample groups created successfully!');
-    } catch (error) {
-      console.error('Error creating sample groups:', error);
-      toast.error('Failed to create sample groups');
-    }
+        const newProgress = Math.min(currentTest.progress + 10, 100);
+        const newLog = currentTest.log + `\nProgress: ${newProgress}% - Step completed`;
+        const updatedTest = { ...currentTest, progress: newProgress, log: newLog };
+        const updatedTestsList = [...prevTests];
+        updatedTestsList[currentTestIndex] = updatedTest;
+
+        if (newProgress === 100) {
+          clearInterval(interval);
+          setRunningTestId(null);
+          toast.success(`Test "${currentTest.name}" completed successfully!`);
+          return updatedTestsList.map(test =>
+            test.id === testId ? { ...test, status: 'completed' } : test
+          );
+        }
+
+        return updatedTestsList;
+      });
+    }, 500);
   };
 
-  const createSampleElections = async () => {
-    try {
-      // Get a sample group first
-      const { data: groups } = await supabase
-        .from('groups')
-        .select('id')
-        .limit(1);
-
-      if (!groups || groups.length === 0) {
-        toast.error('Please create sample groups first');
-        return;
-      }
-
-      const election = {
-        group_id: groups[0].id,
-        election_type: 'manager',
-        status: 'active',
-        start_date: new Date().toISOString(),
-        end_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-        created_by: user?.id
-      };
-
-      const { error } = await supabase
-        .from('group_elections')
-        .insert(election);
-
-      if (error) throw error;
-
-      setSetupStatus(prev => ({ ...prev, sampleElections: true }));
-      toast.success('Sample elections created successfully!');
-    } catch (error) {
-      console.error('Error creating sample elections:', error);
-      toast.error('Failed to create sample elections');
-    }
+  const handlePauseTest = (testId: string) => {
+    setRunningTestId(null);
+    setTests(prevTests =>
+      prevTests.map(test =>
+        test.id === testId ? { ...test, status: 'pending' } : test
+      )
+    );
+    toast.info('Test paused');
   };
 
-  const createSampleData = async () => {
-    setIsLoading(true);
-    try {
-      await createMCPAgent();
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      await createSampleGroups();
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      await createSampleElections();
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      // Mark other items as complete for demo
-      setSetupStatus(prev => ({ 
-        ...prev, 
-        sampleOffers: true, 
-        sampleReports: true 
-      }));
-
-      toast.success('MCP Test Environment Setup Complete!');
-    } catch (error) {
-      console.error('Error in setup:', error);
-      toast.error('Setup failed. Please try individual steps.');
-    } finally {
-      setIsLoading(false);
-    }
+  const handleResetTest = (testId: string) => {
+    setTests(prevTests =>
+      prevTests.map(test =>
+        test.id === testId ? { ...test, status: 'pending', progress: 0, log: '' } : test
+      )
+    );
+    toast.success('Test reset');
   };
 
-  const setupItems = [
-    {
-      id: 'mcpAgent',
-      title: 'MCP Agent Record',
-      description: 'Create MCP Agent privileges for current user',
-      icon: Shield,
-      action: createMCPAgent
-    },
-    {
-      id: 'sampleGroups',
-      title: 'Sample Groups',
-      description: 'Create test groups with proper numbering (P 101, I 201, etc.)',
-      icon: Users,
-      action: createSampleGroups
-    },
-    {
-      id: 'sampleElections',
-      title: 'Sample Elections',
-      description: 'Create test elections for group management',
-      icon: Vote,
-      action: createSampleElections
-    },
-    {
-      id: 'sampleOffers',
-      title: 'Sample Offers',
-      description: 'Mock offers from suppliers and freelancers',
-      icon: FileText,
-      action: () => {
-        setSetupStatus(prev => ({ ...prev, sampleOffers: true }));
-        toast.success('Sample offers ready (mock data)');
-      }
-    },
-    {
-      id: 'sampleReports',
-      title: 'Performance Reports',
-      description: 'Mock performance reports for testing',
-      icon: Database,
-      action: () => {
-        setSetupStatus(prev => ({ ...prev, sampleReports: true }));
-        toast.success('Sample reports ready (mock data)');
-      }
-    }
-  ];
-
-  const allComplete = Object.values(setupStatus).every(Boolean);
+  const handleDeleteTest = (testId: string) => {
+    setTests(prevTests => prevTests.filter(test => test.id !== testId));
+    toast.success('Test deleted');
+  };
 
   return (
-    <div className="space-y-6">
-      <Card className="bg-gradient-to-r from-blue-600 to-purple-700 text-white">
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <Shield className="w-8 h-8" />
-            <div>
-              <CardTitle className="text-2xl">MCP Agent Test Setup</CardTitle>
-              <p className="text-white/80">Initialize MCP Agent system for testing</p>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-white/80">Setup Progress</p>
-              <p className="text-xl font-bold">
-                {Object.values(setupStatus).filter(Boolean).length}/{setupItems.length} Complete
-              </p>
-            </div>
-            <Button 
-              onClick={createSampleData}
-              disabled={isLoading || allComplete}
-              className="bg-white/20 hover:bg-white/30 text-white border-white/30"
-            >
-              {isLoading ? 'Setting Up...' : allComplete ? 'Complete' : 'Run Full Setup'}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <TestTube className="w-5 h-5" />
+          MCP Test Setup
+        </CardTitle>
+        <CardDescription>Create and manage your MCP tests</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Create Test Form */}
+        <div className="space-y-2">
+          <Label htmlFor="testName">Test Name</Label>
+          <Input
+            id="testName"
+            placeholder="Enter test name"
+            value={testName}
+            onChange={(e) => setTestName(e.target.value)}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="testDescription">Test Description</Label>
+          <Input
+            id="testDescription"
+            placeholder="Enter test description"
+            value={testDescription}
+            onChange={(e) => setTestDescription(e.target.value)}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="testScript">Test Script</Label>
+          <Textarea
+            id="testScript"
+            placeholder="Enter test script"
+            value={testScript}
+            onChange={(e) => setTestScript(e.target.value)}
+          />
+        </div>
+        <Button onClick={handleCreateTest} className="bg-blue-600 hover:bg-blue-700">
+          Create Test
+        </Button>
 
-      <div className="grid gap-4">
-        {setupItems.map((item) => {
-          const Icon = item.icon;
-          const isComplete = setupStatus[item.id as keyof typeof setupStatus];
-          
-          return (
-            <Card key={item.id}>
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start gap-3">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      isComplete ? 'bg-green-100' : 'bg-gray-100'
-                    }`}>
-                      {isComplete ? (
-                        <CheckCircle className="w-5 h-5 text-green-600" />
-                      ) : (
-                        <Icon className="w-5 h-5 text-gray-600" />
-                      )}
-                    </div>
-                    <div>
-                      <h3 className="font-semibold flex items-center gap-2">
-                        {item.title}
-                        {isComplete && <Badge className="bg-green-100 text-green-800">Complete</Badge>}
-                      </h3>
-                      <p className="text-sm text-gray-600 mt-1">{item.description}</p>
-                    </div>
-                  </div>
-                  
-                  {!isComplete && (
-                    <Button 
-                      size="sm" 
-                      onClick={item.action}
-                      disabled={isLoading}
+        <Separator className="my-4" />
+
+        {/* Test List */}
+        {tests.length === 0 ? (
+          <div className="text-center py-4">
+            <FileText className="w-10 h-10 text-gray-400 mx-auto mb-2" />
+            <p className="text-gray-500">No tests created yet.</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {tests.map((test) => (
+              <Card key={test.id}>
+                <CardHeader className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    {test.name}
+                    {test.status === 'completed' && (
+                      <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">
+                        <CheckCircle className="w-4 h-4 mr-1" />
+                        Completed
+                      </Badge>
+                    )}
+                    {test.status === 'running' && (
+                      <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200 animate-pulse">
+                        <Clock className="w-4 h-4 mr-1" />
+                        Running
+                      </Badge>
+                    )}
+                    {test.status === 'failed' && (
+                      <Badge variant="outline" className="bg-red-100 text-red-800 border-red-200">
+                        <XCircle className="w-4 h-4 mr-1" />
+                        Failed
+                      </Badge>
+                    )}
+                    {test.status === 'pending' && (
+                      <Badge variant="outline">
+                        <Clock className="w-4 h-4 mr-1" />
+                        Pending
+                      </Badge>
+                    )}
+                  </CardTitle>
+                  <div className="flex gap-2">
+                    {test.status === 'pending' && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleRunTest(test.id)}
+                        disabled={runningTestId !== null}
+                      >
+                        <Play className="w-4 h-4 mr-2" />
+                        Run Test
+                      </Button>
+                    )}
+                    {test.status === 'running' && (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => handlePauseTest(test.id)}
+                      >
+                        <Pause className="w-4 h-4 mr-2" />
+                        Pause Test
+                      </Button>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleResetTest(test.id)}
                     >
-                      Setup
+                      <RotateCcw className="w-4 h-4" />
                     </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleDeleteTest(test.id)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <Progress value={test.progress} />
+                  {test.log && (
+                    <div className="mt-4 text-sm text-gray-600">
+                      <Label>Log:</Label>
+                      <Textarea value={test.log} readOnly className="mt-1 h-24" />
+                    </div>
                   )}
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
-
-      {allComplete && (
-        <Card className="bg-green-50 border-green-200">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <CheckCircle className="w-6 h-6 text-green-600" />
-              <div>
-                <h3 className="font-semibold text-green-900">Setup Complete!</h3>
-                <p className="text-sm text-green-700">
-                  MCP Agent test environment is ready. You can now test all MCP functionalities.
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-    </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 

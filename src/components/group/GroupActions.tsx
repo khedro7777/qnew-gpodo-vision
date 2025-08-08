@@ -1,152 +1,88 @@
-
 import React, { useState } from 'react';
-import { MessageCircle, UserPlus, Briefcase, Building, Lock } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/hooks/useAuth';
+import { Users, MessageSquare, Calendar, Settings, UserPlus, Shield } from 'lucide-react';
 import { toast } from 'sonner';
-import { useAuth } from '@/contexts/AuthContext';
-import AuthModal from '@/components/auth/AuthModal';
-import GroupWorkflowModals from './GroupWorkflowModals';
 
 interface GroupActionsProps {
   groupId: string;
   isLoggedIn: boolean;
 }
 
-const GroupActions = ({ groupId, isLoggedIn }: GroupActionsProps) => {
+const GroupActions: React.FC<GroupActionsProps> = ({ groupId, isLoggedIn }) => {
   const { user } = useAuth();
-  const [authModalOpen, setAuthModalOpen] = useState(false);
-  const [workflowModalOpen, setWorkflowModalOpen] = useState(false);
-  const [workflowType, setWorkflowType] = useState<'contact' | 'supplier' | 'freelancer'>('contact');
+  const [isMember, setIsMember] = useState(false); // Mock state
 
-  const handleAction = (action: string) => {
-    if (!isLoggedIn || !user) {
-      setAuthModalOpen(true);
-      return;
-    }
-    
-    // Handle workflow actions
-    switch (action) {
-      case 'contact':
-        setWorkflowType('contact');
-        setWorkflowModalOpen(true);
-        break;
-      case 'join':
-        toast.success('Join request submitted successfully');
-        break;
-      case 'supplier':
-        setWorkflowType('supplier');
-        setWorkflowModalOpen(true);
-        break;
-      case 'freelancer':
-        setWorkflowType('freelancer');
-        setWorkflowModalOpen(true);
-        break;
-      default:
-        toast.info('Feature coming soon');
-    }
+  const handleJoinGroup = () => {
+    // Implement the logic to join the group
+    setIsMember(true);
+    toast.success('تم الانضمام إلى المجموعة بنجاح');
   };
 
-  const actions = [
-    {
-      id: 'contact',
-      title: 'Contact Group Admin',
-      description: 'Send a message to the group administrator',
-      icon: MessageCircle,
-      color: 'bg-blue-500 hover:bg-blue-600',
-      enabled: true
-    },
-    {
-      id: 'join',
-      title: 'Join as Member',
-      description: 'Request to become a member of this group',
-      icon: UserPlus,
-      color: 'bg-green-500 hover:bg-green-600',
-      enabled: true
-    },
-    {
-      id: 'supplier',
-      title: 'Submit Supplier Offer',
-      description: 'Submit your products or services offer',
-      icon: Building,
-      color: 'bg-purple-500 hover:bg-purple-600',
-      enabled: true
-    },
-    {
-      id: 'freelancer',
-      title: 'Apply for Freelancer Role',
-      description: 'Submit your freelancer application',
-      icon: Briefcase,
-      color: 'bg-orange-500 hover:bg-orange-600',
-      enabled: true
-    }
-  ];
+  const handleLeaveGroup = () => {
+    // Implement the logic to leave the group
+    setIsMember(false);
+    toast.success('تم مغادرة المجموعة بنجاح');
+  };
 
   return (
-    <>
-      <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-white/50 sticky top-8">
-        <h3 className="text-lg font-bold text-gray-900 mb-6">Available Actions</h3>
-        
-        {!isLoggedIn && (
-          <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl">
-            <div className="flex items-center gap-2 mb-2">
-              <Lock className="w-4 h-4 text-amber-600" />
-              <span className="font-medium text-amber-800">Authentication Required</span>
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Settings className="w-4 h-4" />
+          إجراءات المجموعة
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Users className="w-4 h-4 text-gray-500" />
+              <span className="text-sm font-medium text-gray-700">الأعضاء</span>
             </div>
-            <p className="text-sm text-amber-700">
-              Please log in to interact with this group and access all features.
-            </p>
+            <Badge variant="secondary">10 أعضاء</Badge>
           </div>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <MessageSquare className="w-4 h-4 text-gray-500" />
+              <span className="text-sm font-medium text-gray-700">الرسائل</span>
+            </div>
+            <Badge variant="secondary">5 رسائل جديدة</Badge>
+          </div>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-gray-500" />
+              <span className="text-sm font-medium text-gray-700">الاجتماعات القادمة</span>
+            </div>
+            <Badge variant="secondary">2 اجتماع</Badge>
+          </div>
+        </div>
+
+        {isLoggedIn ? (
+          isMember ? (
+            <Button variant="destructive" className="w-full" onClick={handleLeaveGroup}>
+              مغادرة المجموعة
+            </Button>
+          ) : (
+            <Button className="w-full" onClick={handleJoinGroup}>
+              الانضمام إلى المجموعة
+            </Button>
+          )
+        ) : (
+          <Button variant="outline" className="w-full" disabled>
+            <UserPlus className="w-4 h-4 ml-2" />
+            تسجيل الدخول للانضمام
+          </Button>
         )}
 
-        <div className="space-y-4">
-          {actions.map((action) => {
-            const IconComponent = action.icon;
-            const shouldShowAsDisabled = !isLoggedIn && !action.enabled;
-            
-            return (
-              <Button
-                key={action.id}
-                className={`w-full justify-start gap-3 h-auto p-4 ${
-                  shouldShowAsDisabled
-                    ? 'bg-gray-300 hover:bg-gray-300 cursor-pointer'
-                    : action.color
-                } text-white transition-colors`}
-                onClick={() => handleAction(action.id)}
-              >
-                <IconComponent className="w-5 h-5" />
-                <div className="text-left">
-                  <div className="font-medium">{action.title}</div>
-                  <div className="text-xs opacity-90">{action.description}</div>
-                </div>
-              </Button>
-            );
-          })}
-        </div>
-
-        <div className="mt-6 pt-6 border-t border-gray-200">
-          <div className="text-center">
-            <p className="text-sm text-gray-600 mb-2">Need help?</p>
-            <Button variant="ghost" size="sm" className="text-productivity-blue hover:text-productivity-blue/90">
-              Contact Support
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* Auth Modal */}
-      <AuthModal 
-        isOpen={authModalOpen}
-        onClose={() => setAuthModalOpen(false)}
-      />
-
-      {/* Workflow Modals */}
-      <GroupWorkflowModals
-        isOpen={workflowModalOpen}
-        onClose={() => setWorkflowModalOpen(false)}
-        groupId={groupId}
-        type={workflowType}
-      />
-    </>
+        <Button variant="secondary" className="w-full">
+          <Shield className="w-4 h-4 ml-2" />
+          طلب التحقق
+        </Button>
+      </CardContent>
+    </Card>
   );
 };
 

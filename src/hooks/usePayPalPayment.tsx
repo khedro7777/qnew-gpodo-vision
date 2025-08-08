@@ -1,93 +1,89 @@
-
-import { useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
-import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
-interface PayPalPaymentResponse {
-  success: boolean;
-  orderId?: string;
-  approvalUrl?: string;
-  error?: string;
+interface PayPalHook {
+  loading: boolean;
+  error: string | null;
+  createOrder: (amount: number) => Promise<string | null>;
+  captureOrder: (orderID: string) => Promise<boolean>;
 }
 
-interface PayPalCaptureResponse {
-  success: boolean;
-  status?: string;
-  amount?: number;
-  error?: string;
-}
-
-export const usePayPalPayment = () => {
+export const usePayPalPayment = (): PayPalHook => {
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
 
-  const createPayment = async (amount: number, currency = 'USD'): Promise<PayPalPaymentResponse> => {
-    if (!user) {
-      throw new Error('User not authenticated');
-    }
-
+  const createOrder = useCallback(async (amount: number): Promise<string | null> => {
     setLoading(true);
-    try {
-      console.log('Creating PayPal payment:', { amount, currency, userId: user.id });
+    setError(null);
 
-      const { data, error } = await supabase.functions.invoke('paypal-payment', {
-        body: {
-          amount,
-          currency,
-          userId: user.id,
+    try {
+      const response = await fetch('/api/paypal/create-order', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
+        body: JSON.stringify({ amount }),
       });
 
-      if (error) {
-        throw error;
-      }
+      const data = await response.json();
 
-      console.log('PayPal payment created:', data);
-      return data;
-    } catch (error: any) {
-      console.error('PayPal payment creation failed:', error);
-      toast.error('Failed to create payment: ' + error.message);
-      throw error;
+      if (response.ok && data.orderID) {
+        return data.orderID;
+      } else {
+        setError(data.message || 'Failed to create order.');
+        toast.error(data.message || 'Failed to create order.');
+        return null;
+      }
+    } catch (err: any) {
+      setError(err.message || 'An unexpected error occurred.');
+      toast.error(err.message || 'An unexpected error occurred.');
+      return null;
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const capturePayment = async (orderId: string): Promise<PayPalCaptureResponse> => {
-    if (!user) {
-      throw new Error('User not authenticated');
-    }
-
+  const captureOrder = useCallback(async (orderID: string): Promise<boolean> => {
     setLoading(true);
-    try {
-      console.log('Capturing PayPal payment:', orderId);
+    setError(null);
 
-      const { data, error } = await supabase.functions.invoke('paypal-capture', {
-        body: {
-          orderId,
-          userId: user.id,
+    try {
+      const response = await fetch('/api/paypal/capture-order', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
+        body: JSON.stringify({ orderID }),
       });
 
-      if (error) {
-        throw error;
-      }
+      const data = await response.json();
 
-      console.log('PayPal payment captured:', data);
-      return data;
-    } catch (error: any) {
-      console.error('PayPal payment capture failed:', error);
-      toast.error('Failed to capture payment: ' + error.message);
-      throw error;
+      if (response.ok && data.status === 'COMPLETED') {
+        toast.success('Payment successful!');
+        // Update user profile or grant access here
+        if (user?.id) {
+          await supabase
+            .from('profiles')
+            .update({ has_paid: true })
+            .eq('id', user.id);
+        }
+        return true;
+      } else {
+        setError(data.message || 'Failed to capture order.');
+        toast.error(data.message || 'Failed to capture order.');
+        return false;
+      }
+    } catch (err: any) {
+      setError(err.message || 'An unexpected error occurred.');
+      toast.error(err.message || 'An unexpected error occurred.');
+      return false;
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id]);
 
-  return {
-    createPayment,
-    capturePayment,
-    loading,
-  };
+  return { loading, error, createOrder, captureOrder };
 };

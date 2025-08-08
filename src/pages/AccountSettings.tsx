@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Card } from '@/components/ui/card';
@@ -22,7 +21,7 @@ import {
 import { toast } from 'sonner';
 
 const AccountSettings = () => {
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   const [notifications, setNotifications] = useState({
     email: true,
     push: false,
@@ -98,12 +97,12 @@ const AccountSettings = () => {
                     </div>
                     <div className="space-y-2">
                       <Label>Email Address</Label>
-                      <Input value={profile?.email || ''} readOnly className="bg-gray-50" />
+                      <Input value={user?.email || ''} readOnly className="bg-gray-50" />
                     </div>
                   </div>
                   <div className="space-y-2">
                     <Label>Account Type</Label>
-                    <Input value={profile?.role?.toUpperCase() || 'USER'} readOnly className="bg-gray-50" />
+                    <Input value="USER" readOnly className="bg-gray-50" />
                   </div>
                 </div>
               </Card>
