@@ -7,7 +7,6 @@ interface AdminUser {
   id: string;
   email: string;
   role: string;
-  full_name?: string;
   last_login?: string;
 }
 
@@ -50,8 +49,7 @@ export const AdminAuthProvider = ({ children }: { children: React.ReactNode }) =
             id,
             email,
             role,
-            last_login,
-            full_name
+            last_login
           )
         `)
         .eq('token', token)
@@ -76,7 +74,6 @@ export const AdminAuthProvider = ({ children }: { children: React.ReactNode }) =
         email: data.admin_users.email,
         role: data.admin_users.role,
         last_login: data.admin_users.last_login,
-        full_name: data.admin_users.full_name,
       });
 
       setLoading(false);
@@ -94,7 +91,7 @@ export const AdminAuthProvider = ({ children }: { children: React.ReactNode }) =
     try {
       const { data: adminData, error: adminError } = await supabase
         .from('admin_users')
-        .select('id, email, role, is_active, last_login, full_name')
+        .select('id, email, role, is_active, last_login')
         .eq('email', email)
         .eq('password_hash', password)
         .eq('is_active', true)
@@ -138,7 +135,6 @@ export const AdminAuthProvider = ({ children }: { children: React.ReactNode }) =
         email: adminData.email,
         role: adminData.role,
         last_login: adminData.last_login,
-        full_name: adminData.full_name,
       });
 
       toast.success('Welcome to Admin Dashboard');
