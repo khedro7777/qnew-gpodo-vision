@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -21,7 +22,8 @@ import {
   FileText,
   Building2,
   MapPin,
-  Crown
+  Crown,
+  Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -85,8 +87,9 @@ const GroupCreationWizard = () => {
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value, type, checked } = e.target;
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value, type } = e.target;
+    const checked = (e.target as HTMLInputElement).checked;
     setGroupData(prevData => ({
       ...prevData,
       [name]: type === 'checkbox' ? checked : value
@@ -114,32 +117,52 @@ const GroupCreationWizard = () => {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 2000));
 
-      // Insert group data into Supabase
+      // Insert group data into Supabase with correct column names
       const { data, error } = await supabase
         .from('groups')
-        .insert([
-          {
-            name: groupData.name,
-            description: groupData.description,
-            industry_sector: groupData.industrySector,
-            country: groupData.country,
-            is_public: groupData.isPublic,
-            entry_points: groupData.entryPoints,
-            kyc_required: groupData.kycRequired,
-            mcp_test_required: groupData.mcpTestRequired,
-            governance_structure: groupData.governanceStructure,
-            mission_statement: groupData.missionStatement,
-            rules_and_regulations: groupData.rulesAndRegulations,
-            created_by: user.id
-          }
-        ]);
+        .insert({
+          name: groupData.name,
+          description: groupData.description,
+          gateway_type: 'marketing', // Default gateway type
+          creator_id: user.id,
+          is_public: groupData.isPublic,
+          current_members: 1
+        })
+        .select()
+        .single();
 
       if (error) {
         throw error;
       }
 
+      // Add creator as admin member
+      if (data) {
+        await supabase
+          .from('group_members')
+          .insert({
+            group_id: data.id,
+            user_id: user.id,
+            role: 'admin'
+          });
+      }
+
       toast.success('Group created successfully!');
       setIsOpen(false);
+      // Reset form
+      setGroupData({
+        name: '',
+        description: '',
+        industrySector: '',
+        country: '',
+        isPublic: true,
+        entryPoints: 0,
+        kycRequired: false,
+        mcpTestRequired: false,
+        governanceStructure: '',
+        missionStatement: '',
+        rulesAndRegulations: ''
+      });
+      setCurrentStep(0);
     } catch (error: any) {
       console.error('Error creating group:', error);
       toast.error('Failed to create group: ' + error.message);
@@ -213,7 +236,7 @@ const GroupCreationWizard = () => {
               <div>
                 <Label>Group Type</Label>
                 <div className="flex items-center space-x-2">
-                  <Input
+                  <input
                     type="checkbox"
                     id="isPublic"
                     name="isPublic"
@@ -276,7 +299,7 @@ const GroupCreationWizard = () => {
               />
             </div>
             <div className="flex items-center space-x-2">
-              <Input
+              <input
                 type="checkbox"
                 id="kycRequired"
                 name="kycRequired"
@@ -286,7 +309,7 @@ const GroupCreationWizard = () => {
               <Label htmlFor="kycRequired">KYC Verification Required</Label>
             </div>
             <div className="flex items-center space-x-2">
-              <Input
+              <input
                 type="checkbox"
                 id="mcpTestRequired"
                 name="mcpTestRequired"
@@ -301,7 +324,7 @@ const GroupCreationWizard = () => {
         return (
           <div className="space-y-4">
             <Card>
-              <CardContent>
+              <CardContent className="pt-6">
                 <div className="space-y-2">
                   <h3 className="text-lg font-semibold">Group Details</h3>
                   <p><strong>Name:</strong> {groupData.name}</p>
@@ -313,7 +336,7 @@ const GroupCreationWizard = () => {
               </CardContent>
             </Card>
             <Card>
-              <CardContent>
+              <CardContent className="pt-6">
                 <div className="space-y-2">
                   <h3 className="text-lg font-semibold">Group Structure</h3>
                   <p><strong>Governance:</strong> {groupData.governanceStructure}</p>
@@ -323,7 +346,7 @@ const GroupCreationWizard = () => {
               </CardContent>
             </Card>
             <Card>
-              <CardContent>
+              <CardContent className="pt-6">
                 <div className="space-y-2">
                   <h3 className="text-lg font-semibold">Entry Requirements</h3>
                   <p><strong>Entry Points:</strong> {groupData.entryPoints}</p>
@@ -360,7 +383,7 @@ const GroupCreationWizard = () => {
             {steps.map((step, index) => (
               <div key={step.id} className="flex items-center">
                 {index > 0 && (
-                  <ArrowRight className="w-4 h-4 text-gray-400" />
+                  <ArrowRight className="w-4 h-4 text-gray-400 mx-2" />
                 )}
                 <div className={`flex items-center ${currentStep === index ? 'text-blue-600 font-semibold' : 'text-gray-500'}`}>
                   {currentStep > index ? (
@@ -378,6 +401,13 @@ const GroupCreationWizard = () => {
 
         {renderStepContent()}
 
+        {submissionProgress > 0 && submissionProgress < 100 && (
+          <div className="space-y-2">
+            <Progress value={submissionProgress} />
+            <p className="text-sm text-center text-gray-500">Creating your group...</p>
+          </div>
+        )}
+
         <div className="flex justify-between">
           <Button
             variant="secondary"
@@ -391,8 +421,8 @@ const GroupCreationWizard = () => {
             <Button onClick={handleSubmit} disabled={submissionProgress > 0}>
               {submissionProgress > 0 ? (
                 <div className="flex items-center">
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   Submitting...
-                  <Loader2 className="w-4 h-4 ml-2 animate-spin" />
                 </div>
               ) : (
                 'Submit'

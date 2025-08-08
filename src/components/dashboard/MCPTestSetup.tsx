@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -56,7 +57,7 @@ const MCPTestSetup = () => {
           agent_code: setupData.agentCode,
           full_name: setupData.fullName,
           specialization: setupData.specialization,
-          status: 'active'
+          is_active: true
         })
         .select()
         .single();
@@ -70,10 +71,8 @@ const MCPTestSetup = () => {
         .insert({
           name: setupData.testGroupName,
           description: 'Test Group for MCP Agent',
-          industry_sector_id: 'default',
-          country_id: 'default',
-          created_by: user?.id,
-          status: 'active',
+          gateway_type: 'marketing',
+          creator_id: user?.id,
           is_public: true,
           current_members: 1
         })
@@ -95,22 +94,18 @@ const MCPTestSetup = () => {
       if (memberError) throw memberError;
       setSetupProgress(70);
 
-      // 4. Create Mock Election, Offer, and Report (Placeholder)
-      // In a real scenario, you would create actual records in the database
-      // and store their IDs in the setupData state.
-
-      // 5. Update MCP Test Results
+      // 4. Create Mock Test Result
       const { error: testError } = await supabase
         .from('mcp_test_results')
         .insert({
           user_id: user?.id,
-          mcp_agent_id: agent.id,
-          group_id: group.id,
-          election_id: 'mock-election-id',
-          offer_id: 'mock-offer-id',
-          report_id: 'mock-report-id',
-          status: 'approved',
-          test_date: new Date().toISOString()
+          test_score: 85,
+          test_data: {
+            agent_id: agent.id,
+            group_id: group.id,
+            test_type: 'setup'
+          },
+          status: 'approved'
         });
 
       if (testError) throw testError;

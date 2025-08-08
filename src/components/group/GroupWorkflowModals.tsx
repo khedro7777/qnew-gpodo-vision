@@ -1,100 +1,120 @@
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useAuth } from '@/hooks/useAuth';
 import { useGroupWorkflow } from '@/hooks/useGroupWorkflow';
-import { 
-  Vote, 
-  FileText, 
-  Users, 
-  Scale, 
-  Upload, 
-  X, 
-  Plus, 
-  AlertTriangle, 
-  CheckCircle,
-  Calendar
-} from 'lucide-react';
-import { toast } from 'sonner';
+import { Vote, FileText, UserPlus, AlertTriangle, Loader2 } from 'lucide-react';
 
-interface CreateVoteModalProps {
-  groupId: string;
-  onVoteCreated: () => void;
+interface GroupType {
+  id: string;
+  name: string;
 }
 
-export const CreateVoteModal: React.FC<CreateVoteModalProps> = ({ groupId, onVoteCreated }) => {
-  const [open, setOpen] = useState(false);
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const { createVote, loading } = useGroupWorkflow(groupId);
+interface VoteType {
+  title: string;
+  description: string;
+}
 
-  const handleSubmit = async () => {
-    if (!title || !description) {
-      toast.error('Please fill in all fields');
+interface ProposalType {
+  title: string;
+  description: string;
+  document_url: string;
+}
+
+interface TaskType {
+  title: string;
+  description: string;
+  assigned_to: string;
+  due_date: string;
+  status: 'pending' | 'in progress' | 'completed';
+  priority: 'low' | 'medium' | 'high';
+}
+
+interface ArbitrationCaseType {
+  respondent_id: string;
+  title: string;
+  description: string;
+  evidence: string[];
+}
+
+export const CreateVoteModal = ({ groupId, group }: { groupId: string; group: GroupType }) => {
+  const { createVote, loading } = useGroupWorkflow(groupId);
+  const [isOpen, setIsOpen] = useState(false);
+  const [voteData, setVoteData] = useState<VoteType>({
+    title: '',
+    description: ''
+  });
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setVoteData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!voteData.title || !voteData.description) {
+      alert('Please fill in all fields');
       return;
     }
 
-    const success = await createVote({ title, description });
+    const success = await createVote(voteData);
     if (success) {
-      toast.success('Vote created successfully!');
-      onVoteCreated();
-      setOpen(false);
-      setTitle('');
-      setDescription('');
-    } else {
-      toast.error('Failed to create vote.');
+      setIsOpen(false);
+      setVoteData({ title: '', description: '' });
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="w-full justify-start gap-2">
-          <Vote className="w-4 h-4" />
+        <Button variant="outline">
+          <Vote className="w-4 h-4 mr-2" />
           Create Vote
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Create a New Vote</DialogTitle>
           <DialogDescription>
-            Gather opinions and make decisions within your group.
+            Create a new vote for the group to decide on important matters.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
-          <div className="grid gap-2">
-            <Label htmlFor="vote-title">Title</Label>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="title" className="text-right">
+              Title
+            </Label>
             <Input
               type="text"
-              id="vote-title"
-              placeholder="Enter vote title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              id="title"
+              name="title"
+              value={voteData.title}
+              onChange={handleChange}
+              className="col-span-3"
             />
           </div>
-          <div className="grid gap-2">
-            <Label htmlFor="vote-description">Description</Label>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="description" className="text-right">
+              Description
+            </Label>
             <Textarea
-              id="vote-description"
-              placeholder="Describe the vote"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              id="description"
+              name="description"
+              value={voteData.description}
+              onChange={handleChange}
+              className="col-span-3"
             />
           </div>
         </div>
         <Button onClick={handleSubmit} disabled={loading}>
           {loading ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Please wait
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Creating...
             </>
           ) : (
             'Create Vote'
@@ -105,88 +125,94 @@ export const CreateVoteModal: React.FC<CreateVoteModalProps> = ({ groupId, onVot
   );
 };
 
-interface SubmitProposalModalProps {
-  groupId: string;
-  onProposalSubmitted: () => void;
-}
-
-export const SubmitProposalModal: React.FC<SubmitProposalModalProps> = ({ groupId, onProposalSubmitted }) => {
-  const [open, setOpen] = useState(false);
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [documentUrl, setDocumentUrl] = useState('');
+export const SubmitProposalModal = ({ groupId, group }: { groupId: string; group: GroupType }) => {
   const { submitProposal, loading } = useGroupWorkflow(groupId);
+  const [isOpen, setIsOpen] = useState(false);
+  const [proposalData, setProposalData] = useState<ProposalType>({
+    title: '',
+    description: '',
+    document_url: ''
+  });
 
-  const handleSubmit = async () => {
-    if (!title || !description) {
-      toast.error('Please fill in all fields');
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setProposalData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!proposalData.title || !proposalData.description) {
+      alert('Please fill in all fields');
       return;
     }
 
-    const success = await submitProposal({ title, description, document_url: documentUrl });
+    const success = await submitProposal(proposalData);
     if (success) {
-      toast.success('Proposal submitted successfully!');
-      onProposalSubmitted();
-      setOpen(false);
-      setTitle('');
-      setDescription('');
-      setDocumentUrl('');
-    } else {
-      toast.error('Failed to submit proposal.');
+      setIsOpen(false);
+      setProposalData({ title: '', description: '', document_url: '' });
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="w-full justify-start gap-2">
-          <FileText className="w-4 h-4" />
+        <Button variant="outline">
+          <FileText className="w-4 h-4 mr-2" />
           Submit Proposal
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Submit a New Proposal</DialogTitle>
           <DialogDescription>
-            Share your ideas and suggestions with the group.
+            Submit a new proposal for the group to review and vote on.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
-          <div className="grid gap-2">
-            <Label htmlFor="proposal-title">Title</Label>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="title" className="text-right">
+              Title
+            </Label>
             <Input
               type="text"
-              id="proposal-title"
-              placeholder="Enter proposal title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              id="title"
+              name="title"
+              value={proposalData.title}
+              onChange={handleChange}
+              className="col-span-3"
             />
           </div>
-          <div className="grid gap-2">
-            <Label htmlFor="proposal-description">Description</Label>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="description" className="text-right">
+              Description
+            </Label>
             <Textarea
-              id="proposal-description"
-              placeholder="Describe the proposal"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              id="description"
+              name="description"
+              value={proposalData.description}
+              onChange={handleChange}
+              className="col-span-3"
             />
           </div>
-          <div className="grid gap-2">
-            <Label htmlFor="proposal-document">Document URL (Optional)</Label>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="document_url" className="text-right">
+              Document URL
+            </Label>
             <Input
-              type="url"
-              id="proposal-document"
-              placeholder="Enter document URL"
-              value={documentUrl}
-              onChange={(e) => setDocumentUrl(e.target.value)}
+              type="text"
+              id="document_url"
+              name="document_url"
+              value={proposalData.document_url}
+              onChange={handleChange}
+              className="col-span-3"
             />
           </div>
         </div>
         <Button onClick={handleSubmit} disabled={loading}>
           {loading ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Please wait
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Submitting...
             </>
           ) : (
             'Submit Proposal'
@@ -197,124 +223,125 @@ export const SubmitProposalModal: React.FC<SubmitProposalModalProps> = ({ groupI
   );
 };
 
-interface CreateTaskModalProps {
-  groupId: string;
-  onTaskCreated: () => void;
-}
-
-export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ groupId, onTaskCreated }) => {
-  const [open, setOpen] = useState(false);
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [assignedTo, setAssignedTo] = useState('');
-  const [dueDate, setDueDate] = useState('');
-  const [status, setStatus] = useState('pending');
-  const [priority, setPriority] = useState('medium');
+export const CreateTaskModal = ({ groupId, group }: { groupId: string; group: GroupType }) => {
   const { createTask, loading } = useGroupWorkflow(groupId);
-  const { user } = useAuth();
+  const [isOpen, setIsOpen] = useState(false);
+  const [taskData, setTaskData] = useState<TaskType>({
+    title: '',
+    description: '',
+    assigned_to: '',
+    due_date: '',
+    status: 'pending',
+    priority: 'medium'
+  });
 
-  const handleSubmit = async () => {
-    if (!title || !description || !assignedTo || !dueDate) {
-      toast.error('Please fill in all required fields');
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setTaskData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!taskData.title || !taskData.description || !taskData.assigned_to || !taskData.due_date) {
+      alert('Please fill in all fields');
       return;
     }
 
-    const success = await createTask({
-      title,
-      description,
-      assigned_to: assignedTo,
-      due_date: dueDate,
-      status,
-      priority
-    });
-
+    const success = await createTask(taskData);
     if (success) {
-      toast.success('Task created successfully!');
-      onTaskCreated();
-      setOpen(false);
-      setTitle('');
-      setDescription('');
-      setAssignedTo('');
-      setDueDate('');
-      setStatus('pending');
-      setPriority('medium');
-    } else {
-      toast.error('Failed to create task.');
+      setIsOpen(false);
+      setTaskData({ title: '', description: '', assigned_to: '', due_date: '', status: 'pending', priority: 'medium' });
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="w-full justify-start gap-2">
-          <Plus className="w-4 h-4" />
+        <Button variant="outline">
+          <UserPlus className="w-4 h-4 mr-2" />
           Create Task
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Create a New Task</DialogTitle>
           <DialogDescription>
-            Assign tasks to group members to manage projects effectively.
+            Assign a new task to a group member.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
-          <div className="grid gap-2">
-            <Label htmlFor="task-title">Title</Label>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="title" className="text-right">
+              Title
+            </Label>
             <Input
               type="text"
-              id="task-title"
-              placeholder="Enter task title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              id="title"
+              name="title"
+              value={taskData.title}
+              onChange={handleChange}
+              className="col-span-3"
             />
           </div>
-          <div className="grid gap-2">
-            <Label htmlFor="task-description">Description</Label>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="description" className="text-right">
+              Description
+            </Label>
             <Textarea
-              id="task-description"
-              placeholder="Describe the task"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              id="description"
+              name="description"
+              value={taskData.description}
+              onChange={handleChange}
+              className="col-span-3"
             />
           </div>
-          <div className="grid gap-2">
-            <Label htmlFor="task-assigned-to">Assign To</Label>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="assigned_to" className="text-right">
+              Assigned To
+            </Label>
             <Input
               type="text"
-              id="task-assigned-to"
-              placeholder="Enter user ID to assign"
-              value={assignedTo}
-              onChange={(e) => setAssignedTo(e.target.value)}
+              id="assigned_to"
+              name="assigned_to"
+              value={taskData.assigned_to}
+              onChange={handleChange}
+              className="col-span-3"
             />
           </div>
-          <div className="grid gap-2">
-            <Label htmlFor="task-due-date">Due Date</Label>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="due_date" className="text-right">
+              Due Date
+            </Label>
             <Input
               type="date"
-              id="task-due-date"
-              value={dueDate}
-              onChange={(e) => setDueDate(e.target.value)}
+              id="due_date"
+              name="due_date"
+              value={taskData.due_date}
+              onChange={handleChange}
+              className="col-span-3"
             />
           </div>
-          <div className="grid gap-2">
-            <Label htmlFor="task-status">Status</Label>
-            <Select value={status} onValueChange={setStatus}>
-              <SelectTrigger className="w-full">
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="status" className="text-right">
+              Status
+            </Label>
+            <Select onValueChange={(value) => setTaskData(prev => ({ ...prev, status: value as any }))}>
+              <SelectTrigger className="col-span-3">
                 <SelectValue placeholder="Select status" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="in_progress">In Progress</SelectItem>
+                <SelectItem value="in progress">In Progress</SelectItem>
                 <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
               </SelectContent>
             </Select>
           </div>
-          <div className="grid gap-2">
-            <Label htmlFor="task-priority">Priority</Label>
-            <Select value={priority} onValueChange={setPriority}>
-              <SelectTrigger className="w-full">
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="priority" className="text-right">
+              Priority
+            </Label>
+            <Select onValueChange={(value) => setTaskData(prev => ({ ...prev, priority: value as any }))}>
+              <SelectTrigger className="col-span-3">
                 <SelectValue placeholder="Select priority" />
               </SelectTrigger>
               <SelectContent>
@@ -328,8 +355,8 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ groupId, onTas
         <Button onClick={handleSubmit} disabled={loading}>
           {loading ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Please wait
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Creating...
             </>
           ) : (
             'Create Task'
@@ -340,98 +367,95 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ groupId, onTas
   );
 };
 
-interface FileArbitrationCaseModalProps {
-  groupId: string;
-  onCaseFiled: () => void;
-}
-
-export const FileArbitrationCaseModal: React.FC<FileArbitrationCaseModalProps> = ({ groupId, onCaseFiled }) => {
-  const [open, setOpen] = useState(false);
-  const [respondentId, setRespondentId] = useState('');
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [evidence, setEvidence] = useState<string[]>([]);
+export const FileArbitrationCaseModal = ({ groupId, group }: { groupId: string; group: GroupType }) => {
   const { fileArbitrationCase, loading } = useGroupWorkflow(groupId);
+  const [isOpen, setIsOpen] = useState(false);
+  const [caseData, setCaseData] = useState<ArbitrationCaseType>({
+    respondent_id: '',
+    title: '',
+    description: '',
+    evidence: []
+  });
 
-  const handleSubmit = async () => {
-    if (!respondentId || !title || !description) {
-      toast.error('Please fill in all required fields');
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setCaseData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!caseData.respondent_id || !caseData.title || !caseData.description) {
+      alert('Please fill in all fields');
       return;
     }
 
-    const caseData = {
-      respondent_id: respondentId,
-      title,
-      description,
-      evidence
-    };
-
     const success = await fileArbitrationCase(caseData);
     if (success) {
-      toast.success('Arbitration case filed successfully!');
-      onCaseFiled();
-      setOpen(false);
-      setRespondentId('');
-      setTitle('');
-      setDescription('');
-      setEvidence([]);
-    } else {
-      toast.error('Failed to file arbitration case.');
+      setIsOpen(false);
+      setCaseData({ respondent_id: '', title: '', description: '', evidence: [] });
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="destructive" className="w-full justify-start gap-2">
-          <AlertTriangle className="w-4 h-4" />
+        <Button variant="destructive">
+          <AlertTriangle className="w-4 h-4 mr-2" />
           File Arbitration Case
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>File an Arbitration Case</DialogTitle>
           <DialogDescription>
-            Report a dispute and request arbitration. This will temporarily freeze the group.
+            File an arbitration case against a group member. This will temporarily freeze the group.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
-          <div className="grid gap-2">
-            <Label htmlFor="respondent-id">Respondent User ID</Label>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="respondent_id" className="text-right">
+              Respondent ID
+            </Label>
             <Input
               type="text"
-              id="respondent-id"
-              placeholder="Enter the user ID of the respondent"
-              value={respondentId}
-              onChange={(e) => setRespondentId(e.target.value)}
+              id="respondent_id"
+              name="respondent_id"
+              value={caseData.respondent_id}
+              onChange={handleChange}
+              className="col-span-3"
             />
           </div>
-          <div className="grid gap-2">
-            <Label htmlFor="case-title">Case Title</Label>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="title" className="text-right">
+              Title
+            </Label>
             <Input
               type="text"
-              id="case-title"
-              placeholder="Enter the title of the case"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              id="title"
+              name="title"
+              value={caseData.title}
+              onChange={handleChange}
+              className="col-span-3"
             />
           </div>
-          <div className="grid gap-2">
-            <Label htmlFor="case-description">Case Description</Label>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="description" className="text-right">
+              Description
+            </Label>
             <Textarea
-              id="case-description"
-              placeholder="Describe the details of the case"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              id="description"
+              name="description"
+              value={caseData.description}
+              onChange={handleChange}
+              className="col-span-3"
             />
           </div>
-          {/* Implement evidence upload/selection as needed */}
         </div>
         <Button onClick={handleSubmit} disabled={loading}>
           {loading ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Please wait
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Submitting...
             </>
           ) : (
             'File Arbitration Case'
