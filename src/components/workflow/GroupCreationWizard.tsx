@@ -20,7 +20,7 @@ const GroupCreationWizard = () => {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    gateway_type: '',
+    gateway_type: '' as 'purchasing' | 'marketing' | 'suppliers' | 'freelancers' | 'formation' | 'legal' | '',
     max_members: 50,
     is_public: true,
     country_id: '',
@@ -72,7 +72,13 @@ const GroupCreationWizard = () => {
     setIsLoading(true);
     try {
       const groupData = {
-        ...formData,
+        name: formData.name,
+        description: formData.description,
+        gateway_type: formData.gateway_type as 'purchasing' | 'marketing' | 'suppliers' | 'freelancers' | 'formation' | 'legal',
+        max_members: formData.max_members,
+        is_public: formData.is_public,
+        country_id: formData.country_id || null,
+        industry_sector_id: formData.industry_sector_id || null,
         creator_id: user.id,
         current_members: 1
       };
@@ -148,7 +154,9 @@ const GroupCreationWizard = () => {
               <Label htmlFor="gateway_type">Group Type</Label>
               <Select
                 value={formData.gateway_type}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, gateway_type: value }))}
+                onValueChange={(value: 'purchasing' | 'marketing' | 'suppliers' | 'freelancers' | 'formation' | 'legal') => 
+                  setFormData(prev => ({ ...prev, gateway_type: value }))
+                }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select group type" />
