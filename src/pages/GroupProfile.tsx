@@ -10,7 +10,7 @@ import GroupDocuments from '@/components/group/GroupDocuments';
 import GroupActivity from '@/components/group/GroupActivity';
 import GroupActions from '@/components/group/GroupActions';
 import MCPPresentationManager from '@/components/group/MCPPresentationManager';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 

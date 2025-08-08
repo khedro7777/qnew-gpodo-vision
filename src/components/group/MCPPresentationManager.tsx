@@ -1,336 +1,309 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { 
-  Bot, 
-  FileText, 
-  Edit, 
-  Save, 
-  RefreshCw,
-  Sparkles
-} from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Progress } from '@/components/ui/progress';
+import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { 
+  Presentation, 
+  Plus, 
+  FileText, 
+  Download, 
+  Eye, 
+  Vote, 
+  Users, 
+  CheckCircle, 
+  XCircle, 
+  AlertTriangle, 
+  Loader2,
+  Clock
+} from 'lucide-react';
 import { toast } from 'sonner';
-import { useTranslation } from '@/hooks/useTranslation';
 
-interface MCPPresentationManagerProps {
-  groupId: string;
-  group: any;
-}
-
-interface GroupPresentation {
+interface PresentationType {
   id: string;
   group_id: string;
-  presentation_type: 'loi' | 'terms_conditions';
   title: string;
-  content: string;
-  status: 'draft' | 'active' | 'under_review';
-  generated_by_mcp: boolean;
-  last_updated_by: string;
-  version: number;
+  description: string;
+  file_url: string;
   created_at: string;
-  updated_at: string;
+  created_by: string;
+  status: 'draft' | 'submitted' | 'approved' | 'rejected';
 }
 
-const MCPPresentationManager = ({ groupId, group }: MCPPresentationManagerProps) => {
+interface GroupType {
+  id: string;
+  name: string;
+}
+
+const MCPPresentationManager = ({ groupId, group }: { groupId: string; group: GroupType }) => {
   const { user } = useAuth();
-  const { t, isRTL } = useTranslation();
-  const [presentations, setPresentations] = useState<GroupPresentation[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editContent, setEditContent] = useState('');
-  const [generatingLOI, setGeneratingLOI] = useState(false);
-  const [generatingTC, setGeneratingTC] = useState(false);
+  const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState('view');
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [newPresentation, setNewPresentation] = useState({
+    title: '',
+    description: '',
+    file: null as File | null,
+  });
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploading, setUploading] = useState(false);
 
-  useEffect(() => {
-    loadPresentations();
-  }, [groupId]);
-
-  const loadPresentations = async () => {
-    try {
-      // Mock data for demo - in real app this would come from database
-      const mockPresentations: GroupPresentation[] = [];
-      setPresentations(mockPresentations);
-    } catch (error) {
-      console.error('Error loading presentations:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const generatePresentation = async (type: 'loi' | 'terms_conditions') => {
-    const isLOI = type === 'loi';
-    const setGenerating = isLOI ? setGeneratingLOI : setGeneratingTC;
-    
-    setGenerating(true);
-    try {
-      console.log('Generating presentation with DeepSeek MCP...');
-      
-      const { data, error } = await supabase.functions.invoke('deepseek-mcp', {
-        body: {
-          action: isLOI ? 'generate_loi' : 'generate_terms',
-          groupData: group
-        }
-      });
+  const { data: presentations, isLoading, refetch } = useQuery({
+    queryKey: ['group-presentations', groupId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('group_presentations')
+        .select('*')
+        .eq('group_id', groupId)
+        .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('DeepSeek MCP error:', error);
+        console.error('Error fetching presentations:', error);
         throw error;
       }
+      return data as PresentationType[];
+    },
+  });
 
-      if (!data.success) {
-        throw new Error(data.error || 'Failed to generate presentation');
+  const createPresentationMutation = useMutation({
+    mutationFn: async () => {
+      if (!user || !newPresentation.file) {
+        throw new Error('Missing user or file');
       }
 
-      const newPresentation: GroupPresentation = {
-        id: Date.now().toString(),
-        group_id: groupId,
-        presentation_type: type,
-        title: isLOI ? 'Letter of Intent - Generated by MCP Assistant' : 'Terms and Conditions - Generated by MCP Assistant',
-        content: data.content,
-        status: 'draft',
-        generated_by_mcp: true,
-        last_updated_by: 'MCP Assistant (DeepSeek R1)',
-        version: 1,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
+      setUploading(true);
+      const fileExt = newPresentation.file.name.split('.').pop();
+      const filePath = `presentations/${groupId}/${Date.now()}-${newPresentation.file.name}`;
 
-      setPresentations(prev => [newPresentation, ...prev.filter(p => p.presentation_type !== type)]);
-      toast.success(t(`${isLOI ? 'Letter of Intent' : 'Terms and Conditions'} generated successfully with DeepSeek R1`));
-    } catch (error) {
-      console.error('Error generating presentation:', error);
-      toast.error(t('Failed to generate presentation. Please check your DeepSeek API configuration.'));
-    } finally {
-      setGenerating(false);
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('group-documents')
+        .upload(filePath, newPresentation.file, {
+          cacheControl: '3600',
+          upsert: false,
+        });
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      const { data: publicUrlData } = supabase.storage
+        .from('group-documents')
+        .getPublicUrl(filePath);
+
+      const { error: dbError } = await supabase
+        .from('group_presentations')
+        .insert({
+          group_id: groupId,
+          title: newPresentation.title,
+          description: newPresentation.description,
+          file_url: publicUrlData.publicUrl,
+          created_by: user.id,
+          status: 'submitted',
+        });
+
+      if (dbError) {
+        throw dbError;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['group-presentations', groupId] });
+      toast.success('Presentation created and submitted successfully!');
+      setNewPresentation({ title: '', description: '', file: null });
+      setIsCreateModalOpen(false);
+      setUploading(false);
+    },
+    onError: (error: any) => {
+      toast.error('Failed to create presentation: ' + error.message);
+      setUploading(false);
+    },
+  });
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setNewPresentation({ ...newPresentation, file });
     }
   };
 
-  const startEditing = (presentation: GroupPresentation) => {
-    setEditingId(presentation.id);
-    setEditContent(presentation.content);
-  };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPresentation.title || !newPresentation.description || !newPresentation.file) {
+      toast.error('Please fill in all fields and select a file.');
+      return;
+    }
 
-  const saveEdit = async (presentationId: string) => {
     try {
-      setPresentations(prev => prev.map(p => 
-        p.id === presentationId 
-          ? {
-              ...p,
-              content: editContent,
-              updated_at: new Date().toISOString(),
-              last_updated_by: user?.full_name || 'Member',
-              version: p.version + 1,
-              status: 'under_review' as const
-            }
-          : p
-      ));
-      
-      setEditingId(null);
-      setEditContent('');
-      toast.success(t('Presentation updated successfully'));
+      await createPresentationMutation.mutateAsync();
     } catch (error) {
-      console.error('Error saving presentation:', error);
-      toast.error(t('Failed to save presentation'));
+      console.error('Presentation creation failed:', error);
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active': return 'bg-green-100 text-green-800';
-      case 'draft': return 'bg-yellow-100 text-yellow-800';
-      case 'under_review': return 'bg-blue-100 text-blue-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  if (loading) {
-    return (
-      <Card>
-        <CardContent className="p-6 text-center">
-          <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2" />
-          <p>{t('Loading presentations...')}</p>
-        </CardContent>
-      </Card>
-    );
-  }
+  const tabs = [
+    { id: 'view', label: 'View Presentations', icon: Eye },
+    { id: 'create', label: 'Create Presentation', icon: Plus },
+    { id: 'manage', label: 'Manage Group Access', icon: Users },
+    { id: 'vote', label: 'Voting Configuration', icon: Vote },
+  ];
 
   return (
-    <div className="space-y-6" dir={isRTL ? 'rtl' : 'ltr'}>
-      {/* Enhanced MCP Assistant Header with DeepSeek */}
-      <Card className="bg-gradient-to-r from-blue-500 via-purple-600 to-indigo-600 text-white">
+    <div className="space-y-6">
+      {/* Presentation Manager Header */}
+      <Card className="bg-gradient-to-r from-blue-100 to-purple-200">
         <CardContent className="p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-              <Bot className="w-5 h-5" />
-            </div>
+          <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-xl font-bold flex items-center gap-2">
-                {t('MCP Assistant')}
-                <Sparkles className="w-5 h-5 text-yellow-300" />
-              </h3>
-              <p className="text-white/80">{t('Powered by DeepSeek R1 - Advanced AI Reasoning')}</p>
+              <h2 className="text-2xl font-bold text-gray-900">{group.name} Presentations</h2>
+              <p className="text-gray-700">Manage and showcase presentations for your group.</p>
             </div>
-          </div>
-          <div className="bg-white/10 rounded-lg p-3 mb-4">
-            <p className="text-sm text-white/90">
-              ✨ Enhanced with DeepSeek R1's reasoning capabilities for intelligent document generation and analysis
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Button 
-              onClick={() => generatePresentation('loi')}
-              disabled={generatingLOI}
-              className="bg-white/20 hover:bg-white/30 text-white border-white/30"
-            >
-              {generatingLOI ? (
-                <RefreshCw className="w-4 h-4 animate-spin mr-2" />
-              ) : (
-                <FileText className="w-4 h-4 mr-2" />
-              )}
-              {t('Generate LOI')}
-            </Button>
-            <Button 
-              onClick={() => generatePresentation('terms_conditions')}
-              disabled={generatingTC}
-              className="bg-white/20 hover:bg-white/30 text-white border-white/30"
-            >
-              {generatingTC ? (
-                <RefreshCw className="w-4 h-4 animate-spin mr-2" />
-              ) : (
-                <FileText className="w-4 h-4 mr-2" />
-              )}
-              {t('Generate Terms & Conditions')}
-            </Button>
+            <Badge variant="secondary">
+              <Presentation className="w-4 h-4 mr-2" />
+              {presentations?.length || 0} Presentations
+            </Badge>
           </div>
         </CardContent>
       </Card>
 
-      {/* Presentations List */}
-      <div className="space-y-4">
-        {presentations.map((presentation) => (
-          <Card key={presentation.id}>
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <FileText className="w-5 h-5" />
-                    {presentation.title}
-                  </CardTitle>
-                  <div className="flex items-center gap-2 mt-2">
-                    <Badge className={getStatusColor(presentation.status)}>
-                      {t(presentation.status)}
-                    </Badge>
-                    {presentation.generated_by_mcp && (
-                      <Badge className="bg-purple-100 text-purple-800">
-                        <Bot className="w-3 h-3 mr-1" />
-                        {t('MCP Generated')}
-                      </Badge>
-                    )}
-                    <span className="text-sm text-gray-500">
-                      {t('Version')} {presentation.version}
-                    </span>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  {editingId === presentation.id ? (
-                    <>
-                      <Button 
-                        size="sm" 
-                        onClick={() => saveEdit(presentation.id)}
-                      >
-                        <Save className="w-4 h-4 mr-1" />
-                        {t('Save')}
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => {
-                          setEditingId(null);
-                          setEditContent('');
-                        }}
-                      >
-                        {t('Cancel')}
-                      </Button>
-                    </>
-                  ) : (
-                    <Button 
-                      size="sm" 
-                      variant="outline"
-                      onClick={() => startEditing(presentation)}
-                    >
-                      <Edit className="w-4 h-4 mr-1" />
-                      {t('Edit')}
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {editingId === presentation.id ? (
-                <Textarea
-                  value={editContent}
-                  onChange={(e) => setEditContent(e.target.value)}
-                  className="min-h-[300px] font-mono text-sm"
-                  placeholder={t('Edit presentation content...')}
-                />
-              ) : (
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <pre className="whitespace-pre-wrap text-sm text-gray-700 font-sans leading-relaxed">
-                    {presentation.content}
-                  </pre>
-                </div>
-              )}
-              
-              <div className="mt-4 pt-4 border-t flex items-center justify-between text-sm text-gray-500">
-                <div>
-                  {t('Last updated by')}: {presentation.last_updated_by}
-                </div>
-                <div>
-                  {new Date(presentation.updated_at).toLocaleString()}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+      {/* Navigation Tabs */}
+      <div className="flex space-x-2 bg-gray-100 p-1 rounded-lg">
+        {tabs.map((tab) => {
+          const Icon = tab.icon;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                activeTab === tab.id
+                  ? 'bg-white text-blue-600 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <Icon className="w-4 h-4" />
+              {tab.label}
+            </button>
+          );
+        })}
       </div>
 
-      {presentations.length === 0 && (
+      {/* Tab Content */}
+      {activeTab === 'view' && (
+        <div className="space-y-4">
+          {isLoading ? (
+            <div className="flex items-center justify-center">
+              <Loader2 className="w-6 h-6 animate-spin text-gray-500" />
+            </div>
+          ) : presentations && presentations.length > 0 ? (
+            presentations.map((presentation) => (
+              <Card key={presentation.id} className="shadow-sm">
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    {presentation.title}
+                    <Badge variant="outline">{presentation.status}</Badge>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <p className="text-sm text-gray-600">{presentation.description}</p>
+                  <div className="flex items-center justify-between">
+                    <a href={presentation.file_url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+                      <Download className="w-4 h-4 mr-2 inline-block" />
+                      Download Presentation
+                    </a>
+                    <p className="text-xs text-gray-500">
+                      Uploaded on {new Date(presentation.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          ) : (
+            <Card className="p-6 text-center">
+              <FileText className="w-10 h-10 mx-auto text-gray-400 mb-4" />
+              <p className="text-gray-600">No presentations available. Start by creating one!</p>
+            </Card>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'create' && (
         <Card>
-          <CardContent className="p-8 text-center">
-            <div className="flex items-center justify-center mb-4">
-              <Bot className="w-12 h-12 text-gray-400 mr-2" />
-              <Sparkles className="w-6 h-6 text-yellow-500" />
-            </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              {t('Ready to Generate Intelligent Presentations')}
-            </h3>
-            <p className="text-gray-600 mb-4">
-              {t('Use MCP Assistant powered by DeepSeek R1 to generate professional Letter of Intent and Terms & Conditions for your group')}
-            </p>
-            <div className="flex justify-center gap-2">
-              <Button onClick={() => generatePresentation('loi')} disabled={generatingLOI}>
-                {generatingLOI ? (
-                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                ) : (
-                  <Sparkles className="w-4 h-4 mr-2" />
+          <CardHeader>
+            <CardTitle>Create New Presentation</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <Label htmlFor="title">Title</Label>
+                <Input
+                  type="text"
+                  id="title"
+                  placeholder="Presentation Title"
+                  value={newPresentation.title}
+                  onChange={(e) => setNewPresentation({ ...newPresentation, title: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  placeholder="Brief description of the presentation"
+                  value={newPresentation.description}
+                  onChange={(e) => setNewPresentation({ ...newPresentation, description: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="file">Upload Presentation File</Label>
+                <Input
+                  type="file"
+                  id="file"
+                  accept=".pdf,.ppt,.pptx,.doc,.docx"
+                  onChange={handleFileChange}
+                  required
+                />
+                {newPresentation.file && (
+                  <p className="text-sm text-gray-500 mt-1">Selected file: {newPresentation.file.name}</p>
                 )}
-                {t('Generate LOI')}
-              </Button>
-              <Button onClick={() => generatePresentation('terms_conditions')} variant="outline" disabled={generatingTC}>
-                {generatingTC ? (
-                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+              </div>
+              <Button type="submit" disabled={uploading} className="w-full">
+                {uploading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Uploading...
+                  </>
                 ) : (
-                  <Sparkles className="w-4 h-4 mr-2" />
+                  <>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create Presentation
+                  </>
                 )}
-                {t('Generate Terms & Conditions')}
               </Button>
-            </div>
+            </form>
           </CardContent>
+        </Card>
+      )}
+
+      {activeTab === 'manage' && (
+        <Card className="p-6 text-center">
+          <Users className="w-10 h-10 mx-auto text-gray-400 mb-4" />
+          <p className="text-gray-600">Group access management features coming soon!</p>
+        </Card>
+      )}
+
+      {activeTab === 'vote' && (
+        <Card className="p-6 text-center">
+          <Vote className="w-10 h-10 mx-auto text-gray-400 mb-4" />
+          <p className="text-gray-600">Voting configuration options will be available soon.</p>
         </Card>
       )}
     </div>

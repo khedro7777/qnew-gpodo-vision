@@ -1,6 +1,6 @@
 
 import { useState, useCallback } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { Group, GroupMember, Vote, Proposal, Task } from '@/types';
