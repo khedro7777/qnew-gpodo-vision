@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -6,7 +7,7 @@ import type { User, UserRole, KycStatus } from '@/types';
 
 interface AuthContextType {
   user: User | null;
-  profile: User | null; // Add profile property
+  profile: User | null;
   loading: boolean;
   signUp: (email: string, password: string, userData?: any) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
@@ -24,42 +25,109 @@ export const useAuth = () => {
   return context;
 };
 
-// Mock user data for development that matches our User interface
-const mockUser: User = {
-  id: 'mock-user-id',
-  email: 'demo@gpodo.com',
-  full_name: 'Demo User',
-  company_name: 'GPODO Demo',
-  role: 'user' as UserRole,
-  country_code: 'SA',
-  industry_sector: 'التكنولوجيا',
-  phone: '+966501234567',
-  is_verified: true,
-  kyc_status: 'approved' as KycStatus,
-  kyc_completed_at: new Date().toISOString(),
-  points: 1000,
-  created_at: new Date().toISOString(),
-  updated_at: new Date().toISOString(),
-};
-
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<User | null>(mockUser);
-  const [loading, setLoading] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Set mock data immediately for demo mode
-    console.log('Demo mode: Using mock authentication data');
-    setUser(mockUser);
-    setLoading(false);
+    // Get initial session
+    const getInitialSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        await loadUserProfile(session.user);
+      }
+      setLoading(false);
+    };
+
+    getInitialSession();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('Auth state changed:', event, session?.user?.email);
+        if (session?.user) {
+          await loadUserProfile(session.user);
+        } else {
+          setUser(null);
+        }
+        setLoading(false);
+      }
+    );
+
+    return () => subscription.unsubscribe();
   }, []);
+
+  const loadUserProfile = async (supabaseUser: SupabaseUser) => {
+    try {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', supabaseUser.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error loading profile:', error);
+        return;
+      }
+
+      if (!profile) {
+        // Create profile if it doesn't exist
+        const newProfile = {
+          id: supabaseUser.id,
+          email: supabaseUser.email!,
+          full_name: supabaseUser.user_metadata?.full_name || supabaseUser.email,
+          role: 'user' as UserRole,
+          kyc_status: 'pending' as KycStatus,
+          is_verified: false,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+
+        const { data: createdProfile, error: createError } = await supabase
+          .from('profiles')
+          .insert(newProfile)
+          .select()
+          .single();
+
+        if (createError) {
+          console.error('Error creating profile:', createError);
+          return;
+        }
+
+        setUser(createdProfile as User);
+      } else {
+        setUser(profile as User);
+      }
+    } catch (error) {
+      console.error('Error in loadUserProfile:', error);
+    }
+  };
 
   const signUp = async (email: string, password: string, userData?: any) => {
     try {
       setLoading(true);
-      // Mock sign up - just show success message
-      toast.success('Account created successfully (demo mode)');
+      const redirectUrl = `${window.location.origin}/`;
+      
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: redirectUrl,
+          data: {
+            full_name: userData?.full_name || email
+          }
+        }
+      });
+
+      if (error) {
+        toast.error(error.message);
+        throw error;
+      } else {
+        toast.success('Account created successfully - check your email for verification');
+      }
     } catch (error: any) {
-      toast.error('Error creating account');
+      toast.error('Error creating account: ' + error.message);
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -68,10 +136,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signIn = async (email: string, password: string) => {
     try {
       setLoading(true);
-      // Mock sign in - just show success message
-      toast.success('Signed in successfully (demo mode)');
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (error) {
+        toast.error(error.message);
+        throw error;
+      } else {
+        toast.success('Signed in successfully');
+      }
     } catch (error: any) {
-      toast.error('Error signing in');
+      toast.error('Error signing in: ' + error.message);
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -79,30 +157,45 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signOut = async () => {
     try {
-      // Mock sign out
-      toast.success('Signed out successfully');
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        toast.error(error.message);
+      } else {
+        toast.success('Signed out successfully');
+        setUser(null);
+      }
     } catch (error: any) {
-      toast.error('Error signing out');
+      toast.error('Error signing out: ' + error.message);
     }
   };
 
   const updateProfile = async (updates: Partial<User>) => {
     try {
-      setUser(prev => prev ? { 
-        ...prev, 
-        ...updates, 
-        updated_at: new Date().toISOString() 
-      } : null);
-      toast.success('تم تحديث الملف الشخصي بنجاح');
+      if (!user) throw new Error('No user logged in');
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .update({
+          ...updates,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setUser(data as User);
+      toast.success('Profile updated successfully');
     } catch (error: any) {
-      toast.error('حدث خطأ في تحديث الملف الشخصي');
+      toast.error('Error updating profile: ' + error.message);
       throw error;
     }
   };
 
   const value = {
     user,
-    profile: user, // Set profile to be same as user for now
+    profile: user,
     loading,
     signUp,
     signIn,

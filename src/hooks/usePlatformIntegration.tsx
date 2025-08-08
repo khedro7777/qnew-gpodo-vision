@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -36,8 +35,6 @@ export const usePlatformGroups = () => {
   return useQuery({
     queryKey: ['platform_groups'],
     queryFn: async () => {
-      console.log('Fetching platform groups...');
-      
       const { data, error } = await supabase
         .from('groups')
         .select(`
@@ -51,10 +48,9 @@ export const usePlatformGroups = () => {
 
       if (error) {
         console.error('Error fetching groups:', error);
-        return [];
+        throw error;
       }
 
-      console.log('Groups fetched successfully:', data?.length || 0);
       return data as PlatformGroup[];
     },
   });
@@ -68,8 +64,6 @@ export const useUserProfile = () => {
     queryFn: async () => {
       if (!user) return null;
       
-      console.log('Fetching user profile...');
-      
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -78,10 +72,9 @@ export const useUserProfile = () => {
 
       if (error) {
         console.error('Error fetching profile:', error);
-        return null;
+        throw error;
       }
 
-      console.log('Profile fetched successfully');
       return data as UserProfile;
     },
     enabled: !!user,
@@ -96,7 +89,6 @@ export const useUpdateProfile = () => {
     mutationFn: async (profileData: Partial<Omit<UserProfile, 'id'>>) => {
       if (!user) throw new Error('User not authenticated');
 
-      // Ensure kyc_status is properly typed
       const updateData = {
         ...profileData,
         ...(profileData.kyc_status && {
@@ -116,10 +108,10 @@ export const useUpdateProfile = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user_profile'] });
-      toast.success('تم تحديث الملف الشخصي بنجاح');
+      toast.success('Profile updated successfully');
     },
     onError: (error: any) => {
-      toast.error('حدث خطأ في تحديث الملف الشخصي: ' + error.message);
+      toast.error('Error updating profile: ' + error.message);
     },
   });
 };
@@ -132,7 +124,6 @@ export const useJoinGroup = () => {
     mutationFn: async (groupId: string) => {
       if (!user) throw new Error('User not authenticated');
 
-      // Check if already a member
       const { data: existingMember } = await supabase
         .from('group_members')
         .select('id')
@@ -144,7 +135,6 @@ export const useJoinGroup = () => {
         throw new Error('You are already a member of this group');
       }
 
-      // Add member
       const { error } = await supabase
         .from('group_members')
         .insert({
@@ -155,7 +145,6 @@ export const useJoinGroup = () => {
 
       if (error) throw error;
 
-      // Update group member count manually since increment_group_members function doesn't exist
       const { data: currentGroup } = await supabase
         .from('groups')
         .select('current_members')
@@ -174,10 +163,10 @@ export const useJoinGroup = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['platform_groups'] });
       queryClient.invalidateQueries({ queryKey: ['user_groups'] });
-      toast.success('تم الانضمام للمجموعة بنجاح');
+      toast.success('Successfully joined group');
     },
     onError: (error: any) => {
-      toast.error(error.message || 'حدث خطأ في الانضمام للمجموعة');
+      toast.error(error.message || 'Error joining group');
     },
   });
 };
@@ -210,7 +199,6 @@ export const useCreateGroup = () => {
 
       if (error) throw error;
 
-      // Add creator as first member
       await supabase
         .from('group_members')
         .insert({
@@ -224,10 +212,10 @@ export const useCreateGroup = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['platform_groups'] });
       queryClient.invalidateQueries({ queryKey: ['user_groups'] });
-      toast.success('تم إنشاء المجموعة بنجاح');
+      toast.success('Group created successfully');
     },
     onError: (error: any) => {
-      toast.error('حدث خطأ في إنشاء المجموعة: ' + error.message);
+      toast.error('Error creating group: ' + error.message);
     },
   });
 };
@@ -239,8 +227,6 @@ export const useUserGroups = () => {
     queryKey: ['user_groups', user?.id],
     queryFn: async () => {
       if (!user) return [];
-      
-      console.log('Fetching user groups...');
       
       const { data, error } = await supabase
         .from('group_members')
@@ -257,10 +243,9 @@ export const useUserGroups = () => {
 
       if (error) {
         console.error('Error fetching user groups:', error);
-        return [];
+        throw error;
       }
 
-      console.log('User groups fetched successfully:', data?.length || 0);
       return data.map(item => ({
         ...item.groups,
         user_role: item.role,
@@ -275,9 +260,6 @@ export const usePlatformStats = () => {
   return useQuery({
     queryKey: ['platform_stats'],
     queryFn: async () => {
-      console.log('Fetching platform stats...');
-      
-      // Fetch stats in parallel
       const [usersRes, groupsRes, contractsRes] = await Promise.all([
         supabase.from('profiles').select('id', { count: 'exact' }),
         supabase.from('groups').select('id', { count: 'exact' }).eq('status', 'active'),
@@ -303,6 +285,9 @@ export const useCountriesAndSectors = () => {
         supabase.from('countries').select('*').order('name'),
         supabase.from('industry_sectors').select('*').order('name')
       ]);
+
+      if (countriesRes.error) throw countriesRes.error;
+      if (sectorsRes.error) throw sectorsRes.error;
 
       return {
         countries: countriesRes.data || [],

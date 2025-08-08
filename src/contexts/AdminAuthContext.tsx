@@ -36,9 +36,10 @@ export const AdminAuthProvider = ({ children }: { children: React.ReactNode }) =
   const checkAuth = async (): Promise<boolean> => {
     try {
       const token = localStorage.getItem('admin_token');
-      if (!token) return false;
-
-      console.log('Checking auth with token:', token);
+      if (!token) {
+        setLoading(false);
+        return false;
+      }
 
       const { data, error } = await supabase
         .from('admin_sessions')
@@ -49,7 +50,8 @@ export const AdminAuthProvider = ({ children }: { children: React.ReactNode }) =
             id,
             email,
             role,
-            last_login
+            last_login,
+            full_name
           )
         `)
         .eq('token', token)
@@ -59,28 +61,30 @@ export const AdminAuthProvider = ({ children }: { children: React.ReactNode }) =
       if (error) {
         console.error('Auth check error:', error);
         localStorage.removeItem('admin_token');
+        setLoading(false);
         return false;
       }
 
       if (!data || !data.admin_users) {
-        console.log('No valid session found');
         localStorage.removeItem('admin_token');
+        setLoading(false);
         return false;
       }
-
-      console.log('Auth check successful:', data);
 
       setAdminUser({
         id: data.admin_users.id,
         email: data.admin_users.email,
         role: data.admin_users.role,
         last_login: data.admin_users.last_login,
+        full_name: data.admin_users.full_name,
       });
 
+      setLoading(false);
       return true;
     } catch (error) {
       console.error('Auth check failed:', error);
       localStorage.removeItem('admin_token');
+      setLoading(false);
       return false;
     }
   };
@@ -88,27 +92,21 @@ export const AdminAuthProvider = ({ children }: { children: React.ReactNode }) =
   const signIn = async (email: string, password: string) => {
     setLoading(true);
     try {
-      console.log('Attempting to sign in with email:', email);
-
       const { data: adminData, error: adminError } = await supabase
         .from('admin_users')
-        .select('id, email, role, is_active, last_login')
+        .select('id, email, role, is_active, last_login, full_name')
         .eq('email', email)
         .eq('password_hash', password)
         .eq('is_active', true)
         .maybeSingle();
 
       if (adminError) {
-        console.error('Admin query error:', adminError);
-        throw new Error('خطأ في الاستعلام: ' + adminError.message);
+        throw new Error('Database query error: ' + adminError.message);
       }
 
       if (!adminData) {
-        console.log('No admin user found for:', email);
-        throw new Error('بيانات تسجيل الدخول غير صحيحة');
+        throw new Error('Invalid login credentials');
       }
-
-      console.log('Admin user found:', { id: adminData.id, email: adminData.email, role: adminData.role });
 
       // Create session
       const token = crypto.randomUUID();
@@ -124,21 +122,14 @@ export const AdminAuthProvider = ({ children }: { children: React.ReactNode }) =
         });
 
       if (sessionError) {
-        console.error('Session creation error:', sessionError);
-        throw new Error('فشل في إنشاء الجلسة: ' + sessionError.message);
+        throw new Error('Failed to create session: ' + sessionError.message);
       }
 
-      console.log('Session created successfully');
-
       // Update last login
-      const { error: updateError } = await supabase
+      await supabase
         .from('admin_users')
         .update({ last_login: new Date().toISOString() })
         .eq('id', adminData.id);
-
-      if (updateError) {
-        console.warn('Failed to update last login:', updateError);
-      }
 
       localStorage.setItem('admin_token', token);
       
@@ -147,12 +138,13 @@ export const AdminAuthProvider = ({ children }: { children: React.ReactNode }) =
         email: adminData.email,
         role: adminData.role,
         last_login: adminData.last_login,
+        full_name: adminData.full_name,
       });
 
-      toast.success('مرحباً بك في لوحة تحكم الإدارة');
+      toast.success('Welcome to Admin Dashboard');
     } catch (error: any) {
       console.error('Sign in error:', error);
-      toast.error('فشل تسجيل الدخول: ' + error.message);
+      toast.error('Login failed: ' + error.message);
       throw error;
     } finally {
       setLoading(false);
@@ -171,20 +163,15 @@ export const AdminAuthProvider = ({ children }: { children: React.ReactNode }) =
 
       localStorage.removeItem('admin_token');
       setAdminUser(null);
-      toast.success('تم تسجيل الخروج بنجاح');
+      toast.success('Successfully signed out');
     } catch (error: any) {
       console.error('Sign out error:', error);
-      toast.error('خطأ في تسجيل الخروج');
+      toast.error('Error signing out');
     }
   };
 
   useEffect(() => {
-    const initAuth = async () => {
-      await checkAuth();
-      setLoading(false);
-    };
-
-    initAuth();
+    checkAuth();
   }, []);
 
   const value = {
