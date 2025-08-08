@@ -57,8 +57,7 @@ const WalletTab = () => {
               <div key={transaction.id} className="flex items-center justify-between p-3 border rounded-lg">
                 <div className="flex items-center gap-3">
                   <div className={`w-2 h-2 rounded-full ${
-                    transaction.type === 'recharge' ? 'bg-green-500' : 
-                    transaction.type === 'payment' ? 'bg-red-500' : 'bg-blue-500'
+                    transaction.type === 'credit' ? 'bg-green-500' : 'bg-red-500'
                   }`} />
                   <div>
                     <p className="font-medium capitalize">{transaction.type}</p>
@@ -69,9 +68,9 @@ const WalletTab = () => {
                 </div>
                 <div className="text-right">
                   <p className={`font-medium ${
-                    transaction.type === 'recharge' ? 'text-green-600' : 'text-red-600'
+                    transaction.type === 'credit' ? 'text-green-600' : 'text-red-600'
                   }`}>
-                    {transaction.type === 'recharge' ? '+' : '-'}{transaction.amount} pts
+                    {transaction.type === 'credit' ? '+' : '-'}{transaction.amount} pts
                   </p>
                   <Badge variant={transaction.status === 'completed' ? 'default' : 'secondary'}>
                     {transaction.status}
