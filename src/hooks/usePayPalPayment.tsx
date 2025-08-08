@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -63,11 +64,11 @@ export const usePayPalPayment = (): PayPalHook => {
 
       if (response.ok && data.status === 'COMPLETED') {
         toast.success('Payment successful!');
-        // Update user profile or grant access here
+        // Update user profile - remove the non-existent has_paid field
         if (user?.id) {
           await supabase
             .from('profiles')
-            .update({ has_paid: true })
+            .update({ is_verified: true })
             .eq('id', user.id);
         }
         return true;

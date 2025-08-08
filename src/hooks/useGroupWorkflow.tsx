@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -40,17 +41,22 @@ export const useGroupWorkflow = ({ groupId }: UseGroupWorkflowProps) => {
   const fetchWorkflowTasks = async (groupId: string) => {
     setIsLoading(true);
     try {
+      // Since workflow_tasks table doesn't exist in our schema, 
+      // we'll use the tasks table and mock workflow functionality
       const { data, error } = await supabase
-        .from('workflow_tasks')
+        .from('tasks')
         .select('*')
         .eq('group_id', groupId)
-        .order('order', { ascending: true });
+        .order('created_at', { ascending: true });
 
       if (error) {
         setError(error.message);
         toast.error(`Failed to load tasks: ${error.message}`);
       } else {
-        setWorkflowState(prevState => ({ ...prevState, tasks: data || [] }));
+        setWorkflowState(prevState => ({ 
+          ...prevState, 
+          tasks: data || [] 
+        }));
       }
     } catch (err: any) {
       setError(err.message);
@@ -108,7 +114,7 @@ export const useGroupWorkflow = ({ groupId }: UseGroupWorkflowProps) => {
   };
 
   const resumeWorkflow = () => {
-    if (!workflowState.isWorkflowActive || workflowState.pausedTime === null) {
+    if (workflowState.isWorkflowActive || workflowState.pausedTime === null) {
       return;
     }
 
@@ -164,7 +170,7 @@ export const useGroupWorkflow = ({ groupId }: UseGroupWorkflowProps) => {
     setIsLoading(true);
     try {
       setWorkflowState({
-        tasks: [],
+        tasks: workflowState.tasks,
         currentTaskIndex: 0,
         isWorkflowActive: false,
         startTime: null,

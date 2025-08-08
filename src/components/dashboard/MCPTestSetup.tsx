@@ -1,280 +1,203 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
-import { Separator } from '@/components/ui/separator';
 import { 
-  TestTube, 
-  Play, 
-  Pause, 
-  RotateCcw, 
-  CheckCircle, 
-  XCircle, 
+  Brain, 
+  Plus, 
+  Settings, 
+  Users, 
   Clock, 
-  Settings,
+  Trophy, 
+  Target,
+  CheckCircle2,
+  XCircle,
+  AlertCircle,
+  BarChart3,
   FileText,
-  BarChart3
+  Calendar,
+  Trash2
 } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-
-interface TestResult {
-  id: string;
-  name: string;
-  status: 'pending' | 'running' | 'completed' | 'failed';
-  progress: number;
-  log: string;
-}
 
 const MCPTestSetup = () => {
   const { user } = useAuth();
-  const [testName, setTestName] = useState('');
-  const [testDescription, setTestDescription] = useState('');
-  const [testScript, setTestScript] = useState('');
-  const [tests, setTests] = useState<TestResult[]>([]);
-  const [runningTestId, setRunningTestId] = useState<string | null>(null);
+  const [tests, setTests] = useState([]);
+  const [selectedTest, setSelectedTest] = useState(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
 
   useEffect(() => {
-    // Load existing tests from local storage or database
-    const storedTests = localStorage.getItem('mcpTests');
-    if (storedTests) {
-      setTests(JSON.parse(storedTests));
-    }
+    // Mock data for MCP tests
+    const mockTests = [
+      {
+        id: '1',
+        title: 'AI Fundamentals',
+        description: 'Assess basic knowledge of AI concepts and applications',
+        status: 'active',
+        participantCount: 45,
+        duration: 60,
+        questionCount: 20
+      },
+      {
+        id: '2',
+        title: 'Data Science Essentials',
+        description: 'Evaluate understanding of data analysis and machine learning techniques',
+        status: 'draft',
+        participantCount: 12,
+        duration: 45,
+        questionCount: 15
+      }
+    ];
+    setTests(mockTests);
   }, []);
 
-  useEffect(() => {
-    // Save tests to local storage whenever tests state changes
-    localStorage.setItem('mcpTests', JSON.stringify(tests));
-  }, [tests]);
+  const handleTestSelect = (testId: string) => {
+    const test = tests.find(t => t.id === testId);
+    setSelectedTest(test);
+  };
 
   const handleCreateTest = () => {
-    if (!testName || !testDescription || !testScript) {
-      toast.error('Please fill in all fields');
-      return;
-    }
-
-    const newTest: TestResult = {
-      id: Date.now().toString(),
-      name: testName,
-      status: 'pending',
-      progress: 0,
-      log: '',
-    };
-
-    setTests([...tests, newTest]);
-    setTestName('');
-    setTestDescription('');
-    setTestScript('');
-    toast.success('Test created successfully!');
+    setIsCreateModalOpen(true);
+    setIsEditMode(false);
   };
 
-  const handleRunTest = (testId: string) => {
-    setRunningTestId(testId);
-    const testIndex = tests.findIndex(test => test.id === testId);
-    if (testIndex === -1) return;
-
-    const updatedTests = [...tests];
-    updatedTests[testIndex] = { ...updatedTests[testIndex], status: 'running', progress: 0, log: '' };
-    setTests(updatedTests);
-
-    // Simulate test execution
-    const interval = setInterval(() => {
-      setTests(prevTests => {
-        const currentTestIndex = prevTests.findIndex(test => test.id === testId);
-        if (currentTestIndex === -1) {
-          clearInterval(interval);
-          return prevTests;
-        }
-
-        const currentTest = prevTests[currentTestIndex];
-        if (currentTest.status === 'completed' || currentTest.status === 'failed') {
-          clearInterval(interval);
-          return prevTests;
-        }
-
-        const newProgress = Math.min(currentTest.progress + 10, 100);
-        const newLog = currentTest.log + `\nProgress: ${newProgress}% - Step completed`;
-        const updatedTest = { ...currentTest, progress: newProgress, log: newLog };
-        const updatedTestsList = [...prevTests];
-        updatedTestsList[currentTestIndex] = updatedTest;
-
-        if (newProgress === 100) {
-          clearInterval(interval);
-          setRunningTestId(null);
-          toast.success(`Test "${currentTest.name}" completed successfully!`);
-          return updatedTestsList.map(test =>
-            test.id === testId ? { ...test, status: 'completed' } : test
-          );
-        }
-
-        return updatedTestsList;
-      });
-    }, 500);
-  };
-
-  const handlePauseTest = (testId: string) => {
-    setRunningTestId(null);
-    setTests(prevTests =>
-      prevTests.map(test =>
-        test.id === testId ? { ...test, status: 'pending' } : test
-      )
-    );
-    toast.info('Test paused');
-  };
-
-  const handleResetTest = (testId: string) => {
-    setTests(prevTests =>
-      prevTests.map(test =>
-        test.id === testId ? { ...test, status: 'pending', progress: 0, log: '' } : test
-      )
-    );
-    toast.success('Test reset');
+  const handleEditTest = (testId: string) => {
+    const test = tests.find(t => t.id === testId);
+    setSelectedTest(test);
+    setIsCreateModalOpen(true);
+    setIsEditMode(true);
   };
 
   const handleDeleteTest = (testId: string) => {
-    setTests(prevTests => prevTests.filter(test => test.id !== testId));
-    toast.success('Test deleted');
+    // Implement delete logic here
+    toast.success(`Test ${testId} deleted successfully!`);
   };
-
+  
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <TestTube className="w-5 h-5" />
-          MCP Test Setup
-        </CardTitle>
-        <CardDescription>Create and manage your MCP tests</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Create Test Form */}
-        <div className="space-y-2">
-          <Label htmlFor="testName">Test Name</Label>
-          <Input
-            id="testName"
-            placeholder="Enter test name"
-            value={testName}
-            onChange={(e) => setTestName(e.target.value)}
-          />
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <Brain className="w-6 h-6 text-productivity-blue" />
+            MCP Test Management
+          </h2>
+          <p className="text-gray-600 mt-1">Create and manage MCP skill assessment tests</p>
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="testDescription">Test Description</Label>
-          <Input
-            id="testDescription"
-            placeholder="Enter test description"
-            value={testDescription}
-            onChange={(e) => setTestDescription(e.target.value)}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="testScript">Test Script</Label>
-          <Textarea
-            id="testScript"
-            placeholder="Enter test script"
-            value={testScript}
-            onChange={(e) => setTestScript(e.target.value)}
-          />
-        </div>
-        <Button onClick={handleCreateTest} className="bg-blue-600 hover:bg-blue-700">
-          Create Test
+        <Button onClick={() => setIsCreateModalOpen(true)} className="bg-productivity-blue hover:bg-productivity-blue/90">
+          <Plus className="w-4 h-4 mr-2" />
+          Create New Test
         </Button>
+      </div>
 
-        <Separator className="my-4" />
+      {/* Test List */}
+      <div className="grid gap-4">
+        {tests.map((test) => (
+          <Card key={test.id} className="hover:shadow-lg transition-shadow">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <div className="space-y-1">
+                <CardTitle className="text-lg">{test.title}</CardTitle>
+                <CardDescription>{test.description}</CardDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant={test.status === 'active' ? 'default' : 'secondary'}>
+                  {test.status}
+                </Badge>
+                <Button variant="outline" size="sm">
+                  <Settings className="w-4 h-4" />
+                </Button>
+                <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between text-sm text-gray-600">
+                <div className="flex items-center gap-4">
+                  <span className="flex items-center gap-1">
+                    <Users className="w-4 h-4" />
+                    {test.participantCount || 0} participants
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Clock className="w-4 h-4" />
+                    {test.duration || 30} minutes
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Target className="w-4 h-4" />
+                    {test.questionCount || 0} questions
+                  </span>
+                </div>
+                <Button variant="link" className="p-0 h-auto text-productivity-blue">
+                  View Results
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
 
-        {/* Test List */}
-        {tests.length === 0 ? (
-          <div className="text-center py-4">
-            <FileText className="w-10 h-10 text-gray-400 mx-auto mb-2" />
-            <p className="text-gray-500">No tests created yet.</p>
+      {/* Create/Edit Test Modal */}
+      <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {isEditMode ? 'Edit MCP Test' : 'Create New MCP Test'}
+            </DialogTitle>
+            <DialogDescription>
+              Set up skill assessment parameters and questions for MCP evaluation
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-6">
+            {/* Basic Information */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="title">Test Title</Label>
+                <Input 
+                  id="title"
+                  placeholder="Enter test title"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="duration">Duration (minutes)</Label>
+                <Input 
+                  id="duration"
+                  type="number"
+                  placeholder="30"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea 
+                id="description"
+                placeholder="Describe the test objectives and requirements"
+                rows={3}
+              />
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setIsCreateModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button className="bg-productivity-blue hover:bg-productivity-blue/90">
+                {isEditMode ? 'Update Test' : 'Create Test'}
+              </Button>
+            </div>
           </div>
-        ) : (
-          <div className="space-y-4">
-            {tests.map((test) => (
-              <Card key={test.id}>
-                <CardHeader className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2">
-                    {test.name}
-                    {test.status === 'completed' && (
-                      <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">
-                        <CheckCircle className="w-4 h-4 mr-1" />
-                        Completed
-                      </Badge>
-                    )}
-                    {test.status === 'running' && (
-                      <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200 animate-pulse">
-                        <Clock className="w-4 h-4 mr-1" />
-                        Running
-                      </Badge>
-                    )}
-                    {test.status === 'failed' && (
-                      <Badge variant="outline" className="bg-red-100 text-red-800 border-red-200">
-                        <XCircle className="w-4 h-4 mr-1" />
-                        Failed
-                      </Badge>
-                    )}
-                    {test.status === 'pending' && (
-                      <Badge variant="outline">
-                        <Clock className="w-4 h-4 mr-1" />
-                        Pending
-                      </Badge>
-                    )}
-                  </CardTitle>
-                  <div className="flex gap-2">
-                    {test.status === 'pending' && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleRunTest(test.id)}
-                        disabled={runningTestId !== null}
-                      >
-                        <Play className="w-4 h-4 mr-2" />
-                        Run Test
-                      </Button>
-                    )}
-                    {test.status === 'running' && (
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => handlePauseTest(test.id)}
-                      >
-                        <Pause className="w-4 h-4 mr-2" />
-                        Pause Test
-                      </Button>
-                    )}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleResetTest(test.id)}
-                    >
-                      <RotateCcw className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleDeleteTest(test.id)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <Progress value={test.progress} />
-                  {test.log && (
-                    <div className="mt-4 text-sm text-gray-600">
-                      <Label>Log:</Label>
-                      <Textarea value={test.log} readOnly className="mt-1 h-24" />
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 };
 

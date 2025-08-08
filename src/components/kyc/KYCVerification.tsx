@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Card } from '@/components/ui/card';
@@ -10,6 +11,7 @@ import MCPTest from './MCPTest';
 const KYCVerification = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('documents');
+  const [uploadedDocuments, setUploadedDocuments] = useState<string[]>([]);
 
   // Mock profile data for KYC since we don't have profile structure yet
   const mockProfile = {
@@ -39,6 +41,10 @@ const KYCVerification = () => {
       default:
         return ['ID Card or Passport'];
     }
+  };
+
+  const handleUploadComplete = (url: string) => {
+    setUploadedDocuments(prev => [...prev, url]);
   };
 
   return (
@@ -104,10 +110,20 @@ const KYCVerification = () => {
                   </button>
                 </div>
 
-                {activeTab === 'documents' ? <DocumentUpload /> : <MCPTest />}
+                {activeTab === 'documents' ? (
+                  <DocumentUpload 
+                    documentType="ID Document" 
+                    onUploadComplete={handleUploadComplete}
+                  />
+                ) : (
+                  <MCPTest />
+                )}
               </div>
             ) : (
-              <DocumentUpload />
+              <DocumentUpload 
+                documentType="Business Documents" 
+                onUploadComplete={handleUploadComplete}
+              />
             )}
           </div>
         </div>
