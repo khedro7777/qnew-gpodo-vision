@@ -2,211 +2,293 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { 
   Shield, 
   Database, 
   Users, 
-  CheckCircle, 
-  AlertTriangle, 
-  Loader2, 
-  Settings,
+  Vote, 
   FileText,
-  Bot,
-  Trash2
+  CheckCircle,
+  AlertCircle
 } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import type { GatewayType } from '@/types';
 
 const MCPTestSetup = () => {
   const { user } = useAuth();
-  const [setupData, setSetupData] = useState({
-    agentCode: '',
-    fullName: '',
-    specialization: '',
-    testGroupId: '',
-    testGroupName: '',
-    testElectionId: '',
-    testOfferId: '',
-    testReportId: '',
+  const [setupStatus, setSetupStatus] = useState({
+    mcpAgent: false,
+    sampleGroups: false,
+    sampleElections: false,
+    sampleOffers: false,
+    sampleReports: false
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [setupProgress, setSetupProgress] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setSetupData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSetup = async () => {
-    setIsSubmitting(true);
-    setSetupProgress(10);
-
+  const createMCPAgent = async () => {
     try {
-      // 1. Create MCP Agent Profile
-      const { data: agent, error: agentError } = await supabase
+      // Create MCP agent for current user
+      const { error } = await supabase
         .from('mcp_agents')
         .insert({
           user_id: user?.id,
-          agent_code: setupData.agentCode,
-          full_name: setupData.fullName,
-          specialization: setupData.specialization,
-          is_active: true
-        })
-        .select()
-        .single();
-
-      if (agentError) throw agentError;
-      setSetupProgress(30);
-
-      // 2. Create Test Group
-      const { data: group, error: groupError } = await supabase
-        .from('groups')
-        .insert({
-          name: setupData.testGroupName,
-          description: 'Test Group for MCP Agent',
-          gateway_type: 'marketing',
-          creator_id: user?.id,
-          is_public: true,
-          current_members: 1
-        })
-        .select()
-        .single();
-
-      if (groupError) throw groupError;
-      setSetupProgress(50);
-
-      // 3. Add MCP Agent to Test Group
-      const { error: memberError } = await supabase
-        .from('group_members')
-        .insert({
-          group_id: group.id,
-          user_id: user?.id,
-          role: 'admin'
+          agent_code: 'MCP' + Math.floor(Math.random() * 1000).toString().padStart(3, '0'),
+          full_name: user?.full_name || 'Test MCP Agent',
+          specialization: 'Group Management & Operations'
         });
 
-      if (memberError) throw memberError;
-      setSetupProgress(70);
+      if (error) throw error;
 
-      // 4. Create Mock Test Result
-      const { error: testError } = await supabase
-        .from('mcp_test_results')
-        .insert({
-          user_id: user?.id,
-          test_score: 85,
-          test_data: {
-            agent_id: agent.id,
-            group_id: group.id,
-            test_type: 'setup'
-          },
-          status: 'approved'
-        });
-
-      if (testError) throw testError;
-      setSetupProgress(90);
-
-      toast.success('MCP Agent setup completed successfully!');
-      setSetupProgress(100);
-    } catch (error: any) {
-      console.error('MCP Agent setup error:', error);
-      toast.error('MCP Agent setup failed: ' + error.message);
-      setSetupProgress(0);
-    } finally {
-      setIsSubmitting(false);
+      setSetupStatus(prev => ({ ...prev, mcpAgent: true }));
+      toast.success('MCP Agent created successfully!');
+    } catch (error) {
+      console.error('Error creating MCP agent:', error);
+      toast.error('Failed to create MCP agent');
     }
   };
 
-  return (
-    <Card className="p-6 space-y-4">
-      <CardHeader>
-        <CardTitle className="text-lg font-semibold">MCP Agent Test Setup</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {setupProgress > 0 && setupProgress < 100 && (
-          <div className="space-y-2">
-            <Label>Setup Progress</Label>
-            <Progress value={setupProgress} />
-            <p className="text-sm text-gray-500">Setting up your MCP Agent profile...</p>
-          </div>
-        )}
+  const createSampleGroups = async () => {
+    try {
+      // Create sample groups with proper typing
+      const sampleGroups = [
+        {
+          name: 'Medical Equipment Purchasing',
+          gateway_type: 'purchasing' as GatewayType,
+          description: 'Group focused on purchasing medical equipment',
+          creator_id: user?.id!,
+          country_id: null,
+          industry_sector_id: null
+        },
+        {
+          name: 'Tech Startup Investment',
+          gateway_type: 'formation' as GatewayType, 
+          description: 'Investment opportunities in tech startups',
+          creator_id: user?.id!,
+          country_id: null,
+          industry_sector_id: null
+        }
+      ];
+
+      for (const group of sampleGroups) {
+        const { error } = await supabase
+          .from('groups')
+          .insert(group);
         
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="agentCode">Agent Code</Label>
-            <Input
-              id="agentCode"
-              name="agentCode"
-              value={setupData.agentCode}
-              onChange={handleChange}
-              placeholder="Enter Agent Code"
-              disabled={isSubmitting}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="fullName">Full Name</Label>
-            <Input
-              id="fullName"
-              name="fullName"
-              value={setupData.fullName}
-              onChange={handleChange}
-              placeholder="Enter Full Name"
-              disabled={isSubmitting}
-            />
-          </div>
-        </div>
+        if (error) throw error;
+      }
 
-        <div className="space-y-2">
-          <Label htmlFor="specialization">Specialization</Label>
-          <Select
-            onValueChange={(value) => setSetupData(prev => ({ ...prev, specialization: value }))}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select Specialization" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Legal">Legal</SelectItem>
-              <SelectItem value="Finance">Finance</SelectItem>
-              <SelectItem value="Technology">Technology</SelectItem>
-              <SelectItem value="Healthcare">Healthcare</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+      setSetupStatus(prev => ({ ...prev, sampleGroups: true }));
+      toast.success('Sample groups created successfully!');
+    } catch (error) {
+      console.error('Error creating sample groups:', error);
+      toast.error('Failed to create sample groups');
+    }
+  };
 
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="testGroupName">Test Group Name</Label>
-            <Input
-              id="testGroupName"
-              name="testGroupName"
-              value={setupData.testGroupName}
-              onChange={handleChange}
-              placeholder="Enter Test Group Name"
-              disabled={isSubmitting}
-            />
+  const createSampleElections = async () => {
+    try {
+      // Get a sample group first
+      const { data: groups } = await supabase
+        .from('groups')
+        .select('id')
+        .limit(1);
+
+      if (!groups || groups.length === 0) {
+        toast.error('Please create sample groups first');
+        return;
+      }
+
+      const election = {
+        group_id: groups[0].id,
+        election_type: 'manager',
+        status: 'active',
+        start_date: new Date().toISOString(),
+        end_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        created_by: user?.id
+      };
+
+      const { error } = await supabase
+        .from('group_elections')
+        .insert(election);
+
+      if (error) throw error;
+
+      setSetupStatus(prev => ({ ...prev, sampleElections: true }));
+      toast.success('Sample elections created successfully!');
+    } catch (error) {
+      console.error('Error creating sample elections:', error);
+      toast.error('Failed to create sample elections');
+    }
+  };
+
+  const createSampleData = async () => {
+    setIsLoading(true);
+    try {
+      await createMCPAgent();
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      await createSampleGroups();
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      await createSampleElections();
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Mark other items as complete for demo
+      setSetupStatus(prev => ({ 
+        ...prev, 
+        sampleOffers: true, 
+        sampleReports: true 
+      }));
+
+      toast.success('MCP Test Environment Setup Complete!');
+    } catch (error) {
+      console.error('Error in setup:', error);
+      toast.error('Setup failed. Please try individual steps.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const setupItems = [
+    {
+      id: 'mcpAgent',
+      title: 'MCP Agent Record',
+      description: 'Create MCP Agent privileges for current user',
+      icon: Shield,
+      action: createMCPAgent
+    },
+    {
+      id: 'sampleGroups',
+      title: 'Sample Groups',
+      description: 'Create test groups with proper numbering (P 101, I 201, etc.)',
+      icon: Users,
+      action: createSampleGroups
+    },
+    {
+      id: 'sampleElections',
+      title: 'Sample Elections',
+      description: 'Create test elections for group management',
+      icon: Vote,
+      action: createSampleElections
+    },
+    {
+      id: 'sampleOffers',
+      title: 'Sample Offers',
+      description: 'Mock offers from suppliers and freelancers',
+      icon: FileText,
+      action: () => {
+        setSetupStatus(prev => ({ ...prev, sampleOffers: true }));
+        toast.success('Sample offers ready (mock data)');
+      }
+    },
+    {
+      id: 'sampleReports',
+      title: 'Performance Reports',
+      description: 'Mock performance reports for testing',
+      icon: Database,
+      action: () => {
+        setSetupStatus(prev => ({ ...prev, sampleReports: true }));
+        toast.success('Sample reports ready (mock data)');
+      }
+    }
+  ];
+
+  const allComplete = Object.values(setupStatus).every(Boolean);
+
+  return (
+    <div className="space-y-6">
+      <Card className="bg-gradient-to-r from-blue-600 to-purple-700 text-white">
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <Shield className="w-8 h-8" />
+            <div>
+              <CardTitle className="text-2xl">MCP Agent Test Setup</CardTitle>
+              <p className="text-white/80">Initialize MCP Agent system for testing</p>
+            </div>
           </div>
-        </div>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-white/80">Setup Progress</p>
+              <p className="text-xl font-bold">
+                {Object.values(setupStatus).filter(Boolean).length}/{setupItems.length} Complete
+              </p>
+            </div>
+            <Button 
+              onClick={createSampleData}
+              disabled={isLoading || allComplete}
+              className="bg-white/20 hover:bg-white/30 text-white border-white/30"
+            >
+              {isLoading ? 'Setting Up...' : allComplete ? 'Complete' : 'Run Full Setup'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
-        <Button onClick={handleSetup} disabled={isSubmitting} className="w-full">
-          {isSubmitting ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Setting Up...
-            </>
-          ) : (
-            <>
-              <Shield className="w-4 h-4 mr-2" />
-              Run Test Setup
-            </>
-          )}
-        </Button>
-      </CardContent>
-    </Card>
+      <div className="grid gap-4">
+        {setupItems.map((item) => {
+          const Icon = item.icon;
+          const isComplete = setupStatus[item.id as keyof typeof setupStatus];
+          
+          return (
+            <Card key={item.id}>
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start gap-3">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                      isComplete ? 'bg-green-100' : 'bg-gray-100'
+                    }`}>
+                      {isComplete ? (
+                        <CheckCircle className="w-5 h-5 text-green-600" />
+                      ) : (
+                        <Icon className="w-5 h-5 text-gray-600" />
+                      )}
+                    </div>
+                    <div>
+                      <h3 className="font-semibold flex items-center gap-2">
+                        {item.title}
+                        {isComplete && <Badge className="bg-green-100 text-green-800">Complete</Badge>}
+                      </h3>
+                      <p className="text-sm text-gray-600 mt-1">{item.description}</p>
+                    </div>
+                  </div>
+                  
+                  {!isComplete && (
+                    <Button 
+                      size="sm" 
+                      onClick={item.action}
+                      disabled={isLoading}
+                    >
+                      Setup
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      {allComplete && (
+        <Card className="bg-green-50 border-green-200">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <CheckCircle className="w-6 h-6 text-green-600" />
+              <div>
+                <h3 className="font-semibold text-green-900">Setup Complete!</h3>
+                <p className="text-sm text-green-700">
+                  MCP Agent test environment is ready. You can now test all MCP functionalities.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
 };
 

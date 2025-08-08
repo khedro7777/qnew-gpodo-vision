@@ -1,254 +1,136 @@
 
-import React from 'react';
-import { useAuth } from '@/hooks/useAuth';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { 
-  User, 
-  Settings, 
-  Bell, 
-  MessageCircle, 
-  Users, 
-  FileText, 
-  TrendingUp, 
-  Shield,
-  LogOut,
-  Home
-} from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
+import { useAuth } from '@/contexts/AuthContext';
+import MyGroupsTab from '@/components/dashboard/MyGroupsTab';
+import GroupRoomsTab from '@/components/dashboard/GroupRoomsTab';
+import WalletTab from '@/components/dashboard/WalletTab';
+import MCPAssistantTab from '@/components/dashboard/MCPAssistantTab';
+import DiscountOffersTab from '@/components/dashboard/DiscountOffersTab';
+import ArbitrationTab from '@/components/dashboard/ArbitrationTab';
+import ArchiveTab from '@/components/dashboard/ArchiveTab';
+import StoreTab from '@/components/dashboard/StoreTab';
+import CompanyFormationTab from '@/components/dashboard/CompanyFormationTab';
+import NotificationsTab from '@/components/dashboard/NotificationsTab';
+import MarketInsightsTab from '@/components/dashboard/MarketInsightsTab';
+import RiskManagementTab from '@/components/dashboard/RiskManagementTab';
+import { Card } from '@/components/ui/card';
+import { Shield } from 'lucide-react';
 
 const ClientDashboard = () => {
-  const { user, signOut } = useAuth();
-  const navigate = useNavigate();
+  const { user, profile } = useAuth();
+  const [activeTab, setActiveTab] = useState('my-groups');
 
-  const handleSignOut = async () => {
-    await signOut();
-    navigate('/');
-  };
+  const tabs = [
+    { id: 'my-groups', label: 'My Groups', shortLabel: 'Groups' },
+    { id: 'group-rooms', label: 'Group Rooms', shortLabel: 'Rooms' },
+    { id: 'wallet', label: 'Wallet', shortLabel: 'Wallet' },
+    { id: 'mcp-assistant', label: 'MCP Assistant', shortLabel: 'MCP' },
+    { id: 'discount-offers', label: 'Discount Offers', shortLabel: 'Offers' },
+    { id: 'arbitration', label: 'Arbitration', shortLabel: 'Legal' },
+    { id: 'archive', label: 'Archive', shortLabel: 'Archive' },
+    { id: 'store', label: 'Store', shortLabel: 'Store' },
+    { id: 'company-formation', label: 'Company Formation', shortLabel: 'Company' },
+    { id: 'notifications', label: 'Notifications', shortLabel: 'Alerts' },
+    { id: 'market-insights', label: 'Market Insights', shortLabel: 'Market' },
+    { id: 'risk-management', label: 'Risk Management', shortLabel: 'Risk' }
+  ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
-        <div className="px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-4">
-              <Link to="/" className="text-2xl font-bold text-blue-600">
-                GPODO
-              </Link>
-              <Badge variant="secondary" className="bg-green-100 text-green-800">
-                لوحة العميل
-              </Badge>
-            </div>
-            
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
+      <Header />
+      <main className="py-4 sm:py-8 px-2 sm:px-4 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          {/* Demo Mode Banner */}
+          <Card className="p-3 sm:p-4 bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-200 mb-4 sm:mb-8">
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <User className="w-4 h-4" />
-                <span>{user?.email}</span>
+              <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-600 shrink-0" />
+              <div>
+                <h3 className="font-semibold text-yellow-900 text-sm sm:text-base">Demo Mode - Development Version</h3>
+                <p className="text-xs sm:text-sm text-yellow-700">Authentication temporarily disabled • Mock data for development</p>
               </div>
-              <Link to="/">
-                <Button variant="outline" size="sm">
-                  <Home className="w-4 h-4 ml-2" />
-                  الرئيسية
-                </Button>
-              </Link>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleSignOut}
-                className="text-red-600 border-red-200 hover:bg-red-50"
-              >
-                <LogOut className="w-4 h-4 ml-2" />
-                تسجيل الخروج
-              </Button>
             </div>
-          </div>
-        </div>
-      </header>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Welcome Section */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            مرحباً بك في لوحة التحكم
-          </h1>
-          <p className="text-gray-600">
-            إدارة مجموعاتك التجارية ومتابعة أنشطتك بسهولة
-          </p>
-        </div>
-
-        {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">المجموعات</p>
-                  <p className="text-2xl font-bold text-gray-900">0</p>
-                </div>
-                <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <Users className="h-6 w-6 text-blue-600" />
-                </div>
-              </div>
-            </CardContent>
           </Card>
 
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">الرسائل</p>
-                  <p className="text-2xl font-bold text-gray-900">0</p>
-                </div>
-                <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center">
-                  <MessageCircle className="h-6 w-6 text-green-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">المشاريع</p>
-                  <p className="text-2xl font-bold text-gray-900">0</p>
-                </div>
-                <div className="h-12 w-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                  <FileText className="h-6 w-6 text-purple-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">النشاط</p>
-                  <p className="text-2xl font-bold text-gray-900">جديد</p>
-                </div>
-                <div className="h-12 w-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                  <TrendingUp className="h-6 w-6 text-orange-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Panel */}
-          <div className="lg:col-span-2">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="w-5 h-5" />
-                  مجموعاتي
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-12">
-                  <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    لا توجد مجموعات حالياً
-                  </h3>
-                  <p className="text-gray-600 mb-6">
-                    ابدأ بإنشاء مجموعة جديدة أو انضم إلى مجموعة موجودة
-                  </p>
-                  <div className="flex gap-3 justify-center">
-                    <Link to="/dashboard">
-                      <Button className="bg-blue-600 hover:bg-blue-700">
-                        استكشاف المجموعات
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+          <div className="mb-4 sm:mb-8">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">Client Dashboard</h1>
+            <p className="text-sm sm:text-base text-gray-600">Welcome, {profile?.full_name || user?.email}</p>
           </div>
 
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Profile Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <User className="w-5 h-5" />
-                  الملف الشخصي
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                      <User className="w-6 h-6 text-blue-600" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-900">{user?.email}</p>
-                      <p className="text-sm text-gray-600">عضو جديد</p>
-                    </div>
-                  </div>
-                  
-                  <div className="pt-4 border-t">
-                    <Link to="/settings">
-                      <Button variant="outline" className="w-full">
-                        <Settings className="w-4 h-4 ml-2" />
-                        إعدادات الحساب
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            {/* Mobile-friendly tabs with horizontal scroll */}
+            <div className="mb-4 sm:mb-8">
+              <ScrollArea className="w-full whitespace-nowrap">
+                <TabsList className="inline-flex h-10 items-center justify-start rounded-md bg-muted p-1 text-muted-foreground min-w-full sm:min-w-0">
+                  {tabs.map((tab) => (
+                    <TabsTrigger 
+                      key={tab.id}
+                      value={tab.id}
+                      className="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm shrink-0"
+                    >
+                      <span className="sm:hidden">{tab.shortLabel}</span>
+                      <span className="hidden sm:inline">{tab.label}</span>
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+                <ScrollBar orientation="horizontal" className="sm:hidden" />
+              </ScrollArea>
+            </div>
 
-            {/* Notifications */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Bell className="w-5 h-5" />
-                  الإشعارات
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8">
-                  <Bell className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                  <p className="text-gray-600 text-sm">لا توجد إشعارات جديدة</p>
-                </div>
-              </CardContent>
-            </Card>
+            <TabsContent value="my-groups">
+              <MyGroupsTab />
+            </TabsContent>
 
-            {/* Security Status */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Shield className="w-5 h-5" />
-                  حالة الأمان
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span className="text-sm text-gray-600">تم التحقق من البريد الإلكتروني</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                    <span className="text-sm text-gray-600">في انتظار التحقق من الهوية</span>
-                  </div>
-                  <Button variant="outline" size="sm" className="w-full mt-3">
-                    <Shield className="w-4 h-4 ml-2" />
-                    إكمال التحقق
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+            <TabsContent value="group-rooms">
+              <GroupRoomsTab />
+            </TabsContent>
+
+            <TabsContent value="wallet">
+              <WalletTab />
+            </TabsContent>
+
+            <TabsContent value="mcp-assistant">
+              <MCPAssistantTab />
+            </TabsContent>
+
+            <TabsContent value="discount-offers">
+              <DiscountOffersTab />
+            </TabsContent>
+
+            <TabsContent value="arbitration">
+              <ArbitrationTab />
+            </TabsContent>
+
+            <TabsContent value="archive">
+              <ArchiveTab />
+            </TabsContent>
+
+            <TabsContent value="store">
+              <StoreTab />
+            </TabsContent>
+
+            <TabsContent value="company-formation">
+              <CompanyFormationTab />
+            </TabsContent>
+
+            <TabsContent value="notifications">
+              <NotificationsTab />
+            </TabsContent>
+
+            <TabsContent value="market-insights">
+              <MarketInsightsTab />
+            </TabsContent>
+
+            <TabsContent value="risk-management">
+              <RiskManagementTab />
+            </TabsContent>
+          </Tabs>
         </div>
-      </div>
+      </main>
+      <Footer />
     </div>
   );
 };

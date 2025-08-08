@@ -1,442 +1,315 @@
-
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { 
-  Plus, 
-  ArrowRight, 
-  ArrowLeft, 
-  CheckCircle, 
-  Users, 
-  Globe, 
-  Shield, 
-  FileText,
-  Building2,
-  MapPin,
-  Crown,
-  Loader2
-} from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { Users, Globe, Lock, CheckCircle, ArrowRight, ArrowLeft } from 'lucide-react';
+import type { GatewayType } from '@/types';
 
-interface Step {
-  id: string;
-  label: string;
+interface GroupCreationData {
+  name: string;
   description: string;
+  gateway_type: GatewayType;
+  is_public: boolean;
+  max_members: number;
+  requires_kyc: boolean;
+  requires_mcp_test: boolean;
+  industry_sector?: string;
+  country?: string;
 }
 
-const steps: Step[] = [
-  {
-    id: 'details',
-    label: 'Group Details',
-    description: 'Provide basic information about your group'
-  },
-  {
-    id: 'structure',
-    label: 'Group Structure',
-    description: 'Define the structure and governance of the group'
-  },
-  {
-    id: 'requirements',
-    label: 'Entry Requirements',
-    description: 'Set requirements for users to join the group'
-  },
-  {
-    id: 'review',
-    label: 'Review & Submit',
-    description: 'Review all details and submit your group for approval'
-  }
-];
-
-const GroupCreationWizard = () => {
+const GroupCreationWizard = ({ onComplete }: { onComplete: () => void }) => {
   const { user } = useAuth();
-  const [isOpen, setIsOpen] = useState(false);
-  const [currentStep, setCurrentStep] = useState(0);
-  const [groupData, setGroupData] = useState({
+  const [currentStep, setCurrentStep] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState<GroupCreationData>({
     name: '',
     description: '',
-    industrySector: '',
-    country: '',
-    isPublic: true,
-    entryPoints: 0,
-    kycRequired: false,
-    mcpTestRequired: false,
-    governanceStructure: '',
-    missionStatement: '',
-    rulesAndRegulations: ''
+    gateway_type: 'purchasing',
+    is_public: true,
+    max_members: 50,
+    requires_kyc: false,
+    requires_mcp_test: false
   });
-  const [submissionProgress, setSubmissionProgress] = useState(0);
 
-  const nextStep = () => {
-    if (currentStep < steps.length - 1) {
-      setCurrentStep(currentStep + 1);
-    }
+  const gatewayOptions = [
+    { value: 'purchasing', label: 'Cooperative Purchasing', icon: '🛒', desc: 'Group buying for better prices' },
+    { value: 'marketing', label: 'Cooperative Marketing', icon: '📢', desc: 'Joint marketing campaigns' },
+    { value: 'formation', label: 'Company Formation', icon: '🏢', desc: 'Start a company together' },
+    { value: 'suppliers', label: 'Suppliers', icon: '🏭', desc: 'Connect with suppliers' },
+    { value: 'freelancers', label: 'Freelancers', icon: '👨‍💻', desc: 'Find skilled freelancers' },
+    { value: 'legal', label: 'Legal & Documentation', icon: '⚖️', desc: 'Legal dispute resolution' }
+  ] as const;
+
+  const handleInputChange = (field: keyof GroupCreationData, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const prevStep = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
-    }
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value, type } = e.target;
-    const checked = (e.target as HTMLInputElement).checked;
-    setGroupData(prevData => ({
-      ...prevData,
-      [name]: type === 'checkbox' ? checked : value
-    }));
-  };
-
-  const handleSubmit = async () => {
+  const createGroup = async () => {
     if (!user) {
-      toast.error('You must be logged in to create a group.');
+      toast.error('Please log in to create a group');
       return;
     }
 
-    // Simulate submission progress
-    const interval = setInterval(() => {
-      setSubmissionProgress(prevProgress => {
-        if (prevProgress >= 100) {
-          clearInterval(interval);
-          return 100;
-        }
-        return prevProgress + 10;
-      });
-    }, 200);
-
+    setLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      // Insert group data into Supabase with correct column names
       const { data, error } = await supabase
         .from('groups')
         .insert({
-          name: groupData.name,
-          description: groupData.description,
-          gateway_type: 'marketing', // Default gateway type
+          name: formData.name,
+          description: formData.description,
+          gateway_type: formData.gateway_type,
           creator_id: user.id,
-          is_public: groupData.isPublic,
-          current_members: 1
+          is_public: formData.is_public,
+          max_members: formData.max_members,
+          current_members: 1,
+          status: 'active'
         })
         .select()
         .single();
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
-      // Add creator as admin member
-      if (data) {
-        await supabase
-          .from('group_members')
-          .insert({
-            group_id: data.id,
-            user_id: user.id,
-            role: 'admin'
-          });
-      }
+      // Add creator as founder
+      await supabase
+        .from('group_members')
+        .insert({
+          group_id: data.id,
+          user_id: user.id,
+          role: 'founder'
+        });
 
       toast.success('Group created successfully!');
-      setIsOpen(false);
-      // Reset form
-      setGroupData({
-        name: '',
-        description: '',
-        industrySector: '',
-        country: '',
-        isPublic: true,
-        entryPoints: 0,
-        kycRequired: false,
-        mcpTestRequired: false,
-        governanceStructure: '',
-        missionStatement: '',
-        rulesAndRegulations: ''
-      });
-      setCurrentStep(0);
+      onComplete();
+      
     } catch (error: any) {
-      console.error('Error creating group:', error);
-      toast.error('Failed to create group: ' + error.message);
+      console.error('Create group error:', error);
+      toast.error('Failed to create group');
     } finally {
-      clearInterval(interval);
-      setSubmissionProgress(0);
+      setLoading(false);
     }
   };
 
-  const renderStepContent = () => {
-    switch (steps[currentStep].id) {
-      case 'details':
+  const renderStep = () => {
+    switch (currentStep) {
+      case 1:
         return (
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Basic Information</h2>
+              <p className="text-gray-600">Let's start with the basics of your group</p>
+            </div>
+
+            <div className="space-y-4">
               <div>
-                <Label htmlFor="name">Group Name</Label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Group Name</label>
                 <Input
-                  type="text"
-                  id="name"
-                  name="name"
-                  value={groupData.name}
-                  onChange={handleChange}
-                  placeholder="Enter group name"
+                  value={formData.name}
+                  onChange={(e) => handleInputChange('name', e.target.value)}
+                  placeholder="Enter your group name"
                 />
               </div>
+
               <div>
-                <Label htmlFor="industrySector">Industry Sector</Label>
-                <Select
-                  onValueChange={(value) => setGroupData(prev => ({ ...prev, industrySector: value }))}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select sector" />
+                <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                <Textarea
+                  value={formData.description}
+                  onChange={(e) => handleInputChange('description', e.target.value)}
+                  placeholder="Describe your group's purpose and goals"
+                  rows={4}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Gateway Type</label>
+                <Select value={formData.gateway_type} onValueChange={(value) => handleInputChange('gateway_type', value as GatewayType)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select gateway type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="technology">Technology</SelectItem>
-                    <SelectItem value="healthcare">Healthcare</SelectItem>
-                    <SelectItem value="finance">Finance</SelectItem>
-                    <SelectItem value="education">Education</SelectItem>
+                    {gatewayOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        <div className="flex items-center gap-2">
+                          <span>{option.icon}</span>
+                          <div>
+                            <div className="font-medium">{option.label}</div>
+                            <div className="text-xs text-gray-500">{option.desc}</div>
+                          </div>
+                        </div>
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
             </div>
+          </div>
+        );
+
+      case 2:
+        return (
+          <div className="space-y-6">
             <div>
-              <Label htmlFor="description">Group Description</Label>
-              <Textarea
-                id="description"
-                name="description"
-                value={groupData.description}
-                onChange={handleChange}
-                placeholder="Enter group description"
-              />
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Group Settings</h2>
+              <p className="text-gray-600">Configure how your group operates</p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+            <div className="space-y-4">
               <div>
-                <Label htmlFor="country">Country</Label>
-                <Select
-                  onValueChange={(value) => setGroupData(prev => ({ ...prev, country: value }))}
+                <label className="block text-sm font-medium text-gray-700 mb-2">Visibility</label>
+                <div className="flex gap-4">
+                  <Button
+                    variant={formData.is_public ? "default" : "outline"}
+                    onClick={() => handleInputChange('is_public', true)}
+                    className="flex-1 flex items-center gap-2"
+                  >
+                    <Globe className="w-4 h-4" />
+                    Public
+                  </Button>
+                  <Button
+                    variant={!formData.is_public ? "default" : "outline"}
+                    onClick={() => handleInputChange('is_public', false)}
+                    className="flex-1 flex items-center gap-2"
+                  >
+                    <Lock className="w-4 h-4" />
+                    Private
+                  </Button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Maximum Members</label>
+                <Input
+                  type="number"
+                  value={formData.max_members}
+                  onChange={(e) => handleInputChange('max_members', parseInt(e.target.value))}
+                  min={2}
+                  max={1000}
+                />
+              </div>
+            </div>
+          </div>
+        );
+
+      case 3:
+        return (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Requirements</h2>
+              <p className="text-gray-600">Set member requirements for your group</p>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div>
+                  <h3 className="font-medium">KYC Verification Required</h3>
+                  <p className="text-sm text-gray-500">Members must complete identity verification</p>
+                </div>
+                <Button
+                  variant={formData.requires_kyc ? "default" : "outline"}
+                  onClick={() => handleInputChange('requires_kyc', !formData.requires_kyc)}
+                  size="sm"
                 >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select country" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="US">United States</SelectItem>
-                    <SelectItem value="CA">Canada</SelectItem>
-                    <SelectItem value="GB">United Kingdom</SelectItem>
-                    <SelectItem value="DE">Germany</SelectItem>
-                  </SelectContent>
-                </Select>
+                  {formData.requires_kyc ? 'Required' : 'Optional'}
+                </Button>
               </div>
-              <div>
-                <Label>Group Type</Label>
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="isPublic"
-                    name="isPublic"
-                    checked={groupData.isPublic}
-                    onChange={handleChange}
-                  />
-                  <Label htmlFor="isPublic">Public Group</Label>
+
+              <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div>
+                  <h3 className="font-medium">MCP Test Required</h3>
+                  <p className="text-sm text-gray-500">Members must pass MCP skills assessment</p>
                 </div>
+                <Button
+                  variant={formData.requires_mcp_test ? "default" : "outline"}
+                  onClick={() => handleInputChange('requires_mcp_test', !formData.requires_mcp_test)}
+                  size="sm"
+                >
+                  {formData.requires_mcp_test ? 'Required' : 'Optional'}
+                </Button>
               </div>
             </div>
-          </div>
-        );
-      case 'structure':
-        return (
-          <div className="space-y-4">
+
             <div>
-              <Label htmlFor="governanceStructure">Governance Structure</Label>
-              <Textarea
-                id="governanceStructure"
-                name="governanceStructure"
-                value={groupData.governanceStructure}
-                onChange={handleChange}
-                placeholder="Describe the governance structure of the group"
-              />
-            </div>
-            <div>
-              <Label htmlFor="missionStatement">Mission Statement</Label>
-              <Textarea
-                id="missionStatement"
-                name="missionStatement"
-                value={groupData.missionStatement}
-                onChange={handleChange}
-                placeholder="Enter the mission statement of the group"
-              />
-            </div>
-            <div>
-              <Label htmlFor="rulesAndRegulations">Rules and Regulations</Label>
-              <Textarea
-                id="rulesAndRegulations"
-                name="rulesAndRegulations"
-                value={groupData.rulesAndRegulations}
-                onChange={handleChange}
-                placeholder="Enter the rules and regulations of the group"
-              />
-            </div>
-          </div>
-        );
-      case 'requirements':
-        return (
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="entryPoints">Entry Points</Label>
-              <Input
-                type="number"
-                id="entryPoints"
-                name="entryPoints"
-                value={groupData.entryPoints}
-                onChange={handleChange}
-                placeholder="Enter the number of points required to join"
-              />
-            </div>
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="kycRequired"
-                name="kycRequired"
-                checked={groupData.kycRequired}
-                onChange={handleChange}
-              />
-              <Label htmlFor="kycRequired">KYC Verification Required</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="mcpTestRequired"
-                name="mcpTestRequired"
-                checked={groupData.mcpTestRequired}
-                onChange={handleChange}
-              />
-              <Label htmlFor="mcpTestRequired">MCP Test Required</Label>
-            </div>
-          </div>
-        );
-      case 'review':
-        return (
-          <div className="space-y-4">
-            <Card>
-              <CardContent className="pt-6">
+              <h3 className="font-medium mb-4">Review Your Group</h3>
+              <Card className="p-4 bg-gray-50">
                 <div className="space-y-2">
-                  <h3 className="text-lg font-semibold">Group Details</h3>
-                  <p><strong>Name:</strong> {groupData.name}</p>
-                  <p><strong>Description:</strong> {groupData.description}</p>
-                  <p><strong>Industry Sector:</strong> {groupData.industrySector}</p>
-                  <p><strong>Country:</strong> {groupData.country}</p>
-                  <p><strong>Type:</strong> {groupData.isPublic ? 'Public' : 'Private'}</p>
+                  <div><strong>Name:</strong> {formData.name}</div>
+                  <div><strong>Type:</strong> {gatewayOptions.find(g => g.value === formData.gateway_type)?.label}</div>
+                  <div><strong>Visibility:</strong> {formData.is_public ? 'Public' : 'Private'}</div>
+                  <div><strong>Max Members:</strong> {formData.max_members}</div>
+                  <div className="flex gap-2 mt-2">
+                    {formData.requires_kyc && <Badge variant="secondary">KYC Required</Badge>}
+                    {formData.requires_mcp_test && <Badge variant="secondary">MCP Test Required</Badge>}
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6">
-                <div className="space-y-2">
-                  <h3 className="text-lg font-semibold">Group Structure</h3>
-                  <p><strong>Governance:</strong> {groupData.governanceStructure}</p>
-                  <p><strong>Mission:</strong> {groupData.missionStatement}</p>
-                  <p><strong>Rules:</strong> {groupData.rulesAndRegulations}</p>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6">
-                <div className="space-y-2">
-                  <h3 className="text-lg font-semibold">Entry Requirements</h3>
-                  <p><strong>Entry Points:</strong> {groupData.entryPoints}</p>
-                  <p><strong>KYC Required:</strong> {groupData.kycRequired ? 'Yes' : 'No'}</p>
-                  <p><strong>MCP Test Required:</strong> {groupData.mcpTestRequired ? 'Yes' : 'No'}</p>
-                </div>
-              </CardContent>
-            </Card>
+              </Card>
+            </div>
           </div>
         );
+
       default:
         return null;
     }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline">
-          <Plus className="w-4 h-4 mr-2" />
-          Create New Group
+    <Card className="max-w-2xl mx-auto p-6">
+      {/* Progress Steps */}
+      <div className="flex items-center justify-center mb-8">
+        {[1, 2, 3].map((step) => (
+          <div key={step} className="flex items-center">
+            <div
+              className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                step <= currentStep
+                  ? 'bg-productivity-blue text-white'
+                  : 'bg-gray-200 text-gray-600'
+              }`}
+            >
+              {step < currentStep ? <CheckCircle className="w-4 h-4" /> : step}
+            </div>
+            {step < 3 && (
+              <div className={`w-16 h-1 ${step < currentStep ? 'bg-productivity-blue' : 'bg-gray-200'}`} />
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Step Content */}
+      {renderStep()}
+
+      {/* Navigation */}
+      <div className="flex justify-between mt-8">
+        <Button
+          variant="outline"
+          onClick={() => setCurrentStep(prev => prev - 1)}
+          disabled={currentStep === 1}
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Previous
         </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[600px]">
-        <DialogHeader>
-          <DialogTitle>Create a New Group</DialogTitle>
-          <DialogDescription>
-            Follow these steps to create a new group in the platform.
-          </DialogDescription>
-        </DialogHeader>
 
-        <div className="mb-4">
-          <div className="flex items-center justify-between mb-2">
-            {steps.map((step, index) => (
-              <div key={step.id} className="flex items-center">
-                {index > 0 && (
-                  <ArrowRight className="w-4 h-4 text-gray-400 mx-2" />
-                )}
-                <div className={`flex items-center ${currentStep === index ? 'text-blue-600 font-semibold' : 'text-gray-500'}`}>
-                  {currentStep > index ? (
-                    <CheckCircle className="w-4 h-4 mr-1 text-green-500" />
-                  ) : (
-                    <span className="mr-1">{index + 1}</span>
-                  )}
-                  <span>{step.label}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-          <Progress value={(currentStep + 1) * (100 / steps.length)} />
-        </div>
-
-        {renderStepContent()}
-
-        {submissionProgress > 0 && submissionProgress < 100 && (
-          <div className="space-y-2">
-            <Progress value={submissionProgress} />
-            <p className="text-sm text-center text-gray-500">Creating your group...</p>
-          </div>
-        )}
-
-        <div className="flex justify-between">
+        {currentStep < 3 ? (
           <Button
-            variant="secondary"
-            onClick={prevStep}
-            disabled={currentStep === 0}
+            onClick={() => setCurrentStep(prev => prev + 1)}
+            disabled={!formData.name || !formData.gateway_type}
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Previous
+            Next
+            <ArrowRight className="w-4 h-4 ml-2" />
           </Button>
-          {currentStep === steps.length - 1 ? (
-            <Button onClick={handleSubmit} disabled={submissionProgress > 0}>
-              {submissionProgress > 0 ? (
-                <div className="flex items-center">
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Submitting...
-                </div>
-              ) : (
-                'Submit'
-              )}
-            </Button>
-          ) : (
-            <Button onClick={nextStep}>
-              Next
-              <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
+        ) : (
+          <Button
+            onClick={createGroup}
+            disabled={loading || !formData.name}
+          >
+            {loading ? 'Creating...' : 'Create Group'}
+          </Button>
+        )}
+      </div>
+    </Card>
   );
 };
 

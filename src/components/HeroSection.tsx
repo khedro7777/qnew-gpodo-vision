@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Search, ArrowRight, Users, Building, Briefcase, ShieldCheck, Globe, Handshake } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -9,7 +10,7 @@ import {
   SelectValue 
 } from '@/components/ui/select';
 import { useCountries, useIndustrySectors } from '@/hooks/useSupabaseData';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
 
 const HeroSection = () => {
   const [searchFilters, setSearchFilters] = useState({

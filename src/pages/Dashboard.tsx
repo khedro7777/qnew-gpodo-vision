@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
 import { useKYCStatus } from '@/hooks/useKYCStatus';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -13,21 +13,35 @@ import EnhancedPomodoroTimer from '@/components/enhanced/EnhancedPomodoroTimer';
 import EnhancedTaskList from '@/components/enhanced/EnhancedTaskList';
 import NotificationCenter from '@/components/enhanced/NotificationCenter';
 import GoalsTracker from '@/components/enhanced/GoalsTracker';
+import { Card } from '@/components/ui/card';
+import { Shield } from 'lucide-react';
 
 const Dashboard = () => {
-  const { user, loading } = useAuth();
+  const { user, profile, loading: authLoading } = useAuth();
 
-  console.log('Dashboard render:', {
+  console.log('Dashboard render - Demo Mode:', {
     user: !!user,
-    loading,
+    profile: !!profile,
+    authLoading,
   });
 
-  // Show the main dashboard
+  // Show the main dashboard immediately in demo mode
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
       <Header />
       <main className="py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto space-y-8">
+          {/* Demo Mode Banner */}
+          <Card className="p-4 bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-200">
+            <div className="flex items-center gap-3">
+              <Shield className="w-5 h-5 text-yellow-600" />
+              <div>
+                <h3 className="font-semibold text-yellow-900">Demo Mode - Development Version</h3>
+                <p className="text-sm text-yellow-700">Authentication temporarily disabled • Mock data for development</p>
+              </div>
+            </div>
+          </Card>
+          
           {/* Welcome Section */}
           <WelcomeSection />
           

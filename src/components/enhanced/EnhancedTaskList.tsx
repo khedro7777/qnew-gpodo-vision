@@ -1,403 +1,290 @@
+
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { useAuth } from '@/hooks/useAuth';
-import {
-  Plus,
-  CheckCircle,
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { 
+  Plus, 
+  Filter, 
+  CheckCircle2, 
+  Circle, 
   Clock,
-  AlertTriangle,
-  Users,
-  Calendar,
-  Filter,
-  Search,
-  Edit,
-  Trash2,
-  Tag
+  AlertCircle,
+  Calendar
 } from 'lucide-react';
+import { toast } from 'sonner';
+
+interface Task {
+  id: string;
+  title: string;
+  description?: string;
+  status: string;
+  priority: string;
+  due_date?: string;
+  created_at: string;
+  created_by: string;
+  assigned_to?: string;
+  group_id?: string;
+}
 
 const EnhancedTaskList = () => {
   const { user } = useAuth();
-  const [tasks, setTasks] = useState([
-    {
-      id: '1',
-      title: 'Finalize Q3 Budget',
-      description: 'Complete budget adjustments and submit for approval',
-      status: 'in progress',
-      priority: 'high',
-      assignedTo: 'Sarah Johnson',
-      dueDate: '2024-08-15',
-      tags: ['finance', 'budget']
-    },
-    {
-      id: '2',
-      title: 'Prepare Marketing Report',
-      description: 'Gather data and create a comprehensive marketing report',
-      status: 'completed',
-      priority: 'medium',
-      assignedTo: 'Michael Lee',
-      dueDate: '2024-08-10',
-      tags: ['marketing', 'report']
-    },
-    {
-      id: '3',
-      title: 'Update Project Timeline',
-      description: 'Adjust project timeline based on recent progress',
-      status: 'pending',
-      priority: 'low',
-      assignedTo: 'Emily Davis',
-      dueDate: '2024-08-20',
-      tags: ['project management', 'timeline']
-    }
-  ]);
-  const [newTask, setNewTask] = useState({
-    title: '',
-    description: '',
-    status: 'pending',
-    priority: 'medium',
-    assignedTo: '',
-    dueDate: '',
-    tags: ''
-  });
-  const [isAddingTask, setIsAddingTask] = useState(false);
-  const [editingTask, setEditingTask] = useState(null);
+  const queryClient = useQueryClient();
+  const [filter, setFilter] = useState('all');
+  const [newTaskTitle, setNewTaskTitle] = useState('');
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    setNewTask({ ...newTask, [e.target.name]: e.target.value });
+  console.log('EnhancedTaskList render:', { user: !!user });
+
+  const { data: tasks = [], isLoading, error } = useQuery({
+    queryKey: ['tasks', user?.id, filter],
+    queryFn: async (): Promise<Task[]> => {
+      if (!user?.id) {
+        console.log('No user ID, returning mock data');
+        // Return mock tasks for demo mode
+        return [
+          {
+            id: '1',
+            title: 'Review supplier proposals',
+            description: 'Analyze pricing and terms for office supplies',
+            status: 'pending',
+            priority: 'high',
+            due_date: '2025-08-06',
+            created_at: '2025-08-05T10:00:00Z',
+            created_by: 'demo'
+          },
+          {
+            id: '2',
+            title: 'Schedule team meeting',
+            description: 'Quarterly planning session',
+            status: 'completed',
+            priority: 'medium',
+            due_date: '2025-08-05',
+            created_at: '2025-08-05T09:00:00Z',
+            created_by: 'demo'
+          }
+        ];
+      }
+
+      try {
+        let query = supabase
+          .from('tasks')
+          .select('*')
+          .eq('created_by', user.id)
+          .order('created_at', { ascending: false });
+
+        if (filter !== 'all') {
+          query = query.eq('status', filter);
+        }
+
+        const { data, error } = await query;
+        
+        if (error) {
+          console.error('Tasks query error:', error);
+          throw error;
+        }
+
+        console.log('Tasks loaded successfully:', data?.length || 0);
+        return data || [];
+      } catch (err) {
+        console.error('Failed to load tasks:', err);
+        throw err;
+      }
+    },
+    retry: false,
+  });
+
+  const addTaskMutation = useMutation({
+    mutationFn: async (title: string) => {
+      if (!user?.id) {
+        throw new Error('Authentication required');
+      }
+      
+      const { error } = await supabase
+        .from('tasks')
+        .insert({
+          created_by: user.id,
+          title: title,
+          status: 'pending',
+          priority: 'medium'
+        });
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      setNewTaskTitle('');
+      toast.success('Task added successfully');
+    },
+    onError: (error: Error) => {
+      toast.error('Failed to add task: ' + error.message);
+    },
+  });
+
+  const toggleTaskMutation = useMutation({
+    mutationFn: async ({ taskId, currentStatus }: { taskId: string; currentStatus: string }) => {
+      if (!user?.id) {
+        throw new Error('Authentication required');
+      }
+
+      const newStatus = currentStatus === 'completed' ? 'pending' : 'completed';
+      const { error } = await supabase
+        .from('tasks')
+        .update({ status: newStatus })
+        .eq('id', taskId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      toast.success('Task updated');
+    },
+    onError: (error: Error) => {
+      toast.error('Failed to update task: ' + error.message);
+    },
+  });
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'high': return 'bg-red-100 text-red-800';
+      case 'medium': return 'bg-yellow-100 text-yellow-800';
+      case 'low': return 'bg-green-100 text-green-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
   };
 
   const handleAddTask = () => {
-    setTasks([...tasks, { ...newTask, id: String(Date.now()), tags: newTask.tags.split(',') }]);
-    setNewTask({
-      title: '',
-      description: '',
-      status: 'pending',
-      priority: 'medium',
-      assignedTo: '',
-      dueDate: '',
-      tags: ''
-    });
-    setIsAddingTask(false);
+    if (!newTaskTitle.trim()) return;
+    addTaskMutation.mutate(newTaskTitle);
   };
 
-  const handleEditTask = (task: any) => {
-    setEditingTask(task);
+  const handleToggleTask = (taskId: string, currentStatus: string) => {
+    toggleTaskMutation.mutate({ taskId, currentStatus });
   };
 
-  const handleUpdateTask = (updatedTask: any) => {
-    setTasks(tasks.map(task => (task.id === updatedTask.id ? updatedTask : task)));
-    setEditingTask(null);
-  };
-
-  const handleDeleteTask = (id: string) => {
-    setTasks(tasks.filter(task => task.id !== id));
-  };
+  if (error) {
+    console.error('EnhancedTaskList error:', error);
+    return (
+      <Card className="p-6">
+        <div className="text-center py-8">
+          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Unable to Load Tasks</h3>
+          <p className="text-gray-600 mb-4">There was an error loading your tasks. Please try again.</p>
+          <Button onClick={() => queryClient.invalidateQueries({ queryKey: ['tasks'] })}>
+            Try Again
+          </Button>
+        </div>
+      </Card>
+    );
+  }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <CheckCircle className="w-5 h-5 text-blue-500" />
-          Enhanced Task Management
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Tabs defaultValue="all" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="all">All Tasks</TabsTrigger>
-            <TabsTrigger value="pending">Pending</TabsTrigger>
-            <TabsTrigger value="in progress">In Progress</TabsTrigger>
-            <TabsTrigger value="completed">Completed</TabsTrigger>
-          </TabsList>
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              <Input type="text" placeholder="Search tasks..." className="max-w-xs" />
-              <Select>
-                <SelectTrigger>
-                  <SelectValue placeholder="Filter by priority" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="high">High</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="low">Low</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <Button onClick={() => setIsAddingTask(true)}>
-              <Plus className="w-4 h-4 mr-2" />
-              Add Task
-            </Button>
+    <Card className="p-6">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h3 className="text-xl font-semibold text-gray-900">Task Management</h3>
+          <p className="text-gray-600 text-sm">Stay organized and productive</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Select value={filter} onValueChange={setFilter}>
+            <SelectTrigger className="w-32">
+              <Filter className="w-4 h-4 mr-2" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Tasks</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="completed">Completed</SelectItem>
+              <SelectItem value="in_progress">In Progress</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* Add New Task */}
+      <div className="flex gap-2 mb-6">
+        <Input
+          placeholder="Add a new task..."
+          value={newTaskTitle}
+          onChange={(e) => setNewTaskTitle(e.target.value)}
+          onKeyPress={(e) => e.key === 'Enter' && handleAddTask()}
+          className="flex-1"
+        />
+        <Button 
+          onClick={handleAddTask}
+          disabled={!newTaskTitle.trim() || addTaskMutation.isPending}
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Add
+        </Button>
+      </div>
+
+      {/* Tasks List */}
+      <div className="space-y-3">
+        {isLoading ? (
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="text-gray-600 mt-2">Loading tasks...</p>
           </div>
-          <TabsContent value="all">
-            <div className="grid gap-4">
-              {tasks.map(task => (
-                <Card key={task.id}>
-                  <CardContent className="flex justify-between items-center">
-                    <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        {task.status === 'pending' && <Clock className="w-4 h-4 text-gray-500" />}
-                        {task.status === 'in progress' && <AlertTriangle className="w-4 h-4 text-yellow-500" />}
-                        {task.status === 'completed' && <CheckCircle className="w-4 h-4 text-green-500" />}
-                        <span className="font-medium">{task.title}</span>
-                      </div>
-                      <p className="text-sm text-gray-500">{task.description}</p>
-                      <div className="flex items-center gap-1 mt-2">
-                        {task.tags && task.tags.map((tag: string, index: number) => (
-                          <Badge key={index} variant="secondary">
-                            <Tag className="w-3 h-3 mr-1" />
-                            {tag}
-                          </Badge>
-                        ))}
-                      </div>
+        ) : tasks.length === 0 ? (
+          <div className="text-center py-8">
+            <CheckCircle2 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No tasks found</h3>
+            <p className="text-gray-600">Add your first task to get started!</p>
+          </div>
+        ) : (
+          tasks.map((task) => (
+            <div
+              key={task.id}
+              className="flex items-start gap-3 p-4 border rounded-lg hover:shadow-sm transition-shadow"
+            >
+              <button
+                onClick={() => handleToggleTask(task.id, task.status)}
+                className="mt-1"
+                disabled={toggleTaskMutation.isPending}
+              >
+                {task.status === 'completed' ? (
+                  <CheckCircle2 className="w-5 h-5 text-green-500" />
+                ) : (
+                  <Circle className="w-5 h-5 text-gray-400 hover:text-blue-500" />
+                )}
+              </button>
+              
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <h4 className={`font-medium ${task.status === 'completed' ? 'line-through text-gray-500' : 'text-gray-900'}`}>
+                    {task.title}
+                  </h4>
+                  <Badge className={`${getPriorityColor(task.priority)} border-0 text-xs`}>
+                    {task.priority}
+                  </Badge>
+                </div>
+                
+                {task.description && (
+                  <p className="text-sm text-gray-600 mb-2">{task.description}</p>
+                )}
+                
+                <div className="flex items-center gap-4 text-xs text-gray-500">
+                  {task.due_date && (
+                    <div className="flex items-center gap-1">
+                      <Calendar className="w-3 h-3" />
+                      <span>Due: {new Date(task.due_date).toLocaleDateString()}</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Button variant="ghost" size="sm" onClick={() => handleEditTask(task)}>
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm" className="text-red-500" onClick={() => handleDeleteTask(task.id)}>
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                  )}
+                  <div className="flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    <span>Created: {new Date(task.created_at).toLocaleDateString()}</span>
+                  </div>
+                </div>
+              </div>
             </div>
-          </TabsContent>
-          <TabsContent value="pending">
-            <div className="grid gap-4">
-              {tasks.filter(task => task.status === 'pending').map(task => (
-                <Card key={task.id}>
-                  <CardContent className="flex justify-between items-center">
-                    <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <Clock className="w-4 h-4 text-gray-500" />
-                        <span className="font-medium">{task.title}</span>
-                      </div>
-                      <p className="text-sm text-gray-500">{task.description}</p>
-                      <div className="flex items-center gap-1 mt-2">
-                        {task.tags && task.tags.map((tag: string, index: number) => (
-                          <Badge key={index} variant="secondary">
-                            <Tag className="w-3 h-3 mr-1" />
-                            {tag}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button variant="ghost" size="sm" onClick={() => handleEditTask(task)}>
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm" className="text-red-500" onClick={() => handleDeleteTask(task.id)}>
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
-          <TabsContent value="in progress">
-            <div className="grid gap-4">
-              {tasks.filter(task => task.status === 'in progress').map(task => (
-                <Card key={task.id}>
-                  <CardContent className="flex justify-between items-center">
-                    <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <AlertTriangle className="w-4 h-4 text-yellow-500" />
-                        <span className="font-medium">{task.title}</span>
-                      </div>
-                      <p className="text-sm text-gray-500">{task.description}</p>
-                      <div className="flex items-center gap-1 mt-2">
-                        {task.tags && task.tags.map((tag: string, index: number) => (
-                          <Badge key={index} variant="secondary">
-                            <Tag className="w-3 h-3 mr-1" />
-                            {tag}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button variant="ghost" size="sm" onClick={() => handleEditTask(task)}>
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm" className="text-red-500" onClick={() => handleDeleteTask(task.id)}>
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
-          <TabsContent value="completed">
-            <div className="grid gap-4">
-              {tasks.filter(task => task.status === 'completed').map(task => (
-                <Card key={task.id}>
-                  <CardContent className="flex justify-between items-center">
-                    <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <CheckCircle className="w-4 h-4 text-green-500" />
-                        <span className="font-medium">{task.title}</span>
-                      </div>
-                      <p className="text-sm text-gray-500">{task.description}</p>
-                      <div className="flex items-center gap-1 mt-2">
-                        {task.tags && task.tags.map((tag: string, index: number) => (
-                          <Badge key={index} variant="secondary">
-                            <Tag className="w-3 h-3 mr-1" />
-                            {tag}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button variant="ghost" size="sm" onClick={() => handleEditTask(task)}>
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm" className="text-red-500" onClick={() => handleDeleteTask(task.id)}>
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
-        </Tabs>
-
-        {isAddingTask && (
-          <Card className="mt-4">
-            <CardHeader>
-              <CardTitle>Add New Task</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="title">Title</Label>
-                  <Input type="text" id="title" name="title" value={newTask.title} onChange={handleInputChange} />
-                </div>
-                <div>
-                  <Label htmlFor="dueDate">Due Date</Label>
-                  <Input type="date" id="dueDate" name="dueDate" value={newTask.dueDate} onChange={handleInputChange} />
-                </div>
-              </div>
-              <div>
-                <Label htmlFor="description">Description</Label>
-                <Textarea id="description" name="description" value={newTask.description} onChange={handleInputChange} />
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <Label htmlFor="status">Status</Label>
-                  <Select name="status" value={newTask.status} onValueChange={(value) => handleInputChange({ target: { name: 'status', value } } as any)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="in progress">In Progress</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="priority">Priority</Label>
-                  <Select name="priority" value={newTask.priority} onValueChange={(value) => handleInputChange({ target: { name: 'priority', value } } as any)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select priority" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="high">High</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="low">Low</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="assignedTo">Assigned To</Label>
-                  <Input type="text" id="assignedTo" name="assignedTo" value={newTask.assignedTo} onChange={handleInputChange} />
-                </div>
-              </div>
-              <div>
-                <Label htmlFor="tags">Tags (comma separated)</Label>
-                <Input type="text" id="tags" name="tags" value={newTask.tags} onChange={handleInputChange} placeholder="e.g., finance, budget" />
-              </div>
-              <div className="flex justify-end">
-                <Button variant="ghost" onClick={() => setIsAddingTask(false)}>Cancel</Button>
-                <Button onClick={handleAddTask}>Add Task</Button>
-              </div>
-            </CardContent>
-          </Card>
+          ))
         )}
-
-        {editingTask && (
-          <Card className="mt-4">
-            <CardHeader>
-              <CardTitle>Edit Task</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="title">Title</Label>
-                  <Input type="text" id="title" name="title" value={editingTask.title} onChange={(e) => setEditingTask({ ...editingTask, title: e.target.value })} />
-                </div>
-                <div>
-                  <Label htmlFor="dueDate">Due Date</Label>
-                  <Input type="date" id="dueDate" name="dueDate" value={editingTask.dueDate} onChange={(e) => setEditingTask({ ...editingTask, dueDate: e.target.value })} />
-                </div>
-              </div>
-              <div>
-                <Label htmlFor="description">Description</Label>
-                <Textarea id="description" name="description" value={editingTask.description} onChange={(e) => setEditingTask({ ...editingTask, description: e.target.value })} />
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <Label htmlFor="status">Status</Label>
-                  <Select value={editingTask.status} onValueChange={(value) => setEditingTask({ ...editingTask, status: value })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="in progress">In Progress</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="priority">Priority</Label>
-                  <Select value={editingTask.priority} onValueChange={(value) => setEditingTask({ ...editingTask, priority: value })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select priority" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="high">High</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="low">Low</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="assignedTo">Assigned To</Label>
-                  <Input type="text" id="assignedTo" name="assignedTo" value={editingTask.assignedTo} onChange={(e) => setEditingTask({ ...editingTask, assignedTo: e.target.value })} />
-                </div>
-              </div>
-              <div>
-                <Label htmlFor="tags">Tags (comma separated)</Label>
-                <Input type="text" id="tags" name="tags" value={editingTask.tags} onChange={(e) => setEditingTask({ ...editingTask, tags: e.target.value })} placeholder="e.g., finance, budget" />
-              </div>
-              <div className="flex justify-end">
-                <Button variant="ghost" onClick={() => setEditingTask(null)}>Cancel</Button>
-                <Button onClick={() => handleUpdateTask(editingTask)}>Update Task</Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-      </CardContent>
+      </div>
     </Card>
   );
 };
