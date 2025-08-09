@@ -127,7 +127,8 @@ export const useContentEntries = (contentTypeId: string) => {
       // Transform database results to our TypeScript types
       return (data || []).map((item: DbContentEntry): ContentEntry => ({
         ...item,
-        data: typeof item.data === 'object' ? item.data : {}
+        data: typeof item.data === 'object' ? item.data : {},
+        status: item.status as 'draft' | 'published' | 'archived'
       }));
     },
     enabled: !!contentTypeId,
@@ -174,7 +175,7 @@ export const useUpdateContentEntry = () => {
       id: string; 
       updates: Partial<ContentEntry>; 
     }) => {
-      const updateData = {
+      const updateData: any = {
         ...updates,
         updated_at: new Date().toISOString()
       };
