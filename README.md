@@ -1,173 +1,264 @@
 
-# GPO SMART Platform
+# Group Purchasing and Business Development Platform
 
-A Progressive Web App (PWA) for collaborative business negotiations, smart procurement, and fair partnerships.
+A comprehensive business development platform that facilitates group purchasing, collaboration, and multi-language support with automatic translation capabilities.
 
-## 🌍 Platform Overview
+## 🚀 Features
 
-GPO SMART is a comprehensive platform that enables:
-- **Collaborative Procurement**: Group buying for better prices
-- **Smart Negotiations**: AI-powered negotiation tools
-- **Group Formation**: Create and manage business groups
-- **Arbitration & Documentation**: Built-in dispute resolution
-- **Multi-Gateway System**: 12 specialized business portals
+- **Multi-Gateway Business Platform**: Support for purchasing, marketing, suppliers, freelancers, formation, and legal gateways
+- **Group Management**: Create and manage business groups with role-based access
+- **Automatic Translation**: Powered by DeepSeek API for real-time content translation
+- **KYC Verification**: Complete Know Your Customer verification system
+- **MCP Agent System**: Multi-Agent system for business process automation
+- **Real-time Communication**: Group messaging and notifications
+- **Document Management**: IPFS-based document storage and sharing
+- **Payment Integration**: PayPal integration for transactions
+- **Admin Dashboard**: Comprehensive admin panel for platform management
+- **Content Management**: Dynamic content creation and management system
 
-## 🧩 Technical Stack
+## 🛠 Technical Stack
 
-- **Frontend**: React 18+ with TypeScript
-- **Styling**: TailwindCSS 3+
-- **Build Tool**: Vite
-- **Backend**: Supabase (PostgreSQL)
-- **Deployment**: Vercel
-- **PWA**: Service Workers, Offline Support
+- **Frontend**: React 18 + TypeScript + Vite + Tailwind CSS
+- **Backend**: Supabase (PostgreSQL + Edge Functions)
+- **Authentication**: Supabase Auth with Row Level Security
+- **Storage**: Supabase Storage + IPFS
+- **State Management**: TanStack Query (React Query)
+- **UI Components**: Radix UI + shadcn/ui
+- **Translation**: DeepSeek API integration
+- **Payments**: PayPal API integration
 
-## 🚀 Quick Start
+## 📦 Installation & Setup
 
-1. **Clone & Install**
+### Prerequisites
+
+- Node.js 18+ 
+- npm or bun
+- Supabase account
+- DeepSeek API key (for translations)
+- PayPal Developer account (for payments)
+
+### Local Development
+
+1. **Clone the repository**
    ```bash
    git clone <repository-url>
-   cd gpo-smart
-   npm install
+   cd group-purchasing-platform
    ```
 
-2. **Environment Setup**
+2. **Install dependencies**
    ```bash
-   cp .env.example .env.local
-   # Add your Supabase credentials
+   npm install
+   # or
+   bun install
    ```
 
-3. **Run Development**
+3. **Set up Supabase**
+   - Create a new Supabase project
+   - Update `src/integrations/supabase/client.ts` with your project details
+   - Run the database migrations from the Supabase dashboard
+
+4. **Configure secrets in Supabase**
+   - `DEEPSEEK_API_KEY`: For translation services
+   - `PAYPAL_CLIENT_ID`: PayPal application client ID
+   - `PAYPAL_CLIENT_SECRET`: PayPal application secret
+
+5. **Start development server**
    ```bash
    npm run dev
+   # or
+   bun run dev
    ```
 
-## 📱 Features
+## 🏗 Project Structure
 
-### Core Platform
-- **Multi-language Support**: EN, AR, FR, CN, ES, HI, JP, KR
-- **Responsive Design**: Mobile-first PWA
-- **Real-time Updates**: Live notifications and chat
-- **Role-based Access**: Comprehensive permission system
-
-### 12 Smart Gateways
-1. **Cooperative Purchasing** - Group buying power
-2. **Cooperative Marketing** - Joint campaigns
-3. **Company Formation** - Business incorporation
-4. **Investment Groups** - Collective funding
-5. **Suppliers** - Vendor marketplace
-6. **Freelancers** - Talent platform
-7. **Freelancer Teams** - Team collaboration
-8. **Service Providers** - Professional services
-9. **Product Listings** - B2B marketplace
-10. **Arbitration & Documentation** - Dispute resolution
-11. **Arbitration Requests** - Case management
-12. **Smart Negotiation Tools** - AI-assisted deals
-
-### Smart Features
-- **MCP Testing System**: Skills assessment
-- **AI Agents**: 12 specialized AI assistants
-- **Reputation System**: Trust & rating management
-- **Voting & Governance**: Democratic decision making
-- **Contract Management**: Legal document handling
-- **Task Management**: Kanban-style boards
-
-## 🏗️ Architecture
-
-### Frontend Structure
 ```
 src/
 ├── components/          # Reusable UI components
-│   ├── layout/         # Layout components
-│   ├── ui/             # Base UI components
-│   ├── workflow/       # Business workflow components
-│   └── dashboard/      # Dashboard widgets
-├── pages/              # Route pages
+│   ├── admin/          # Admin dashboard components
+│   ├── auth/           # Authentication components
+│   ├── dashboard/      # Main dashboard components
+│   ├── ui/             # Base UI components (shadcn/ui)
+│   └── ...
 ├── hooks/              # Custom React hooks
-├── contexts/           # React contexts
-├── types/              # TypeScript definitions
-└── utils/              # Utility functions
+├── pages/              # Route components
+├── contexts/           # React context providers
+├── utils/              # Utility functions
+├── integrations/       # External service integrations
+└── types/              # TypeScript type definitions
+
+supabase/
+├── functions/          # Supabase Edge Functions
+└── config.toml         # Supabase configuration
 ```
 
-### Database Schema
-- **Users & Profiles**: Authentication & user data
-- **Groups & Members**: Group management
-- **Votes & Proposals**: Governance system
-- **Tasks & Contracts**: Work management
-- **Messages & Notifications**: Communication
-- **Arbitration Cases**: Dispute resolution
+## 🔧 Key Components & Hooks
 
-## 🔐 Security Features
+### Authentication
+- `useAuth()`: Main authentication hook with profile management
+- `AuthProvider`: Context provider for authentication state
 
-- **Row Level Security (RLS)**: Database access control
-- **KYC Verification**: Identity validation
-- **Multi-factor Authentication**: Enhanced security
-- **Audit Logging**: Complete activity trails
-- **Data Encryption**: Secure data handling
+### Data Management
+- `useOptimizedQuery()`: Enhanced React Query wrapper with performance optimizations
+- `usePlatformIntegration()`: Platform-wide data operations
+- `useSupabaseData()`: Supabase-specific data hooks
 
-## 🌐 Internationalization
+### Performance
+- `connectionManager`: Database connection pooling
+- `performanceMonitor`: Performance tracking utilities
+- `memoryManager`: Memory cleanup and monitoring
 
-Built-in support for 8 languages with:
-- RTL support for Arabic
-- Currency localization
-- Date/time formatting
-- Cultural adaptations
-
-## 📊 Business Logic
-
-### User Workflow
-1. **Registration** → KYC → Role Selection
-2. **Gateway Selection** → Group Formation/Joining
-3. **Collaboration** → Voting → Contract Execution
-4. **Dispute Resolution** → Arbitration → Resolution
-
-### Points System
-- Entry points for premium groups
-- Earned through platform participation
-- Spent on services and group memberships
-- Transparent transaction history
-
-## 🤖 AI Integration
-
-12 Specialized AI Agents:
-- **Sami**: Demand analysis
-- **Nour**: Market research
-- **Lina**: Legal contracts
-- **Ziad**: Arbitration supervision
-- **Hani**: Negotiation coaching
-- And 7 more specialized agents...
+### Translation
+- `translationManager`: Automatic translation with caching
+- `useAutoTranslation()`: Hook for real-time translation
 
 ## 🚀 Deployment
 
-### Vercel Deployment
-```bash
-npm run build
-vercel --prod
-```
+### VPS Deployment
 
-### Environment Variables
-```
-VITE_SUPABASE_URL=your_supabase_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-```
+1. **Build the application**
+   ```bash
+   npm run build
+   # or
+   bun run build
+   ```
 
-## 👥 Founders
+2. **Configure environment**
+   - Update `src/utils/deploymentConfig.ts` for production settings
+   - Ensure Supabase Edge Functions are deployed
+   - Configure domain and SSL certificates
 
-**Mohamed Hassanein & Ahmed Seddiq**
-- International trade expertise
-- Legal arbitration experience
-- Technology & platform development
-- 25+ years combined experience
+3. **Set up reverse proxy** (nginx example)
+   ```nginx
+   server {
+       listen 80;
+       server_name your-domain.com;
+       
+       location / {
+           proxy_pass http://localhost:8080;
+           proxy_set_header Host $host;
+           proxy_set_header X-Real-IP $remote_addr;
+       }
+   }
+   ```
 
-## 📞 Support
+4. **Process management**
+   ```bash
+   # Using PM2
+   pm2 start "npm start" --name "group-platform"
+   ```
 
-- **Website**: [www.gpodo.com](https://www.gpodo.com)
-- **Email**: support@gpodo.com
-- **Legal**: legal@gpodo.com
+### GitHub Integration
 
-## 📄 License
+The platform is configured for automatic deployment through GitHub Actions:
 
-© 2025 GPO SMART Platform. All rights reserved.
+1. **Connect Repository**: Link your GitHub repository to your deployment service
+2. **Environment Variables**: Set up production environment variables
+3. **Build Pipeline**: The optimized Vite configuration handles code splitting and optimization
+4. **Auto-deployment**: Push to main branch triggers automatic deployment
+
+### Build Optimizations
+
+- **Code Splitting**: Automatic vendor and route-based splitting
+- **Tree Shaking**: Unused code elimination
+- **Asset Optimization**: Image and font optimization
+- **Bundle Analysis**: Performance monitoring and optimization
+
+## 🔒 Security Features
+
+- **Row Level Security (RLS)**: Database-level access control
+- **JWT Authentication**: Secure token-based authentication
+- **Input Validation**: Comprehensive form validation
+- **CORS Configuration**: Proper cross-origin resource sharing
+- **Rate Limiting**: API rate limiting and abuse prevention
+
+## 🌐 Translation System
+
+The platform includes an advanced translation system:
+
+- **Automatic Detection**: Detects user language preferences
+- **Real-time Translation**: Instant translation of UI elements
+- **Caching**: Efficient translation caching for performance
+- **DeepSeek Integration**: High-quality AI-powered translations
+
+## 📊 Admin Dashboard
+
+Comprehensive admin features:
+
+- **User Management**: User accounts, KYC verification, role management
+- **Content Management**: Dynamic content creation and editing
+- **Analytics**: Platform usage and performance metrics
+- **API Management**: API key generation and management
+- **System Monitoring**: Health checks and performance monitoring
+
+## 🔌 Integrations
+
+### Supabase
+- Real-time subscriptions
+- File storage and management
+- Edge Functions for serverless operations
+- Built-in authentication
+
+### Translation Services
+- DeepSeek API for high-quality translations
+- Automatic language detection
+- Translation caching and optimization
+
+### Payment Processing
+- PayPal integration for secure payments
+- Subscription management
+- Transaction history and reporting
+
+## 📈 Performance Optimizations
+
+- **React Query**: Efficient data fetching and caching
+- **Code Splitting**: Lazy loading of route components
+- **Image Optimization**: WebP format and lazy loading
+- **Bundle Optimization**: Tree shaking and minification
+- **Database Optimization**: Connection pooling and query optimization
+
+## 🐛 Debugging & Monitoring
+
+- **Error Handling**: Centralized error management
+- **Performance Monitoring**: Built-in performance tracking
+- **Console Logging**: Development-friendly logging
+- **Memory Management**: Automatic cleanup and monitoring
+
+## 📝 Development Guidelines
+
+1. **Component Creation**: Keep components small and focused
+2. **Hook Usage**: Use custom hooks for data operations
+3. **Error Handling**: Always handle errors gracefully
+4. **Performance**: Use React.memo() for expensive components
+5. **Accessibility**: Follow WCAG guidelines for accessibility
+6. **Testing**: Write tests for critical business logic
+
+## 🔮 Future Enhancements
+
+- **Mobile App**: React Native mobile application
+- **Advanced Analytics**: Business intelligence dashboard
+- **API Marketplace**: Third-party integration marketplace
+- **AI Automation**: Enhanced MCP agent capabilities
+- **Blockchain Integration**: Decentralized features
+
+## 📞 Support & Documentation
+
+- **Technical Documentation**: Comprehensive API documentation
+- **User Guides**: Step-by-step user tutorials  
+- **Developer Resources**: Integration guides and examples
+- **Support Portal**: Technical support and issue tracking
 
 ---
 
-*Built with ❤️ for the global business community*
+## 🏁 Quick Start Checklist
+
+- [ ] Set up Supabase project
+- [ ] Configure environment variables
+- [ ] Install dependencies
+- [ ] Run database migrations
+- [ ] Start development server
+- [ ] Configure translation services
+- [ ] Set up payment integration
+- [ ] Deploy to VPS
+- [ ] Connect GitHub for auto-deployment
+
+For detailed setup instructions, refer to the installation section above.

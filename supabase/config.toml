@@ -10,6 +10,9 @@ max_rows = 1000
 
 [db]
 port = 54322
+# Enable connection pooling for better performance
+pool_size = 15
+max_client_conn = 100
 
 [studio]
 enabled = true
@@ -24,10 +27,18 @@ pop3_port = 54326
 [storage]
 enabled = true
 port = 54327
+file_size_limit = "50MiB"
+s3_region = "us-east-1"
 
 [auth]
 enabled = true
 port = 54328
+# Improved auth configuration
+site_url = "http://localhost:8080"
+additional_redirect_urls = ["https://your-domain.com"]
+jwt_expiry = 3600
+refresh_token_rotation_enabled = true
+security_update_password_require_reauthentication = true
 
 [functions.deepseek-mcp]
 verify_jwt = false
@@ -47,3 +58,6 @@ port = 54329
 
 [[edge-runtime.ip_version]]
 ip_version = 4
+
+[analytics]
+enabled = false

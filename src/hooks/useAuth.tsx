@@ -22,9 +22,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let mounted = true;
+
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        if (!mounted) return;
+        
         console.log('Auth state changed:', event, session?.user?.email);
         setSession(session);
         setUser(session?.user ?? null);
@@ -34,13 +38,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           // Check if profile exists, create if not
           setTimeout(async () => {
             try {
+              if (!mounted) return;
+              
               const { data: profile } = await supabase
                 .from('profiles')
                 .select('id')
                 .eq('id', session.user.id)
                 .single();
 
-              if (!profile) {
+              if (!profile && mounted) {
                 await supabase
                   .from('profiles')
                   .insert({
@@ -58,20 +64,38 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     );
 
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    const initializeAuth = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error('Error getting session:', error);
+        }
+        if (mounted) {
+          setSession(session);
+          setUser(session?.user ?? null);
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Error initializing auth:', error);
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
 
-    return () => subscription.unsubscribe();
+    initializeAuth();
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {
     setLoading(true);
     try {
       const { error } = await supabase.auth.signInWithPassword({
-        email,
+        email: email.toLowerCase().trim(),
         password
       });
 
@@ -81,6 +105,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         toast.success('تم تسجيل الدخول بنجاح');
       }
 
+      return { error };
+    } catch (err) {
+      console.error('Sign in error:', err);
+      const error = err instanceof Error ? err : new Error('Unknown error');
+      toast.error('حدث خطأ في تسجيل الدخول');
       return { error };
     } finally {
       setLoading(false);
@@ -93,12 +122,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const redirectUrl = `${window.location.origin}/`;
       
       const { error } = await supabase.auth.signUp({
-        email,
+        email: email.toLowerCase().trim(),
         password,
         options: {
           emailRedirectTo: redirectUrl,
           data: {
-            full_name: fullName
+            full_name: fullName?.trim()
           }
         }
       });
@@ -110,32 +139,52 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       return { error };
+    } catch (err) {
+      console.error('Sign up error:', err);
+      const error = err instanceof Error ? err : new Error('Unknown error');
+      toast.error('حدث خطأ في إنشاء الحساب');
+      return { error };
     } finally {
       setLoading(false);
     }
   };
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      toast.error(error.message);
-    } else {
-      toast.success('تم تسجيل الخروج بنجاح');
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        toast.error(error.message);
+      } else {
+        toast.success('تم تسجيل الخروج بنجاح');
+      }
+    } catch (err) {
+      console.error('Sign out error:', err);
+      toast.error('حدث خطأ في تسجيل الخروج');
     }
   };
 
   const resetPassword = async (email: string) => {
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`
-    });
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(
+        email.toLowerCase().trim(),
+        {
+          redirectTo: `${window.location.origin}/reset-password`
+        }
+      );
 
-    if (error) {
-      toast.error(error.message);
-    } else {
-      toast.success('تم إرسال رابط إعادة تعيين كلمة المرور');
+      if (error) {
+        toast.error(error.message);
+      } else {
+        toast.success('تم إرسال رابط إعادة تعيين كلمة المرور');
+      }
+
+      return { error };
+    } catch (err) {
+      console.error('Reset password error:', err);
+      const error = err instanceof Error ? err : new Error('Unknown error');
+      toast.error('حدث خطأ في إعادة تعيين كلمة المرور');
+      return { error };
     }
-
-    return { error };
   };
 
   const value = {
