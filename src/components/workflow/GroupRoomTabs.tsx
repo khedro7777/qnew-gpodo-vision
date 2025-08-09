@@ -15,6 +15,8 @@ import GroupMembersTab from './GroupMembersTab';
 import GroupContractsTab from './GroupContractsTab';
 import GroupOffersTab from './GroupOffersTab';
 import GroupOutbox from './GroupOutbox';
+import VotingSystem from '../voting/VotingSystem';
+import DiscussionSystem from '../discussion/DiscussionSystem';
 import { useTranslation } from '@/hooks/useTranslation';
 
 interface GroupRoomTabsProps {
@@ -28,8 +30,18 @@ const GroupRoomTabs = ({ groupId, group, userRole, isManager }: GroupRoomTabsPro
   const { t } = useTranslation();
 
   return (
-    <Tabs defaultValue="members" className="w-full">
-      <TabsList className="grid w-full grid-cols-6">
+    <Tabs defaultValue="discussion" className="w-full">
+      <TabsList className="grid w-full grid-cols-7">
+        <TabsTrigger value="discussion" className="flex items-center gap-2">
+          <MessageSquare className="w-4 h-4" />
+          {t('Discussion')}
+        </TabsTrigger>
+        
+        <TabsTrigger value="voting" className="flex items-center gap-2">
+          <Vote className="w-4 h-4" />
+          {t('Voting')}
+        </TabsTrigger>
+        
         <TabsTrigger value="members" className="flex items-center gap-2">
           <Users className="w-4 h-4" />
           {t('Members')}
@@ -45,11 +57,6 @@ const GroupRoomTabs = ({ groupId, group, userRole, isManager }: GroupRoomTabsPro
           {t('Contracts')}
         </TabsTrigger>
         
-        <TabsTrigger value="voting" className="flex items-center gap-2">
-          <Vote className="w-4 h-4" />
-          {t('Voting')}
-        </TabsTrigger>
-        
         <TabsTrigger value="outbox" className="flex items-center gap-2">
           <Send className="w-4 h-4" />
           {t('Outbox')}
@@ -60,6 +67,22 @@ const GroupRoomTabs = ({ groupId, group, userRole, isManager }: GroupRoomTabsPro
           {t('Arbitration')}
         </TabsTrigger>
       </TabsList>
+
+      <TabsContent value="discussion" className="mt-6">
+        <DiscussionSystem 
+          groupId={groupId} 
+          userRole={userRole} 
+          isManager={isManager}
+        />
+      </TabsContent>
+
+      <TabsContent value="voting" className="mt-6">
+        <VotingSystem 
+          groupId={groupId} 
+          userRole={userRole} 
+          isManager={isManager}
+        />
+      </TabsContent>
 
       <TabsContent value="members" className="mt-6">
         <GroupMembersTab groupId={groupId} userRole={userRole} />
@@ -75,14 +98,6 @@ const GroupRoomTabs = ({ groupId, group, userRole, isManager }: GroupRoomTabsPro
 
       <TabsContent value="contracts" className="mt-6">
         <GroupContractsTab groupId={groupId} userRole={userRole} />
-      </TabsContent>
-
-      <TabsContent value="voting" className="mt-6">
-        <div className="text-center py-12">
-          <Vote className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-          <h3 className="text-lg font-semibold text-gray-600 mb-2">{t('Voting Section')}</h3>
-          <p className="text-gray-500">{t('Manage voting on decisions and proposals')}</p>
-        </div>
       </TabsContent>
 
       <TabsContent value="outbox" className="mt-6">
