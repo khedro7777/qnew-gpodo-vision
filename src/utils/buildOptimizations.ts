@@ -1,4 +1,6 @@
 
+import React from 'react';
+
 // Build optimization utilities
 export const lazyImports = {
   // Lazy load heavy components
@@ -16,7 +18,7 @@ export const createLazyComponent = <T extends React.ComponentType<any>>(
   const LazyComponent = React.lazy(importFn);
   
   return (props: React.ComponentProps<T>) => (
-    <React.Suspense fallback={fallback ? <fallback /> : <div>Loading...</div>}>
+    <React.Suspense fallback={fallback ? React.createElement(fallback) : <div>Loading...</div>}>
       <LazyComponent {...props} />
     </React.Suspense>
   );
@@ -73,5 +75,89 @@ export const bundleAnalyzer = {
   }
 };
 
-// Import React for lazy component creation
-import React from 'react';
+// Performance monitoring
+export const performanceMonitor = {
+  measureComponentRender: (componentName: string) => {
+    if (typeof window !== 'undefined' && 'performance' in window) {
+      performance.mark(`${componentName}-start`);
+      return () => {
+        performance.mark(`${componentName}-end`);
+        performance.measure(`${componentName}-render`, `${componentName}-start`, `${componentName}-end`);
+      };
+    }
+    return () => {};
+  },
+  
+  trackMemoryUsage: () => {
+    if (typeof window !== 'undefined' && 'performance' in window && 'memory' in performance) {
+      const memory = (performance as any).memory;
+      console.log('Memory Usage:', {
+        used: Math.round(memory.usedJSHeapSize / 1048576 * 100) / 100,
+        total: Math.round(memory.totalJSHeapSize / 1048576 * 100) / 100,
+        limit: Math.round(memory.jsHeapSizeLimit / 1048576 * 100) / 100
+      });
+    }
+  }
+};
+
+// Image optimization
+export const imageOptimization = {
+  preloadCriticalImages: (urls: string[]) => {
+    urls.forEach(url => {
+      const img = new Image();
+      img.src = url;
+    });
+  },
+  
+  lazyLoadImages: () => {
+    if ('IntersectionObserver' in window) {
+      const imageObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const img = entry.target as HTMLImageElement;
+            const src = img.dataset.src;
+            if (src) {
+              img.src = src;
+              img.classList.remove('lazy');
+              imageObserver.unobserve(img);
+            }
+          }
+        });
+      });
+      
+      document.querySelectorAll('img[data-src]').forEach(img => {
+        imageObserver.observe(img);
+      });
+    }
+  }
+};
+
+// Bundle size optimization
+export const bundleOptimization = {
+  dynamicImports: {
+    loadComponent: async (componentPath: string) => {
+      try {
+        const module = await import(componentPath);
+        return module.default;
+      } catch (error) {
+        console.error(`Failed to load component: ${componentPath}`, error);
+        return null;
+      }
+    },
+    
+    loadUtility: async (utilityPath: string) => {
+      try {
+        const module = await import(utilityPath);
+        return module;
+      } catch (error) {
+        console.error(`Failed to load utility: ${utilityPath}`, error);
+        return null;
+      }
+    }
+  },
+  
+  treeShakenImports: {
+    loadash: () => import('lodash-es'),
+    dateUtils: () => import('date-fns'),
+  }
+};
