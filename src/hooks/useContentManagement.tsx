@@ -36,6 +36,30 @@ export interface ContentEntry {
   published_at?: string;
 }
 
+// Database types (what Supabase returns)
+interface DbContentType {
+  id: string;
+  name: string;
+  singular_name: string;
+  api_id: string;
+  fields: any; // JSON from database
+  permissions: any; // JSON from database
+  created_at: string;
+  updated_at: string;
+}
+
+interface DbContentEntry {
+  id: string;
+  content_type_id: string;
+  data: any; // JSON from database
+  status: string;
+  created_by: string;
+  updated_by: string;
+  created_at: string;
+  updated_at: string;
+  published_at?: string;
+}
+
 export const useContentTypes = () => {
   return useQuery({
     queryKey: ['content_types'],
@@ -46,7 +70,13 @@ export const useContentTypes = () => {
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return (data || []) as ContentType[];
+      
+      // Transform database results to our TypeScript types
+      return (data || []).map((item: DbContentType): ContentType => ({
+        ...item,
+        fields: Array.isArray(item.fields) ? item.fields : [],
+        permissions: typeof item.permissions === 'object' ? item.permissions : {}
+      }));
     },
   });
 };
@@ -56,9 +86,16 @@ export const useCreateContentType = () => {
   
   return useMutation({
     mutationFn: async (contentType: Omit<ContentType, 'id' | 'created_at' | 'updated_at'>) => {
+      // Transform our TypeScript types to database format
+      const dbData = {
+        ...contentType,
+        fields: JSON.stringify(contentType.fields),
+        permissions: JSON.stringify(contentType.permissions)
+      };
+      
       const { data, error } = await supabase
         .from('content_types')
-        .insert(contentType)
+        .insert(dbData)
         .select()
         .single();
       
@@ -86,7 +123,12 @@ export const useContentEntries = (contentTypeId: string) => {
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return (data || []) as ContentEntry[];
+      
+      // Transform database results to our TypeScript types
+      return (data || []).map((item: DbContentEntry): ContentEntry => ({
+        ...item,
+        data: typeof item.data === 'object' ? item.data : {}
+      }));
     },
     enabled: !!contentTypeId,
   });
@@ -101,6 +143,7 @@ export const useCreateContentEntry = () => {
         .from('content_entries')
         .insert({
           ...entry,
+          data: JSON.stringify(entry.data),
           created_by: entry.created_by,
           updated_by: entry.created_by
         })
@@ -131,12 +174,19 @@ export const useUpdateContentEntry = () => {
       id: string; 
       updates: Partial<ContentEntry>; 
     }) => {
+      const updateData = {
+        ...updates,
+        updated_at: new Date().toISOString()
+      };
+      
+      // Convert data to JSON if it exists
+      if (updates.data) {
+        updateData.data = JSON.stringify(updates.data);
+      }
+      
       const { data, error } = await supabase
         .from('content_entries')
-        .update({
-          ...updates,
-          updated_at: new Date().toISOString()
-        })
+        .update(updateData)
         .eq('id', id)
         .select()
         .single();
