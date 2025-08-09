@@ -41,7 +41,7 @@ export const useContentTypes = () => {
     queryKey: ['content_types'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('content_types')
+        .from('content_types' as any)
         .select('*')
         .order('created_at', { ascending: false });
       
@@ -57,7 +57,7 @@ export const useCreateContentType = () => {
   return useMutation({
     mutationFn: async (contentType: Omit<ContentType, 'id' | 'created_at' | 'updated_at'>) => {
       const { data, error } = await supabase
-        .from('content_types')
+        .from('content_types' as any)
         .insert(contentType)
         .select()
         .single();
@@ -80,7 +80,7 @@ export const useContentEntries = (contentTypeId: string) => {
     queryKey: ['content_entries', contentTypeId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('content_entries')
+        .from('content_entries' as any)
         .select(`
           *,
           profiles!content_entries_created_by_fkey(full_name, email)
@@ -101,7 +101,7 @@ export const useCreateContentEntry = () => {
   return useMutation({
     mutationFn: async (entry: Omit<ContentEntry, 'id' | 'created_at' | 'updated_at'>) => {
       const { data, error } = await supabase
-        .from('content_entries')
+        .from('content_entries' as any)
         .insert({
           ...entry,
           created_by: entry.created_by,
@@ -135,7 +135,7 @@ export const useUpdateContentEntry = () => {
       updates: Partial<ContentEntry>; 
     }) => {
       const { data, error } = await supabase
-        .from('content_entries')
+        .from('content_entries' as any)
         .update({
           ...updates,
           updated_at: new Date().toISOString()
@@ -163,7 +163,7 @@ export const useDeleteContentEntry = () => {
   return useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from('content_entries')
+        .from('content_entries' as any)
         .delete()
         .eq('id', id);
       
@@ -186,7 +186,7 @@ export const usePublishContentEntry = () => {
   return useMutation({
     mutationFn: async (id: string) => {
       const { data, error } = await supabase
-        .from('content_entries')
+        .from('content_entries' as any)
         .update({
           status: 'published',
           published_at: new Date().toISOString()

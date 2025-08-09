@@ -150,6 +150,83 @@ export type Database = {
         }
         Relationships: []
       }
+      content_entries: {
+        Row: {
+          content_type_id: string
+          created_at: string
+          created_by: string
+          data: Json
+          id: string
+          published_at: string | null
+          status: string
+          updated_at: string
+          updated_by: string
+        }
+        Insert: {
+          content_type_id: string
+          created_at?: string
+          created_by: string
+          data?: Json
+          id?: string
+          published_at?: string | null
+          status?: string
+          updated_at?: string
+          updated_by: string
+        }
+        Update: {
+          content_type_id?: string
+          created_at?: string
+          created_by?: string
+          data?: Json
+          id?: string
+          published_at?: string | null
+          status?: string
+          updated_at?: string
+          updated_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_entries_content_type_id_fkey"
+            columns: ["content_type_id"]
+            isOneToOne: false
+            referencedRelation: "content_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_types: {
+        Row: {
+          api_id: string
+          created_at: string
+          fields: Json
+          id: string
+          name: string
+          permissions: Json
+          singular_name: string
+          updated_at: string
+        }
+        Insert: {
+          api_id: string
+          created_at?: string
+          fields?: Json
+          id?: string
+          name: string
+          permissions?: Json
+          singular_name: string
+          updated_at?: string
+        }
+        Update: {
+          api_id?: string
+          created_at?: string
+          fields?: Json
+          id?: string
+          name?: string
+          permissions?: Json
+          singular_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       countries: {
         Row: {
           code: string
