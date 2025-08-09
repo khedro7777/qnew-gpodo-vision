@@ -9,7 +9,8 @@ import {
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
 import { useTranslation } from '@/hooks/useTranslation';
-import { supabase } from '@/integrations/supabase/client';
+import { useAutoTranslation } from '@/hooks/useAutoTranslation';
+import { toast } from 'sonner';
 
 const languages = [
   { code: 'en', name: 'English', flag: '🇺🇸' },
@@ -24,55 +25,8 @@ const languages = [
 
 const LanguageSelector = () => {
   const { locale, setLocale } = useTranslation();
-  const [isTranslating, setIsTranslating] = useState(false);
-
-  const translatePageContent = async (targetLanguage: string, currentLanguage: string) => {
-    try {
-      // Get all text content from the page
-      const textElements = document.querySelectorAll('h1, h2, h3, h4, h5, h6, p, span, button, label, a');
-      const textsToTranslate = Array.from(textElements)
-        .map(el => el.textContent?.trim())
-        .filter(text => text && text.length > 1 && !text.match(/^[0-9\s\W]+$/))
-        .slice(0, 50); // Limit to prevent large payloads
-
-      if (textsToTranslate.length === 0) return;
-
-      console.log('Translating texts:', textsToTranslate);
-
-      const { data, error } = await supabase.functions.invoke('translate', {
-        body: { 
-          targetLanguage: getLanguageName(targetLanguage),
-          currentLanguage: getLanguageName(currentLanguage),
-          texts: textsToTranslate
-        }
-      });
-
-      if (error) {
-        console.error('Translation error:', error);
-        return;
-      }
-
-      if (data?.translatedText) {
-        console.log('Translation successful:', data.translatedText);
-        
-        // Apply translations to the page
-        try {
-          const translations = JSON.parse(data.translatedText);
-          if (Array.isArray(translations) && translations.length > 0) {
-            textElements.forEach((element, index) => {
-              if (index < translations.length && translations[index]) {
-                element.textContent = translations[index];
-              }
-            });
-          }
-        } catch (parseError) {
-          console.error('Error parsing translation response:', parseError);
-        }
-      }
-    } catch (error) {
-      console.error('Translation service error:', error);
-    }
-  };
+  const { translatePage, isTranslating } = useAutoTranslation();
+  const [isChangingLanguage, setIsChangingLanguage] = useState(false);
 
   const getLanguageName = (code: string) => {
     const languageMap: { [key: string]: string } = {
@@ -89,30 +43,33 @@ const LanguageSelector = () => {
   };
 
   const handleLanguageChange = async (newLocale: string) => {
-    if (newLocale === locale || isTranslating) return;
+    if (newLocale === locale || isTranslating || isChangingLanguage) return;
     
-    setIsTranslating(true);
+    setIsChangingLanguage(true);
     
     try {
-      // First set the locale
+      // Set the locale first
       setLocale(newLocale);
       
-      // Then translate the page content
-      await translatePageContent(newLocale, locale);
+      // Show loading toast
+      toast.info(`Switching to ${getLanguageName(newLocale)}...`);
       
-      // Update document direction for RTL languages
-      if (newLocale === 'ar') {
-        document.documentElement.dir = 'rtl';
-        document.documentElement.lang = 'ar';
-      } else {
-        document.documentElement.dir = 'ltr';
-        document.documentElement.lang = newLocale;
+      // Translate page content if not English
+      if (newLocale !== 'en') {
+        await translatePage(newLocale);
       }
+      
+      // Success notification
+      toast.success(`Language changed to ${getLanguageName(newLocale)}`);
       
     } catch (error) {
       console.error('Failed to change language:', error);
+      toast.error('Failed to change language');
+      
+      // Revert locale on error
+      setLocale(locale);
     } finally {
-      setIsTranslating(false);
+      setIsChangingLanguage(false);
     }
   };
 
@@ -121,8 +78,13 @@ const LanguageSelector = () => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="gap-1" disabled={isTranslating}>
-          {isTranslating ? (
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="gap-1" 
+          disabled={isTranslating || isChangingLanguage}
+        >
+          {isTranslating || isChangingLanguage ? (
             <Loader2 className="w-4 h-4 animate-spin" />
           ) : (
             <Globe className="w-4 h-4" />
@@ -137,11 +99,11 @@ const LanguageSelector = () => {
             key={language.code}
             onClick={() => handleLanguageChange(language.code)}
             className={locale === language.code ? 'bg-blue-50 text-blue-700' : ''}
-            disabled={isTranslating}
+            disabled={isTranslating || isChangingLanguage}
           >
             <span className="mr-2">{language.flag}</span>
             {language.name}
-            {isTranslating && locale !== language.code && (
+            {(isTranslating || isChangingLanguage) && locale !== language.code && (
               <Loader2 className="w-3 h-3 ml-2 animate-spin" />
             )}
           </DropdownMenuItem>
