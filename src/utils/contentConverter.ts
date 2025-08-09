@@ -118,8 +118,7 @@ export class ContentConverter {
     const walker = document.createTreeWalker(
       rootElement,
       NodeFilter.SHOW_TEXT,
-      null,
-      false
+      null
     );
 
     const textNodes: Text[] = [];
