@@ -41,12 +41,12 @@ export const useContentTypes = () => {
     queryKey: ['content_types'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('content_types' as any)
+        .from('content_types')
         .select('*')
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data as ContentType[];
+      return (data || []) as ContentType[];
     },
   });
 };
@@ -57,7 +57,7 @@ export const useCreateContentType = () => {
   return useMutation({
     mutationFn: async (contentType: Omit<ContentType, 'id' | 'created_at' | 'updated_at'>) => {
       const { data, error } = await supabase
-        .from('content_types' as any)
+        .from('content_types')
         .insert(contentType)
         .select()
         .single();
@@ -80,16 +80,13 @@ export const useContentEntries = (contentTypeId: string) => {
     queryKey: ['content_entries', contentTypeId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('content_entries' as any)
-        .select(`
-          *,
-          profiles!content_entries_created_by_fkey(full_name, email)
-        `)
+        .from('content_entries')
+        .select('*')
         .eq('content_type_id', contentTypeId)
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data as ContentEntry[];
+      return (data || []) as ContentEntry[];
     },
     enabled: !!contentTypeId,
   });
@@ -101,7 +98,7 @@ export const useCreateContentEntry = () => {
   return useMutation({
     mutationFn: async (entry: Omit<ContentEntry, 'id' | 'created_at' | 'updated_at'>) => {
       const { data, error } = await supabase
-        .from('content_entries' as any)
+        .from('content_entries')
         .insert({
           ...entry,
           created_by: entry.created_by,
@@ -113,7 +110,7 @@ export const useCreateContentEntry = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ['content_entries', data.content_type_id] });
       toast.success('Content entry created successfully');
     },
@@ -135,7 +132,7 @@ export const useUpdateContentEntry = () => {
       updates: Partial<ContentEntry>; 
     }) => {
       const { data, error } = await supabase
-        .from('content_entries' as any)
+        .from('content_entries')
         .update({
           ...updates,
           updated_at: new Date().toISOString()
@@ -147,7 +144,7 @@ export const useUpdateContentEntry = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ['content_entries', data.content_type_id] });
       toast.success('Content entry updated successfully');
     },
@@ -163,7 +160,7 @@ export const useDeleteContentEntry = () => {
   return useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from('content_entries' as any)
+        .from('content_entries')
         .delete()
         .eq('id', id);
       
@@ -186,7 +183,7 @@ export const usePublishContentEntry = () => {
   return useMutation({
     mutationFn: async (id: string) => {
       const { data, error } = await supabase
-        .from('content_entries' as any)
+        .from('content_entries')
         .update({
           status: 'published',
           published_at: new Date().toISOString()
@@ -198,7 +195,7 @@ export const usePublishContentEntry = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ['content_entries', data.content_type_id] });
       toast.success('Content entry published successfully');
     },
