@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -6,73 +5,46 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
   Package, 
-  CreditCard, 
-  FileText, 
-  MessageSquare, 
-  Settings,
+  DollarSign, 
+  Users, 
+  TrendingUp, 
   Plus,
-  Eye,
-  Edit,
-  Trash2,
-  DollarSign,
-  Users,
-  Clock,
-  AlertTriangle
+  FileText,
+  MessageSquare,
+  Settings,
+  Wallet
 } from 'lucide-react';
 import { useSupplierPanel } from '@/hooks/useSupplierPanel';
-import { useWallet } from '@/hooks/useWallet';
 import { CreateOfferForm } from './CreateOfferForm';
 import { PaymentSettingsForm } from './PaymentSettingsForm';
 import { InvoiceForm } from './InvoiceForm';
 import { ComplaintsList } from './ComplaintsList';
-import { WalletBalance } from '@/components/dashboard/WalletBalance';
+import WalletBalance from '@/components/dashboard/WalletBalance';
 
-const SupplierDashboard = () => {
-  const [activeTab, setActiveTab] = useState('overview');
-  const [showCreateOffer, setShowCreateOffer] = useState(false);
-  const [showInvoiceForm, setShowInvoiceForm] = useState(false);
-  
+const SupplierDashboard: React.FC = () => {
   const { 
     offers, 
     paymentSettings, 
     invoices, 
     complaints,
-    isLoading,
-    updateOffer
+    isLoading 
   } = useSupplierPanel();
   
-  const { balance, wallet } = useWallet();
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active': return 'bg-green-100 text-green-800';
-      case 'draft': return 'bg-gray-100 text-gray-800';
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'completed': return 'bg-blue-100 text-blue-800';
-      case 'expired': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
+  const [activeTab, setActiveTab] = useState('overview');
+  const [showCreateOffer, setShowCreateOffer] = useState(false);
+  const [showCreateInvoice, setShowCreateInvoice] = useState(false);
 
   const stats = {
     totalOffers: offers.length,
-    activeOffers: offers.filter(o => o.status === 'active').length,
-    totalParticipants: offers.reduce((sum, o) => sum + o.current_participants, 0),
-    pendingInvoices: invoices.filter(i => i.status === 'pending').length,
-    openComplaints: complaints.filter(c => c.status === 'open').length,
+    activeOffers: offers.filter(offer => offer.status === 'active').length,
+    totalParticipants: offers.reduce((sum, offer) => sum + offer.current_participants, 0),
+    pendingInvoices: invoices.filter(invoice => invoice.status === 'pending').length
   };
 
   if (isLoading) {
     return (
-      <div className="container mx-auto p-6">
-        <div className="animate-pulse space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-32 bg-gray-200 rounded-lg" />
-            ))}
-          </div>
-          <div className="h-96 bg-gray-200 rounded-lg" />
-        </div>
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-productivity-blue"></div>
       </div>
     );
   }
@@ -83,42 +55,30 @@ const SupplierDashboard = () => {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Supplier Dashboard</h1>
-          <p className="text-gray-600">Manage your offers, invoices, and payments</p>
+          <p className="text-gray-600">Manage your group discount offers and business operations</p>
         </div>
         <div className="flex gap-3">
+          <Button onClick={() => setShowCreateInvoice(true)} variant="outline">
+            <FileText className="w-4 h-4 mr-2" />
+            Create Invoice
+          </Button>
           <Button onClick={() => setShowCreateOffer(true)} className="bg-productivity-blue hover:bg-productivity-blue/90">
             <Plus className="w-4 h-4 mr-2" />
             Create Offer
           </Button>
-          <Button onClick={() => setShowInvoiceForm(true)} variant="outline">
-            <FileText className="w-4 h-4 mr-2" />
-            Create Invoice
-          </Button>
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Wallet Balance</p>
-                <p className="text-2xl font-bold text-productivity-blue">${balance.toFixed(2)}</p>
-              </div>
-              <DollarSign className="w-8 h-8 text-productivity-blue" />
-            </div>
-          </CardContent>
-        </Card>
-
+      {/* Quick Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Offers</p>
-                <p className="text-2xl font-bold">{stats.totalOffers}</p>
+                <p className="text-2xl font-bold text-gray-900">{stats.totalOffers}</p>
               </div>
-              <Package className="w-8 h-8 text-blue-500" />
+              <Package className="w-8 h-8 text-productivity-blue" />
             </div>
           </CardContent>
         </Card>
@@ -130,7 +90,7 @@ const SupplierDashboard = () => {
                 <p className="text-sm font-medium text-gray-600">Active Offers</p>
                 <p className="text-2xl font-bold text-green-600">{stats.activeOffers}</p>
               </div>
-              <Eye className="w-8 h-8 text-green-500" />
+              <TrendingUp className="w-8 h-8 text-green-600" />
             </div>
           </CardContent>
         </Card>
@@ -139,10 +99,10 @@ const SupplierDashboard = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Participants</p>
-                <p className="text-2xl font-bold">{stats.totalParticipants}</p>
+                <p className="text-sm font-medium text-gray-600">Total Participants</p>
+                <p className="text-2xl font-bold text-blue-600">{stats.totalParticipants}</p>
               </div>
-              <Users className="w-8 h-8 text-purple-500" />
+              <Users className="w-8 h-8 text-blue-600" />
             </div>
           </CardContent>
         </Card>
@@ -151,10 +111,10 @@ const SupplierDashboard = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Open Issues</p>
-                <p className="text-2xl font-bold text-orange-600">{stats.openComplaints}</p>
+                <p className="text-sm font-medium text-gray-600">Pending Invoices</p>
+                <p className="text-2xl font-bold text-orange-600">{stats.pendingInvoices}</p>
               </div>
-              <AlertTriangle className="w-8 h-8 text-orange-500" />
+              <FileText className="w-8 h-8 text-orange-600" />
             </div>
           </CardContent>
         </Card>
@@ -162,7 +122,7 @@ const SupplierDashboard = () => {
 
       {/* Main Content */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList>
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="offers">My Offers</TabsTrigger>
           <TabsTrigger value="invoices">Invoices</TabsTrigger>
@@ -172,166 +132,133 @@ const SupplierDashboard = () => {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Recent Offers */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Offers</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {offers.slice(0, 5).map((offer) => (
-                    <div key={offer.id} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div>
-                        <p className="font-medium">{offer.title}</p>
-                        <p className="text-sm text-gray-600">${offer.base_price} • {offer.current_participants} participants</p>
-                      </div>
-                      <Badge className={getStatusColor(offer.status)}>
-                        {offer.status}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Wallet Overview */}
-            <WalletBalance />
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Overview</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {/* Add overview content here */}
+              <p>This is the overview tab content.</p>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="offers" className="space-y-6">
           <Card>
             <CardHeader>
-              <div className="flex justify-between items-center">
-                <CardTitle>My Offers</CardTitle>
-                <Button onClick={() => setShowCreateOffer(true)} size="sm">
-                  <Plus className="w-4 h-4 mr-2" />
-                  New Offer
-                </Button>
-              </div>
+              <CardTitle>My Group Discount Offers</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {offers.map((offer) => (
-                  <div key={offer.id} className="border rounded-lg p-4">
-                    <div className="flex justify-between items-start mb-3">
-                      <div>
+              {offers.length === 0 ? (
+                <div className="text-center py-8">
+                  <Package className="w-16 h-16 mx-auto text-gray-400 mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No offers yet</h3>
+                  <p className="text-gray-600 mb-4">Create your first group discount offer to get started</p>
+                  <Button onClick={() => setShowCreateOffer(true)} className="bg-productivity-blue hover:bg-productivity-blue/90">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create Offer
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {offers.map((offer) => (
+                    <div key={offer.id} className="border rounded-lg p-4 hover:bg-gray-50">
+                      <div className="flex justify-between items-start mb-2">
                         <h3 className="font-semibold text-lg">{offer.title}</h3>
-                        <p className="text-gray-600">{offer.description}</p>
+                        <Badge variant={offer.status === 'active' ? 'default' : 'secondary'}>
+                          {offer.status}
+                        </Badge>
                       </div>
-                      <Badge className={getStatusColor(offer.status)}>
-                        {offer.status}
-                      </Badge>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                      <div>
-                        <p className="text-sm text-gray-600">Base Price</p>
-                        <p className="font-medium">${offer.base_price}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-600">Participants</p>
-                        <p className="font-medium">{offer.current_participants}/{offer.minimum_joiners}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-600">Deadline</p>
-                        <p className="font-medium">{new Date(offer.deadline).toLocaleDateString()}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-600">Category</p>
-                        <p className="font-medium">{offer.category || 'N/A'}</p>
+                      <p className="text-gray-600 mb-3">{offer.description}</p>
+                      <div className="flex justify-between items-center text-sm text-gray-500">
+                        <span>Participants: {offer.current_participants}</span>
+                        <span>Deadline: {new Date(offer.deadline).toLocaleDateString()}</span>
                       </div>
                     </div>
-
-                    <div className="flex gap-2">
-                      <Button size="sm" variant="outline">
-                        <Eye className="w-4 h-4 mr-1" />
-                        View
-                      </Button>
-                      {offer.status === 'draft' && (
-                        <Button size="sm" variant="outline">
-                          <Edit className="w-4 h-4 mr-1" />
-                          Edit
-                        </Button>
-                      )}
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => updateOffer({ id: offer.id, status: 'active' })}
-                        disabled={offer.status === 'active'}
-                      >
-                        Activate
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="invoices">
+        <TabsContent value="invoices" className="space-y-6">
           <Card>
             <CardHeader>
-              <div className="flex justify-between items-center">
-                <CardTitle>Invoices</CardTitle>
-                <Button onClick={() => setShowInvoiceForm(true)} size="sm">
-                  <Plus className="w-4 h-4 mr-2" />
-                  New Invoice
-                </Button>
-              </div>
+              <CardTitle>Invoice Management</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {invoices.map((invoice) => (
-                  <div key={invoice.id} className="border rounded-lg p-4">
-                    <div className="flex justify-between items-start">
-                      <div>
+              {invoices.length === 0 ? (
+                <div className="text-center py-8">
+                  <FileText className="w-16 h-16 mx-auto text-gray-400 mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No invoices yet</h3>
+                  <p className="text-gray-600 mb-4">Create invoices for your customers</p>
+                  <Button onClick={() => setShowCreateInvoice(true)} className="bg-productivity-blue hover:bg-productivity-blue/90">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create Invoice
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {invoices.map((invoice) => (
+                    <div key={invoice.id} className="border rounded-lg p-4 hover:bg-gray-50">
+                      <div className="flex justify-between items-start mb-2">
                         <h3 className="font-semibold">{invoice.invoice_number}</h3>
-                        <p className="text-gray-600">{invoice.description}</p>
-                        <p className="text-sm text-gray-500">Due: {new Date(invoice.due_date).toLocaleDateString()}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-bold text-lg">${invoice.amount}</p>
-                        <Badge className={getStatusColor(invoice.status)}>
+                        <Badge variant={invoice.status === 'paid' ? 'default' : 'secondary'}>
                           {invoice.status}
                         </Badge>
                       </div>
+                      <p className="text-gray-600 mb-2">{invoice.description}</p>
+                      <div className="flex justify-between items-center text-sm text-gray-500">
+                        <span>Amount: ${invoice.amount}</span>
+                        <span>Due: {new Date(invoice.due_date).toLocaleDateString()}</span>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="complaints">
+        <TabsContent value="complaints" className="space-y-6">
           <ComplaintsList complaints={complaints} />
         </TabsContent>
 
-        <TabsContent value="wallet">
+        <TabsContent value="wallet" className="space-y-6">
           <WalletBalance />
         </TabsContent>
 
-        <TabsContent value="settings">
+        <TabsContent value="settings" className="space-y-6">
           <PaymentSettingsForm paymentSettings={paymentSettings} />
         </TabsContent>
       </Tabs>
 
       {/* Modals */}
       {showCreateOffer && (
-        <CreateOfferForm
-          isOpen={showCreateOffer}
-          onClose={() => setShowCreateOffer(false)}
-        />
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b">
+              <h2 className="text-xl font-semibold">Create New Offer</h2>
+            </div>
+            <div className="p-6">
+              <CreateOfferForm onClose={() => setShowCreateOffer(false)} />
+            </div>
+          </div>
+        </div>
       )}
 
-      {showInvoiceForm && (
-        <InvoiceForm
-          isOpen={showInvoiceForm}
-          onClose={() => setShowInvoiceForm(false)}
-        />
+      {showCreateInvoice && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b">
+              <h2 className="text-xl font-semibold">Create New Invoice</h2>
+            </div>
+            <div className="p-6">
+              <InvoiceForm onClose={() => setShowCreateInvoice(false)} />
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

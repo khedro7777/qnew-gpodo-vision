@@ -8,7 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { ExternalLink, CreditCard, Bitcoin, DollarSign, Save, Eye, EyeOff } from 'lucide-react';
 import { useSupplierPanel, SupplierPaymentSettings } from '@/hooks/useSupplierPanel';
-import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 
 interface PaymentSettingsFormProps {
   paymentSettings: SupplierPaymentSettings | null;
@@ -16,7 +16,7 @@ interface PaymentSettingsFormProps {
 
 export const PaymentSettingsForm: React.FC<PaymentSettingsFormProps> = ({ paymentSettings }) => {
   const { updatePaymentSettings, isUpdatingSettings } = useSupplierPanel();
-  const { profile } = useAuth();
+  const [profile, setProfile] = useState<any>(null);
   
   const [formData, setFormData] = useState({
     paypal_email: '',
@@ -27,6 +27,22 @@ export const PaymentSettingsForm: React.FC<PaymentSettingsFormProps> = ({ paymen
   });
 
   const [showSecrets, setShowSecrets] = useState(false);
+
+  // Get current user profile
+  useEffect(() => {
+    const getCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+        setProfile(profile);
+      }
+    };
+    getCurrentUser();
+  }, []);
 
   useEffect(() => {
     if (paymentSettings) {

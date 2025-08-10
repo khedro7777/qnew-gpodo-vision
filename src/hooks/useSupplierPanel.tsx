@@ -148,12 +148,12 @@ export const useSupplierPanel = () => {
 
   // Create offer mutation
   const createOffer = useMutation({
-    mutationFn: async (offerData: Partial<SupplierOffer> & { tiers: Omit<DiscountTier, 'id' | 'offer_id' | 'created_at'>[] }) => {
+    mutationFn: async (offerData: Omit<SupplierOffer, 'id' | 'created_at' | 'updated_at' | 'current_participants'> & { tiers: Omit<DiscountTier, 'id' | 'offer_id' | 'created_at'>[] }) => {
       const { tiers, ...offer } = offerData;
       
       const { data: offerResult, error: offerError } = await supabase
         .from('group_discount_offers')
-        .insert([offer])
+        .insert(offer)
         .select()
         .single();
       
@@ -209,10 +209,18 @@ export const useSupplierPanel = () => {
 
   // Update payment settings mutation
   const updatePaymentSettings = useMutation({
-    mutationFn: async (settings: Partial<SupplierPaymentSettings>) => {
+    mutationFn: async (settings: Omit<SupplierPaymentSettings, 'id' | 'created_at' | 'updated_at'>) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const settingsWithUser = {
+        ...settings,
+        supplier_id: user.id,
+      };
+
       const { data, error } = await supabase
         .from('supplier_payment_settings')
-        .upsert([settings])
+        .upsert(settingsWithUser)
         .select()
         .single();
       
@@ -231,10 +239,18 @@ export const useSupplierPanel = () => {
 
   // Create invoice mutation
   const createInvoice = useMutation({
-    mutationFn: async (invoiceData: Partial<Invoice>) => {
+    mutationFn: async (invoiceData: Omit<Invoice, 'id' | 'created_at' | 'updated_at' | 'invoice_number'>) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const invoiceWithSupplier = {
+        ...invoiceData,
+        supplier_id: user.id,
+      };
+
       const { data, error } = await supabase
         .from('invoices')
-        .insert([invoiceData])
+        .insert(invoiceWithSupplier)
         .select()
         .single();
       
