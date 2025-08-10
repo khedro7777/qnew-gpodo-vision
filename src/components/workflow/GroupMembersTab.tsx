@@ -1,33 +1,27 @@
 
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState } from 'react';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   Users, 
   Crown, 
-  Vote, 
-  UserPlus, 
+  Shield, 
+  User, 
+  Mail,
+  UserPlus,
+  MoreVertical,
   Settings,
-  Calendar,
-  Activity
+  UserMinus
 } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { useGroupManagement } from '@/hooks/useGroupManagement';
+import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-
-interface Member {
-  id: string;
-  user_id: string;
-  role: string;
-  joined_at: string;
-  profile?: {
-    full_name: string;
-    email: string;
-    avatar_url?: string;
-  };
-  votes_count?: number;
-}
 
 interface GroupMembersTabProps {
   groupId: string;
@@ -35,221 +29,240 @@ interface GroupMembersTabProps {
 }
 
 const GroupMembersTab = ({ groupId, userRole }: GroupMembersTabProps) => {
-  const [members, setMembers] = useState<Member[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [electionActive, setElectionActive] = useState(false);
+  const { user } = useAuth();
+  const { 
+    members, 
+    isManager,
+    isFounder,
+    isLoading, 
+    updateMemberRole, 
+    removeMember,
+    isUpdatingRole,
+    isRemoving
+  } = useGroupManagement(groupId);
+  
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
 
-  useEffect(() => {
-    loadMembers();
-    checkElectionStatus();
-  }, [groupId]);
+  const handleInviteMember = () => {
+    if (!inviteEmail.trim()) return;
 
-  const loadMembers = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('group_members')
-        .select(`
-          *,
-          profiles(full_name, email, avatar_url)
-        `)
-        .eq('group_id', groupId);
+    // Mock invite functionality - would integrate with real invitation system
+    toast.success(`Invitation sent to ${inviteEmail}`);
+    setInviteEmail('');
+    setIsInviteModalOpen(false);
+  };
 
-      if (error) throw error;
-      setMembers(data || []);
-    } catch (error) {
-      console.error('Load members error:', error);
-    } finally {
-      setLoading(false);
+  const handleRoleChange = (memberId: string, newRole: 'member' | 'manager') => {
+    updateMemberRole({ memberId, newRole });
+  };
+
+  const handleRemoveMember = (memberId: string, memberName: string) => {
+    if (confirm(`Are you sure you want to remove ${memberName} from the group?`)) {
+      removeMember(memberId);
     }
   };
 
-  const checkElectionStatus = async () => {
-    // Check if group has enough members and no active managers
-    const { data: group } = await supabase
-      .from('groups')
-      .select('current_members')
-      .eq('id', groupId)
-      .single();
-
-    if (group && group.current_members >= 5) {
-      const { data: managers } = await supabase
-        .from('group_members')
-        .select('id')
-        .eq('group_id', groupId)
-        .eq('role', 'admin');
-
-      if (!managers || managers.length < 3) {
-        setElectionActive(true);
-      }
-    }
-  };
-
-  const initiateElection = async () => {
-    try {
-      // Create election proposal
-      const { error } = await supabase
-        .from('group_proposals')
-        .insert({
-          group_id: groupId,
-          title: 'انتخاب مديري المجموعة',
-          description: 'انتخاب 3 مديرين لإدارة المجموعة لفترة 6 أشهر',
-          status: 'active',
-          created_by: (await supabase.auth.getUser()).data.user?.id
-        });
-
-      if (error) throw error;
-
-      // Notify all members
-      toast.success('تم إطلاق عملية الانتخاب - 48 ساعة للتصويت');
-      setElectionActive(true);
-    } catch (error) {
-      toast.error('فشل في إطلاق الانتخاب');
-    }
-  };
-
-  const getRoleBadge = (role: string) => {
+  const getRoleIcon = (role: string) => {
     switch (role) {
       case 'founder':
-        return <Badge className="bg-purple-100 text-purple-800">مؤسس</Badge>;
-      case 'admin':
-        return <Badge className="bg-yellow-100 text-yellow-800">مدير منتخب</Badge>;
-      case 'member':
-        return <Badge className="bg-green-100 text-green-800">عضو</Badge>;
+        return <Crown className="w-4 h-4 text-yellow-600" />;
+      case 'manager':
+        return <Shield className="w-4 h-4 text-blue-600" />;
       default:
-        return <Badge variant="outline">مراقب</Badge>;
+        return <User className="w-4 h-4 text-gray-600" />;
     }
   };
 
-  if (loading) {
+  const getRoleBadgeColor = (role: string) => {
+    switch (role) {
+      case 'founder':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'manager':
+        return 'bg-blue-100 text-blue-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  if (isLoading) {
     return (
-      <Card>
-        <CardContent className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        </CardContent>
+      <Card className="p-6">
+        <div className="flex items-center justify-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-productivity-blue"></div>
+        </div>
       </Card>
     );
   }
 
   return (
     <div className="space-y-6">
-      {/* Election Banner */}
-      {electionActive && (
-        <Card className="bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-200">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Vote className="w-6 h-6 text-yellow-600" />
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Group Members</h2>
+          <p className="text-gray-600">Manage group membership and roles</p>
+        </div>
+        
+        {(isManager || isFounder) && (
+          <Dialog open={isInviteModalOpen} onOpenChange={setIsInviteModalOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <UserPlus className="w-4 h-4 mr-2" />
+                Invite Member
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Invite New Member</DialogTitle>
+              </DialogHeader>
+              
+              <div className="space-y-4">
                 <div>
-                  <h3 className="font-semibold text-yellow-900">انتخاب مديري المجموعة</h3>
-                  <p className="text-sm text-yellow-700">صوت لاختيار 3 مديرين - الجولة مفتوحة 48 ساعة</p>
+                  <label className="text-sm font-medium text-gray-700">Email Address</label>
+                  <Input
+                    type="email"
+                    placeholder="Enter email address"
+                    value={inviteEmail}
+                    onChange={(e) => setInviteEmail(e.target.value)}
+                  />
+                </div>
+
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setIsInviteModalOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleInviteMember}>
+                    Send Invitation
+                  </Button>
                 </div>
               </div>
-              <Button variant="outline" className="border-yellow-300">
-                <Vote className="w-4 h-4 mr-2" />
-                صوت الآن
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+            </DialogContent>
+          </Dialog>
+        )}
+      </div>
 
       {/* Members List */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Users className="w-5 h-5" />
-              أعضاء المجموعة ({members.length})
-            </div>
-            {userRole === 'admin' && (
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm">
-                  <UserPlus className="w-4 h-4 mr-2" />
-                  دعوة عضو
-                </Button>
-                {!electionActive && members.length >= 5 && (
-                  <Button onClick={initiateElection} size="sm">
-                    <Crown className="w-4 h-4 mr-2" />
-                    إطلاق الانتخاب
-                  </Button>
+      <Card className="p-6">
+        <div className="space-y-4">
+          {members.map((member) => (
+            <div key={member.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+              <div className="flex items-center gap-4">
+                <Avatar className="w-12 h-12">
+                  <AvatarImage src={member.avatar_url} />
+                  <AvatarFallback>
+                    {member.full_name?.charAt(0) || member.email?.charAt(0) || 'U'}
+                  </AvatarFallback>
+                </Avatar>
+                
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-semibold text-gray-900">
+                      {member.full_name || 'Unknown User'}
+                      {member.user_id === user?.id && (
+                        <span className="text-sm text-gray-500 font-normal ml-1">(You)</span>
+                      )}
+                    </h3>
+                    {getRoleIcon(member.role)}
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <Mail className="w-3 h-3" />
+                    <span>{member.email}</span>
+                  </div>
+                  <p className="text-xs text-gray-500">
+                    Joined {new Date(member.joined_at).toLocaleDateString()}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Badge className={getRoleBadgeColor(member.role)}>
+                  {member.role === 'founder' ? 'Founder' : 
+                   member.role === 'manager' ? 'Manager' : 'Member'}
+                </Badge>
+
+                {(isFounder || (isManager && member.role !== 'founder')) && member.user_id !== user?.id && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm">
+                        <MoreVertical className="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      {member.role === 'member' && (
+                        <DropdownMenuItem 
+                          onClick={() => handleRoleChange(member.id, 'manager')}
+                          disabled={isUpdatingRole}
+                        >
+                          <Shield className="w-4 h-4 mr-2" />
+                          Promote to Manager
+                        </DropdownMenuItem>
+                      )}
+                      
+                      {member.role === 'manager' && isFounder && (
+                        <DropdownMenuItem 
+                          onClick={() => handleRoleChange(member.id, 'member')}
+                          disabled={isUpdatingRole}
+                        >
+                          <User className="w-4 h-4 mr-2" />
+                          Demote to Member
+                        </DropdownMenuItem>
+                      )}
+                      
+                      <DropdownMenuItem 
+                        onClick={() => handleRemoveMember(member.id, member.full_name || member.email || 'Unknown')}
+                        disabled={isRemoving}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <UserMinus className="w-4 h-4 mr-2" />
+                        Remove Member
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 )}
               </div>
-            )}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {members.map((member) => (
-              <div key={member.id} className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex items-center gap-4">
-                  <Avatar className="h-12 w-12">
-                    <AvatarImage src={member.profile?.avatar_url} />
-                    <AvatarFallback>
-                      {member.profile?.full_name?.charAt(0) || 'U'}
-                    </AvatarFallback>
-                  </Avatar>
-                  
-                  <div>
-                    <h4 className="font-medium">{member.profile?.full_name || 'مستخدم'}</h4>
-                    <p className="text-sm text-gray-500">{member.profile?.email}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Calendar className="w-3 h-3 text-gray-400" />
-                      <span className="text-xs text-gray-500">
-                        انضم في {new Date(member.joined_at).toLocaleDateString('ar')}
-                      </span>
-                    </div>
-                  </div>
-                </div>
+            </div>
+          ))}
+        </div>
 
-                <div className="flex items-center gap-3">
-                  {getRoleBadge(member.role)}
-                  
-                  <div className="text-center">
-                    <div className="text-sm font-medium">{member.votes_count || 0}</div>
-                    <div className="text-xs text-gray-500">أصوات</div>
-                  </div>
-                  
-                  <div className="flex items-center gap-1">
-                    <Activity className="w-3 h-3 text-green-500" />
-                    <span className="text-xs text-gray-500">نشط</span>
-                  </div>
-                </div>
-              </div>
-            ))}
+        {members.length === 0 && (
+          <div className="text-center py-8">
+            <Users className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+            <h3 className="text-lg font-semibold text-gray-600 mb-2">No Members Yet</h3>
+            <p className="text-gray-500">Invite members to start building your group.</p>
           </div>
-        </CardContent>
+        )}
       </Card>
 
-      {/* Member Statistics */}
-      <div className="grid md:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="p-4 text-center">
-            <Crown className="w-8 h-8 text-yellow-500 mx-auto mb-2" />
-            <h3 className="font-semibold">المديرين</h3>
-            <p className="text-2xl font-bold text-yellow-600">
-              {members.filter(m => m.role === 'admin').length}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4 text-center">
-            <Users className="w-8 h-8 text-blue-500 mx-auto mb-2" />
-            <h3 className="font-semibold">الأعضاء النشطين</h3>
-            <p className="text-2xl font-bold text-blue-600">
-              {members.filter(m => m.role === 'member').length}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4 text-center">
-            <Activity className="w-8 h-8 text-green-500 mx-auto mb-2" />
-            <h3 className="font-semibold">معدل المشاركة</h3>
-            <p className="text-2xl font-bold text-green-600">87%</p>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Role Information */}
+      <Card className="p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Role Permissions</h3>
+        <div className="space-y-3">
+          <div className="flex items-center gap-3">
+            <Crown className="w-5 h-5 text-yellow-600" />
+            <div>
+              <p className="font-medium text-gray-900">Founder</p>
+              <p className="text-sm text-gray-600">Full control over the group, can manage all members and settings</p>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <Shield className="w-5 h-5 text-blue-600" />
+            <div>
+              <p className="font-medium text-gray-900">Manager</p>
+              <p className="text-sm text-gray-600">Can create votes, manage offers, and moderate discussions</p>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <User className="w-5 h-5 text-gray-600" />
+            <div>
+              <p className="font-medium text-gray-900">Member</p>
+              <p className="text-sm text-gray-600">Can participate in discussions, vote, and view group content</p>
+            </div>
+          </div>
+        </div>
+      </Card>
     </div>
   );
 };
