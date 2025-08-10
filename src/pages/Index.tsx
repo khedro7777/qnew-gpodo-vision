@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import AuthModal from "@/components/auth/AuthModal";
 import Header from "@/components/Header";
 import HeroSection from "@/components/HeroSection";
@@ -14,6 +15,7 @@ import { Play } from "lucide-react";
 const Index = () => {
   const { enterDemoMode } = useDemo();
   const navigate = useNavigate();
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   const handleWatchDemo = () => {
     enterDemoMode();
@@ -49,7 +51,7 @@ const Index = () => {
         <Stats />
       </main>
       <Footer />
-      <AuthModal />
+      <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
     </div>
   );
 };
