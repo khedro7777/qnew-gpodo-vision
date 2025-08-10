@@ -82,6 +82,10 @@ const NotificationsTab = () => {
     }
   };
 
+  const handleMarkAllAsRead = () => {
+    markAllAsRead();
+  };
+
   if (isLoading) {
     return (
       <Card className="p-6">
@@ -112,7 +116,7 @@ const NotificationsTab = () => {
             <Button
               variant="outline"
               size="sm"
-              onClick={markAllAsRead}
+              onClick={handleMarkAllAsRead}
               disabled={isMarkingAllRead || unreadCount === 0}
             >
               <CheckCheck className="w-4 h-4 mr-2" />

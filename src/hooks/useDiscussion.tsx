@@ -7,7 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 export interface Discussion {
   id: string;
   group_id: string;
-  user_id: string;
+  sender_id: string;
   content: string;
   message_type: 'text' | 'file';
   file_url?: string;
@@ -28,23 +28,35 @@ export const useDiscussion = (groupId?: string) => {
 
       console.log('Fetching discussion messages for group:', groupId);
       
-      const { data, error } = await supabase
+      // First get messages
+      const { data: messagesData, error: messagesError } = await supabase
         .from('messages')
-        .select(`
-          *,
-          profiles!messages_sender_id_fkey(full_name)
-        `)
+        .select('*')
         .eq('group_id', groupId)
         .order('created_at', { ascending: true });
 
-      if (error) {
-        console.error('Error fetching discussion messages:', error);
-        throw error;
+      if (messagesError) {
+        console.error('Error fetching discussion messages:', messagesError);
+        throw messagesError;
       }
 
-      return data.map(message => ({
+      // Then get profile data for senders
+      const senderIds = [...new Set(messagesData.map(m => m.sender_id))];
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .in('id', senderIds);
+
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+      }
+
+      // Map profiles to messages
+      const profilesMap = new Map(profilesData?.map(p => [p.id, p]) || []);
+
+      return messagesData.map(message => ({
         ...message,
-        sender_name: message.profiles?.full_name || 'Unknown User'
+        sender_name: profilesMap.get(message.sender_id)?.full_name || 'Unknown User'
       })) as Discussion[];
     },
     enabled: !!groupId,

@@ -34,35 +34,46 @@ export const useGroupManagement = (groupId?: string) => {
     queryFn: async () => {
       if (!groupId) return [];
 
-      const { data, error } = await supabase
+      // First get group members
+      const { data: membersData, error: membersError } = await supabase
         .from('group_members')
-        .select(`
-          *,
-          profiles!group_members_user_id_fkey(full_name, email, avatar_url)
-        `)
+        .select('*')
         .eq('group_id', groupId);
 
-      if (error) {
-        console.error('Error fetching group members:', error);
-        throw error;
+      if (membersError) {
+        console.error('Error fetching group members:', membersError);
+        throw membersError;
       }
 
-      return data.map(member => ({
+      // Then get profile data for members
+      const userIds = membersData.map(m => m.user_id);
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, full_name, email, avatar_url')
+        .in('id', userIds);
+
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+      }
+
+      // Map profiles to members
+      const profilesMap = new Map(profilesData?.map(p => [p.id, p]) || []);
+
+      return membersData.map(member => ({
         ...member,
-        full_name: member.profiles?.full_name,
-        email: member.profiles?.email,
-        avatar_url: member.profiles?.avatar_url
+        full_name: profilesMap.get(member.user_id)?.full_name,
+        email: profilesMap.get(member.user_id)?.email,
+        avatar_url: profilesMap.get(member.user_id)?.avatar_url
       })) as GroupMember[];
     },
     enabled: !!groupId,
   });
 
-  // Get group invitations
+  // Get group invitations (mock for now)
   const { data: invitations = [], isLoading: invitationsLoading } = useQuery({
     queryKey: ['group-invitations', groupId],
     queryFn: async () => {
       if (!groupId) return [];
-
       // Mock data for now - would need to create invitations table
       return [] as GroupInvitation[];
     },
