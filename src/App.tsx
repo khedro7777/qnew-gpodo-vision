@@ -1,4 +1,3 @@
-
 import { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -6,6 +5,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AdminAuthProvider } from "@/contexts/AdminAuthContext";
+import { DemoProvider } from "@/contexts/DemoContext";
+import { DemoToggle } from "@/components/demo/DemoToggle";
 
 // Lazy load components
 const Index = lazy(() => import("@/pages/Index"));
@@ -39,54 +40,57 @@ const queryClient = new QueryClient();
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <AdminAuthProvider>
-          <TooltipProvider>
-            <Toaster />
-            <BrowserRouter>
-              <Suspense fallback={<div>Loading...</div>}>
-                <Routes>
-                  {/* Main app routes */}
-                  <Route path="/" element={<Index />} />
-                  
-                  {/* Board Selector - main dashboard entry point */}
-                  <Route path="/dashboard" element={<BoardSelector />} />
-                  
-                  {/* Role-specific dashboards */}
-                  <Route path="/dashboard/supplier" element={<SupplierDashboard />} />
-                  <Route path="/dashboard/buyer" element={<BuyerDashboard />} />
-                  <Route path="/dashboard/freelancer" element={<FreelancerDashboard />} />
-                  <Route path="/dashboard/group-buying" element={<ClientDashboard />} />
-                  <Route path="/dashboard/investor" element={<ClientDashboard />} />
-                  <Route path="/dashboard/judge" element={<ClientDashboard />} />
-                  <Route path="/dashboard/ai-agent" element={<ClientDashboard />} />
-                  
-                  {/* Legacy routes */}
-                  <Route path="/client-dashboard" element={<ClientDashboard />} />
-                  <Route path="/profile" element={<UserProfile />} />
-                  <Route path="/settings" element={<AccountSettings />} />
-                  <Route path="/group-room/:groupId" element={<GroupRoom />} />
-                  <Route path="/gateway/:gatewayType" element={<GatewayLanding />} />
-                  <Route path="/group/:groupId/profile" element={<GroupProfile />} />
-                  <Route path="/offer/:offerId" element={<OfferDetails />} />
-                  
-                  {/* Admin routes */}
-                  <Route path="/admin/login" element={<AdminLogin />} />
-                  <Route path="/admin" element={<AdminLayout />}>
-                    <Route path="overview" element={<AdminOverview />} />
-                    <Route path="users" element={<AdminUsers />} />
-                    <Route path="portals" element={<AdminPortals />} />
-                    <Route path="referrals" element={<AdminReferrals />} />
-                    <Route path="apis" element={<AdminAPIs />} />
-                  </Route>
-                  
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </Suspense>
-            </BrowserRouter>
-          </TooltipProvider>
-        </AdminAuthProvider>
-      </AuthProvider>
+      <DemoProvider>
+        <AuthProvider>
+          <AdminAuthProvider>
+            <TooltipProvider>
+              <Toaster />
+              <DemoToggle />
+              <BrowserRouter>
+                <Suspense fallback={<div>Loading...</div>}>
+                  <Routes>
+                    {/* Main app routes */}
+                    <Route path="/" element={<Index />} />
+                    
+                    {/* Board Selector - main dashboard entry point */}
+                    <Route path="/dashboard" element={<BoardSelector />} />
+                    
+                    {/* Role-specific dashboards */}
+                    <Route path="/dashboard/supplier" element={<SupplierDashboard />} />
+                    <Route path="/dashboard/buyer" element={<BuyerDashboard />} />
+                    <Route path="/dashboard/freelancer" element={<FreelancerDashboard />} />
+                    <Route path="/dashboard/group-buying" element={<ClientDashboard />} />
+                    <Route path="/dashboard/investor" element={<ClientDashboard />} />
+                    <Route path="/dashboard/judge" element={<ClientDashboard />} />
+                    <Route path="/dashboard/ai-agent" element={<ClientDashboard />} />
+                    
+                    {/* Legacy routes */}
+                    <Route path="/client-dashboard" element={<ClientDashboard />} />
+                    <Route path="/profile" element={<UserProfile />} />
+                    <Route path="/settings" element={<AccountSettings />} />
+                    <Route path="/group-room/:groupId" element={<GroupRoom />} />
+                    <Route path="/gateway/:gatewayType" element={<GatewayLanding />} />
+                    <Route path="/group/:groupId/profile" element={<GroupProfile />} />
+                    <Route path="/offer/:offerId" element={<OfferDetails />} />
+                    
+                    {/* Admin routes */}
+                    <Route path="/admin/login" element={<AdminLogin />} />
+                    <Route path="/admin" element={<AdminLayout />}>
+                      <Route path="overview" element={<AdminOverview />} />
+                      <Route path="users" element={<AdminUsers />} />
+                      <Route path="portals" element={<AdminPortals />} />
+                      <Route path="referrals" element={<AdminReferrals />} />
+                      <Route path="apis" element={<AdminAPIs />} />
+                    </Route>
+                    
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </Suspense>
+              </BrowserRouter>
+            </TooltipProvider>
+          </AdminAuthProvider>
+        </AuthProvider>
+      </DemoProvider>
     </QueryClientProvider>
   );
 }

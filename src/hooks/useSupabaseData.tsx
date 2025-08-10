@@ -2,9 +2,14 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
+import { useDemo } from '@/contexts/DemoContext';
+import { useDemoCountries, useDemoIndustrySectors, useDemoGroups } from './useDemoSupabaseData';
 
 export const useCountries = () => {
-  return useQuery({
+  const { isDemoMode } = useDemo();
+  const demoQuery = useDemoCountries();
+  
+  const liveQuery = useQuery({
     queryKey: ['countries'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -15,11 +20,17 @@ export const useCountries = () => {
       if (error) throw error;
       return data;
     },
+    enabled: !isDemoMode,
   });
+
+  return isDemoMode ? demoQuery : liveQuery;
 };
 
 export const useIndustrySectors = () => {
-  return useQuery({
+  const { isDemoMode } = useDemo();
+  const demoQuery = useDemoIndustrySectors();
+  
+  const liveQuery = useQuery({
     queryKey: ['industry_sectors'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -30,11 +41,17 @@ export const useIndustrySectors = () => {
       if (error) throw error;
       return data;
     },
+    enabled: !isDemoMode,
   });
+
+  return isDemoMode ? demoQuery : liveQuery;
 };
 
 export const useGroups = () => {
-  return useQuery({
+  const { isDemoMode } = useDemo();
+  const demoQuery = useDemoGroups();
+  
+  const liveQuery = useQuery({
     queryKey: ['groups'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -50,7 +67,10 @@ export const useGroups = () => {
       if (error) throw error;
       return data;
     },
+    enabled: !isDemoMode,
   });
+
+  return isDemoMode ? demoQuery : liveQuery;
 };
 
 // Re-export productivity hooks for convenience
