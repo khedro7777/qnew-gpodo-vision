@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUserRoles, UserRole } from '@/hooks/useUserRoles';
+import { useKYCStatus } from '@/hooks/useKYCStatus';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -90,6 +91,7 @@ const roleConfigs = {
 const BoardSelector = () => {
   const navigate = useNavigate();
   const { approvedRoles, pendingRoles, hasRole, requestRole, isLoading } = useUserRoles();
+  const { data: kycData } = useKYCStatus();
   const [requesting, setRequesting] = useState<UserRole | null>(null);
 
   const handleBoardSelect = (role: UserRole) => {
@@ -138,6 +140,10 @@ const BoardSelector = () => {
             const isPending = pendingRoles.some(r => r.role === role);
             const Icon = config.icon;
             
+            // Special handling for supplier role with KYC
+            const isSupplierWithKYC = role === 'supplier' && kycData?.isKYCComplete;
+            const showAutoApproveMessage = isSupplierWithKYC && !hasAccess && !isPending;
+            
             return (
               <Card key={role} className="relative overflow-hidden hover:shadow-lg transition-shadow">
                 <div className={`absolute top-0 left-0 right-0 h-2 ${config.color}`} />
@@ -158,7 +164,13 @@ const BoardSelector = () => {
                           Pending
                         </Badge>
                       )}
-                      {config.requiresApproval && !hasAccess && !isPending && (
+                      {isSupplierWithKYC && !hasAccess && !isPending && (
+                        <Badge variant="default" className="bg-blue-100 text-blue-800">
+                          <CheckCircle className="w-3 h-3 mr-1" />
+                          KYC Complete
+                        </Badge>
+                      )}
+                      {config.requiresApproval && !hasAccess && !isPending && !isSupplierWithKYC && (
                         <Badge variant="outline" className="border-red-500 text-red-700">
                           <AlertCircle className="w-3 h-3 mr-1" />
                           Approval Required
@@ -182,6 +194,14 @@ const BoardSelector = () => {
                   ) : isPending ? (
                     <Button disabled className="w-full">
                       Request Pending...
+                    </Button>
+                  ) : showAutoApproveMessage ? (
+                    <Button 
+                      onClick={() => handleRequestRole(role)}
+                      disabled={requesting === role}
+                      className="w-full bg-blue-600 hover:bg-blue-700"
+                    >
+                      {requesting === role ? 'Activating...' : 'Activate Supplier Access'}
                     </Button>
                   ) : (
                     <Button 
