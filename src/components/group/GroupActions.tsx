@@ -16,7 +16,7 @@ const GroupActions = ({ groupId, isLoggedIn }: GroupActionsProps) => {
   const { user } = useAuth();
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [workflowModalOpen, setWorkflowModalOpen] = useState(false);
-  const [workflowType, setWorkflowType] = useState<'contact' | 'supplier' | 'freelancer'>('contact');
+  const [workflowType, setWorkflowType] = useState<'vote' | 'proposal' | 'task' | 'arbitration'>('vote');
 
   const handleAction = (action: string) => {
     if (!isLoggedIn || !user) {
@@ -27,18 +27,18 @@ const GroupActions = ({ groupId, isLoggedIn }: GroupActionsProps) => {
     // Handle workflow actions
     switch (action) {
       case 'contact':
-        setWorkflowType('contact');
+        setWorkflowType('proposal');
         setWorkflowModalOpen(true);
         break;
       case 'join':
         toast.success('Join request submitted successfully');
         break;
       case 'supplier':
-        setWorkflowType('supplier');
+        setWorkflowType('proposal');
         setWorkflowModalOpen(true);
         break;
       case 'freelancer':
-        setWorkflowType('freelancer');
+        setWorkflowType('proposal');
         setWorkflowModalOpen(true);
         break;
       default:
@@ -144,7 +144,7 @@ const GroupActions = ({ groupId, isLoggedIn }: GroupActionsProps) => {
         isOpen={workflowModalOpen}
         onClose={() => setWorkflowModalOpen(false)}
         groupId={groupId}
-        type={workflowType}
+        modalType={workflowType}
       />
     </>
   );

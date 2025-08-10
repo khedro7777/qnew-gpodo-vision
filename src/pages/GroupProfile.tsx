@@ -83,7 +83,7 @@ const GroupProfile = () => {
               {group && (
                 <div>
                   <h2 className="text-2xl font-bold text-gray-900 mb-4">Group Presentations</h2>
-                  <MCPPresentationManager groupId={groupId} group={group} />
+                  <MCPPresentationManager groupId={groupId} />
                 </div>
               )}
               
