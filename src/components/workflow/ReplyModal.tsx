@@ -36,6 +36,12 @@ const ReplyModal = ({ isOpen, onClose, message, groupId, onReply }: ReplyModalPr
     }
   }, [message]);
 
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      onClose();
+    }
+  };
+
   const getTypeIcon = (type: string) => {
     switch (type) {
       case 'contact':
@@ -114,7 +120,7 @@ const ReplyModal = ({ isOpen, onClose, message, groupId, onReply }: ReplyModalPr
   if (!message) return null;
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" dir="rtl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">

@@ -39,6 +39,12 @@ const GroupWorkflowModals = ({ groupId, isOpen, modalType, onClose }: GroupWorkf
     evidence: ['']
   });
 
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      onClose();
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -138,7 +144,7 @@ const GroupWorkflowModals = ({ groupId, isOpen, modalType, onClose }: GroupWorkf
   const config = getModalConfig();
 
   return (
-    <Dialog open={isOpen && modalType !== null} onOpenChange={onClose}>
+    <Dialog open={isOpen && modalType !== null} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
