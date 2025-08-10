@@ -230,7 +230,7 @@ export const useSupplierPanel = () => {
 
   // Create invoice mutation
   const createInvoice = useMutation({
-    mutationFn: async (invoiceData: Omit<Invoice, 'id' | 'created_at' | 'updated_at' | 'invoice_number'>) => {
+    mutationFn: async (invoiceData: Omit<Invoice, 'id' | 'created_at' | 'updated_at' | 'invoice_number' | 'supplier_id'>) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
