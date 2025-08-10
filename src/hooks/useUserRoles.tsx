@@ -31,7 +31,10 @@ export const useUserRoles = () => {
         .eq('user_id', user.id)
         .eq('is_active', true);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching user roles:', error);
+        throw error;
+      }
       return data as UserRoleData[];
     },
     enabled: !!user?.id,

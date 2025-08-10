@@ -18,17 +18,52 @@ const SupplierDashboard: React.FC = () => {
     paymentSettings, 
     invoices, 
     complaints,
-    isLoading 
+    isLoading,
+    hasError
   } = useSupplierPanel();
   
   const [activeTab, setActiveTab] = useState('overview');
   const [showCreateOffer, setShowCreateOffer] = useState(false);
   const [showCreateInvoice, setShowCreateInvoice] = useState(false);
 
+  console.log('SupplierDashboard render:', {
+    isLoading,
+    hasError,
+    offersCount: offers?.length,
+    invoicesCount: invoices?.length,
+    complaintsCount: complaints?.length
+  });
+
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="text-muted-foreground">Loading your supplier dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (hasError) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <Card className="w-96">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-destructive">
+              <AlertCircle className="w-5 h-5" />
+              Error Loading Dashboard
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground mb-4">
+              There was an error loading your supplier dashboard. Please try refreshing the page.
+            </p>
+            <Button onClick={() => window.location.reload()} className="w-full">
+              Refresh Page
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -37,12 +72,12 @@ const SupplierDashboard: React.FC = () => {
     <div className="min-h-screen bg-background p-6">
       <div className="container mx-auto space-y-6">
         {/* Header */}
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Supplier Dashboard</h1>
             <p className="text-muted-foreground">Manage your offers and business operations</p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-3">
             <Button onClick={() => setShowCreateInvoice(true)} variant="outline">
               <FileText className="w-4 h-4 mr-2" />
               Create Invoice
@@ -55,7 +90,7 @@ const SupplierDashboard: React.FC = () => {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Offers</CardTitle>
@@ -111,9 +146,9 @@ const SupplierDashboard: React.FC = () => {
 
         {/* Main Content */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-6">
             <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="offers">My Offers</TabsTrigger>
+            <TabsTrigger value="offers">Offers</TabsTrigger>
             <TabsTrigger value="invoices">Invoices</TabsTrigger>
             <TabsTrigger value="complaints">Complaints</TabsTrigger>
             <TabsTrigger value="wallet">Wallet</TabsTrigger>
@@ -177,7 +212,7 @@ const SupplierDashboard: React.FC = () => {
                 ) : (
                   <div className="space-y-4">
                     {offers.map((offer) => (
-                      <div key={offer.id} className="border rounded-lg p-4 hover:bg-muted/50">
+                      <div key={offer.id} className="border rounded-lg p-4 hover:bg-muted/50 transition-colors">
                         <div className="flex justify-between items-start mb-2">
                           <h3 className="font-semibold text-lg">{offer.title}</h3>
                           <Badge variant={offer.status === 'active' ? 'default' : 'secondary'}>
@@ -216,7 +251,7 @@ const SupplierDashboard: React.FC = () => {
                 ) : (
                   <div className="space-y-4">
                     {invoices.map((invoice) => (
-                      <div key={invoice.id} className="border rounded-lg p-4 hover:bg-muted/50">
+                      <div key={invoice.id} className="border rounded-lg p-4 hover:bg-muted/50 transition-colors">
                         <div className="flex justify-between items-start mb-2">
                           <h3 className="font-semibold">{invoice.invoice_number}</h3>
                           <Badge variant={invoice.status === 'paid' ? 'default' : 'secondary'}>

@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -91,7 +92,7 @@ export const useSupplierPanel = () => {
   console.log('useSupplierPanel - user:', user?.id);
 
   // Get supplier offers
-  const { data: offers = [], isLoading: offersLoading } = useQuery({
+  const { data: offers = [], isLoading: offersLoading, error: offersError } = useQuery({
     queryKey: ['supplier-offers', user?.id],
     queryFn: async () => {
       if (!user?.id) {
@@ -112,7 +113,7 @@ export const useSupplierPanel = () => {
       
       if (error) {
         console.error('Error fetching offers:', error);
-        return [];
+        throw error;
       }
       
       console.log('Fetched offers:', data?.length || 0);
@@ -122,7 +123,7 @@ export const useSupplierPanel = () => {
   });
 
   // Get payment settings
-  const { data: paymentSettings, isLoading: settingsLoading } = useQuery({
+  const { data: paymentSettings, isLoading: settingsLoading, error: settingsError } = useQuery({
     queryKey: ['supplier-payment-settings', user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
@@ -133,16 +134,17 @@ export const useSupplierPanel = () => {
         .eq('supplier_id', user.id)
         .maybeSingle();
       
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
         console.error('Error fetching payment settings:', error);
+        throw error;
       }
-      return data as SupplierPaymentSettings;
+      return data as SupplierPaymentSettings | null;
     },
     enabled: !!user?.id,
   });
 
   // Get invoices
-  const { data: invoices = [], isLoading: invoicesLoading } = useQuery({
+  const { data: invoices = [], isLoading: invoicesLoading, error: invoicesError } = useQuery({
     queryKey: ['supplier-invoices', user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
@@ -155,7 +157,7 @@ export const useSupplierPanel = () => {
       
       if (error) {
         console.error('Error fetching invoices:', error);
-        return [];
+        throw error;
       }
       return data as Invoice[];
     },
@@ -163,7 +165,7 @@ export const useSupplierPanel = () => {
   });
 
   // Get complaints
-  const { data: complaints = [], isLoading: complaintsLoading } = useQuery({
+  const { data: complaints = [], isLoading: complaintsLoading, error: complaintsError } = useQuery({
     queryKey: ['supplier-complaints', user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
@@ -176,7 +178,7 @@ export const useSupplierPanel = () => {
       
       if (error) {
         console.error('Error fetching complaints:', error);
-        return [];
+        throw error;
       }
       return data as Complaint[];
     },
@@ -260,7 +262,7 @@ export const useSupplierPanel = () => {
       
       const { data, error } = await supabase
         .from('supplier_payment_settings')
-        .upsert(settingsWithSupplier)
+        .upsert(settingsWithSupplier, { onConflict: 'supplier_id' })
         .select()
         .single();
       
@@ -282,13 +284,9 @@ export const useSupplierPanel = () => {
     mutationFn: async (invoiceData: Omit<Invoice, 'id' | 'created_at' | 'updated_at' | 'invoice_number' | 'supplier_id'>) => {
       if (!user?.id) throw new Error('Not authenticated');
 
-      // Generate invoice number
-      const invoiceNumber = `INV-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
-
       const invoiceWithSupplier = {
         ...invoiceData,
         supplier_id: user.id,
-        invoice_number: invoiceNumber,
       };
 
       const { data, error } = await supabase
@@ -338,9 +336,11 @@ export const useSupplierPanel = () => {
   });
 
   const isLoading = offersLoading || settingsLoading || invoicesLoading || complaintsLoading;
+  const hasError = offersError || settingsError || invoicesError || complaintsError;
   
   console.log('useSupplierPanel state:', {
     isLoading,
+    hasError: !!hasError,
     offersCount: offers?.length || 0,
     invoicesCount: invoices?.length || 0,
     complaintsCount: complaints?.length || 0,
@@ -353,6 +353,7 @@ export const useSupplierPanel = () => {
     invoices,
     complaints,
     isLoading,
+    hasError,
     createOffer: createOffer.mutate,
     updateOffer: updateOffer.mutate,
     updatePaymentSettings: updatePaymentSettings.mutate,
