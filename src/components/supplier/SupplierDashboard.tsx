@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -20,7 +21,7 @@ import { PaymentSettingsForm } from './PaymentSettingsForm';
 import { InvoiceForm } from './InvoiceForm';
 import { ComplaintsList } from './ComplaintsList';
 import WalletBalance from '@/components/dashboard/WalletBalance';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
 
 const SupplierDashboard: React.FC = () => {
   const { user, loading: authLoading } = useAuth();
@@ -60,10 +61,10 @@ const SupplierDashboard: React.FC = () => {
   }
 
   const stats = {
-    totalOffers: offers.length,
-    activeOffers: offers.filter(offer => offer.status === 'active').length,
-    totalParticipants: offers.reduce((sum, offer) => sum + (offer.current_participants || 0), 0),
-    pendingInvoices: invoices.filter(invoice => invoice.status === 'pending').length
+    totalOffers: offers?.length || 0,
+    activeOffers: offers?.filter(offer => offer.status === 'active').length || 0,
+    totalParticipants: offers?.reduce((sum, offer) => sum + (offer.current_participants || 0), 0) || 0,
+    pendingInvoices: invoices?.filter(invoice => invoice.status === 'pending').length || 0
   };
 
   if (isLoading) {
@@ -195,9 +196,9 @@ const SupplierDashboard: React.FC = () => {
                   <h3 className="text-lg font-semibold mb-3">Recent Activity</h3>
                   <div className="space-y-2 text-sm text-gray-600">
                     <p>• Dashboard loaded successfully</p>
-                    <p>• {offers.length} offers currently managed</p>
-                    <p>• {invoices.length} invoices in system</p>
-                    <p>• {complaints.length} complaints to review</p>
+                    <p>• {offers?.length || 0} offers currently managed</p>
+                    <p>• {invoices?.length || 0} invoices in system</p>
+                    <p>• {complaints?.length || 0} complaints to review</p>
                   </div>
                 </div>
               </div>
@@ -211,7 +212,7 @@ const SupplierDashboard: React.FC = () => {
               <CardTitle>My Group Discount Offers</CardTitle>
             </CardHeader>
             <CardContent>
-              {offers.length === 0 ? (
+              {!offers || offers.length === 0 ? (
                 <div className="text-center py-8">
                   <Package className="w-16 h-16 mx-auto text-gray-400 mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">No offers yet</h3>
@@ -250,7 +251,7 @@ const SupplierDashboard: React.FC = () => {
               <CardTitle>Invoice Management</CardTitle>
             </CardHeader>
             <CardContent>
-              {invoices.length === 0 ? (
+              {!invoices || invoices.length === 0 ? (
                 <div className="text-center py-8">
                   <FileText className="w-16 h-16 mx-auto text-gray-400 mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">No invoices yet</h3>
@@ -284,7 +285,7 @@ const SupplierDashboard: React.FC = () => {
         </TabsContent>
 
         <TabsContent value="complaints" className="space-y-6">
-          <ComplaintsList complaints={complaints} />
+          <ComplaintsList complaints={complaints || []} />
         </TabsContent>
 
         <TabsContent value="wallet" className="space-y-6">
