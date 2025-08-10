@@ -1,11 +1,11 @@
 
 import React, { useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useSupplierPanel } from '@/hooks/useSupplierPanel';
 import { toast } from 'sonner';
 
@@ -66,14 +66,13 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ isOpen, onClose }) => 
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <Card className="w-full max-w-2xl">
-      <CardHeader>
-        <CardTitle>Create Invoice</CardTitle>
-      </CardHeader>
-      <CardContent>
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Create Invoice</DialogTitle>
+        </DialogHeader>
+        
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="buyer_id">Buyer ID *</Label>
@@ -172,7 +171,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ isOpen, onClose }) => 
             </Button>
           </div>
         </form>
-      </CardContent>
-    </Card>
+      </DialogContent>
+    </Dialog>
   );
 };

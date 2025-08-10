@@ -21,10 +21,8 @@ import { PaymentSettingsForm } from './PaymentSettingsForm';
 import { InvoiceForm } from './InvoiceForm';
 import { ComplaintsList } from './ComplaintsList';
 import WalletBalance from '@/components/dashboard/WalletBalance';
-import { useAuth } from '@/contexts/AuthContext';
 
 const SupplierDashboard: React.FC = () => {
-  const { user, loading: authLoading } = useAuth();
   const { 
     offers, 
     paymentSettings, 
@@ -36,29 +34,6 @@ const SupplierDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [showCreateOffer, setShowCreateOffer] = useState(false);
   const [showCreateInvoice, setShowCreateInvoice] = useState(false);
-
-  // Show loading while auth is loading
-  if (authLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-productivity-blue"></div>
-      </div>
-    );
-  }
-
-  // Show login prompt if not authenticated
-  if (!user) {
-    return (
-      <div className="container mx-auto p-6">
-        <Card>
-          <CardContent className="p-8 text-center">
-            <h2 className="text-2xl font-bold mb-4">Authentication Required</h2>
-            <p className="text-gray-600 mb-4">Please log in to access the Supplier Dashboard</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   const stats = {
     totalOffers: offers?.length || 0,

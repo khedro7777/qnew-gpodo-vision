@@ -2,6 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
 
 export interface SupplierOffer {
   id: string;
@@ -86,13 +87,13 @@ export interface Complaint {
 
 export const useSupplierPanel = () => {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   // Get supplier offers
   const { data: offers = [], isLoading: offersLoading } = useQuery({
-    queryKey: ['supplier-offers'],
+    queryKey: ['supplier-offers', user?.id],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
+      if (!user?.id) throw new Error('Not authenticated');
 
       const { data, error } = await supabase
         .from('group_discount_offers')
@@ -106,14 +107,14 @@ export const useSupplierPanel = () => {
       if (error) throw error;
       return data as SupplierOffer[];
     },
+    enabled: !!user?.id,
   });
 
   // Get payment settings
   const { data: paymentSettings, isLoading: settingsLoading } = useQuery({
-    queryKey: ['supplier-payment-settings'],
+    queryKey: ['supplier-payment-settings', user?.id],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
+      if (!user?.id) throw new Error('Not authenticated');
 
       const { data, error } = await supabase
         .from('supplier_payment_settings')
@@ -124,14 +125,14 @@ export const useSupplierPanel = () => {
       if (error) throw error;
       return data as SupplierPaymentSettings;
     },
+    enabled: !!user?.id,
   });
 
   // Get invoices
   const { data: invoices = [], isLoading: invoicesLoading } = useQuery({
-    queryKey: ['supplier-invoices'],
+    queryKey: ['supplier-invoices', user?.id],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
+      if (!user?.id) throw new Error('Not authenticated');
 
       const { data, error } = await supabase
         .from('invoices')
@@ -142,14 +143,14 @@ export const useSupplierPanel = () => {
       if (error) throw error;
       return data as Invoice[];
     },
+    enabled: !!user?.id,
   });
 
   // Get complaints
   const { data: complaints = [], isLoading: complaintsLoading } = useQuery({
-    queryKey: ['supplier-complaints'],
+    queryKey: ['supplier-complaints', user?.id],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
+      if (!user?.id) throw new Error('Not authenticated');
 
       const { data, error } = await supabase
         .from('complaints')
@@ -160,16 +161,20 @@ export const useSupplierPanel = () => {
       if (error) throw error;
       return data as Complaint[];
     },
+    enabled: !!user?.id,
   });
 
   // Create offer mutation
   const createOffer = useMutation({
-    mutationFn: async (offerData: Omit<SupplierOffer, 'id' | 'created_at' | 'updated_at' | 'current_participants'> & { tiers: Omit<DiscountTier, 'id' | 'offer_id' | 'created_at'>[] }) => {
+    mutationFn: async (offerData: Omit<SupplierOffer, 'id' | 'created_at' | 'updated_at' | 'current_participants' | 'supplier_id'> & { tiers: Omit<DiscountTier, 'id' | 'offer_id' | 'created_at'>[] }) => {
+      if (!user?.id) throw new Error('Not authenticated');
+      
       const { tiers, ...offer } = offerData;
+      const offerWithSupplier = { ...offer, supplier_id: user.id };
       
       const { data: offerResult, error: offerError } = await supabase
         .from('group_discount_offers')
-        .insert(offer)
+        .insert(offerWithSupplier)
         .select()
         .single();
       
@@ -225,10 +230,14 @@ export const useSupplierPanel = () => {
 
   // Update payment settings mutation
   const updatePaymentSettings = useMutation({
-    mutationFn: async (settings: Omit<SupplierPaymentSettings, 'id' | 'created_at' | 'updated_at'>) => {
+    mutationFn: async (settings: Omit<SupplierPaymentSettings, 'id' | 'created_at' | 'updated_at' | 'supplier_id'>) => {
+      if (!user?.id) throw new Error('Not authenticated');
+      
+      const settingsWithSupplier = { ...settings, supplier_id: user.id };
+      
       const { data, error } = await supabase
         .from('supplier_payment_settings')
-        .upsert(settings)
+        .upsert(settingsWithSupplier)
         .select()
         .single();
       
@@ -248,16 +257,11 @@ export const useSupplierPanel = () => {
   // Create invoice mutation
   const createInvoice = useMutation({
     mutationFn: async (invoiceData: Omit<Invoice, 'id' | 'created_at' | 'updated_at' | 'invoice_number' | 'supplier_id'>) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-
-      // Generate invoice number
-      const invoiceNumber = `INV-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      if (!user?.id) throw new Error('Not authenticated');
 
       const invoiceWithSupplier = {
         ...invoiceData,
         supplier_id: user.id,
-        invoice_number: invoiceNumber,
       };
 
       const { data, error } = await supabase
