@@ -137,7 +137,6 @@ const SupplierDashboard: React.FC = () => {
               <CardTitle>Overview</CardTitle>
             </CardHeader>
             <CardContent>
-              {/* Add overview content here */}
               <p>This is the overview tab content.</p>
             </CardContent>
           </Card>
@@ -234,32 +233,16 @@ const SupplierDashboard: React.FC = () => {
         </TabsContent>
       </Tabs>
 
-      {/* Modals */}
-      {showCreateOffer && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b">
-              <h2 className="text-xl font-semibold">Create New Offer</h2>
-            </div>
-            <div className="p-6">
-              <CreateOfferForm onClose={() => setShowCreateOffer(false)} />
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Modals - Fixed to pass isOpen prop */}
+      <CreateOfferForm 
+        isOpen={showCreateOffer}
+        onClose={() => setShowCreateOffer(false)} 
+      />
 
-      {showCreateInvoice && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b">
-              <h2 className="text-xl font-semibold">Create New Invoice</h2>
-            </div>
-            <div className="p-6">
-              <InvoiceForm onClose={() => setShowCreateInvoice(false)} />
-            </div>
-          </div>
-        </div>
-      )}
+      <InvoiceForm 
+        isOpen={showCreateInvoice}
+        onClose={() => setShowCreateInvoice(false)} 
+      />
     </div>
   );
 };

@@ -56,9 +56,19 @@ export const PaymentSettingsForm: React.FC<PaymentSettingsFormProps> = ({ paymen
     }
   }, [paymentSettings]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    updatePaymentSettings(formData);
+    
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      console.error('No authenticated user');
+      return;
+    }
+
+    updatePaymentSettings({
+      ...formData,
+      supplier_id: user.id,
+    });
   };
 
   const handleIPFSClick = () => {
@@ -164,7 +174,6 @@ export const PaymentSettingsForm: React.FC<PaymentSettingsFormProps> = ({ paymen
           </CardContent>
         </Card>
 
-        {/* Cryptocurrency Settings */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -215,7 +224,6 @@ export const PaymentSettingsForm: React.FC<PaymentSettingsFormProps> = ({ paymen
           </CardContent>
         </Card>
 
-        {/* Save Button */}
         <div className="flex justify-end">
           <Button type="submit" disabled={isUpdatingSettings} className="bg-productivity-blue hover:bg-productivity-blue/90">
             <Save className="w-4 h-4 mr-2" />

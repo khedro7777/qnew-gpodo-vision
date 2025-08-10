@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -72,14 +71,13 @@ export const CreateOfferForm: React.FC<CreateOfferFormProps> = ({ isOpen, onClos
         description: `Publishing offer: ${formData.title}`
       });
 
-      // Create the offer
+      // Create the offer - removing current_participants as it's auto-generated
       createOffer({
         ...formData,
         base_price: parseFloat(formData.base_price),
         minimum_joiners: parseInt(formData.minimum_joiners),
         status: 'active',
         supplier_id: '', // Will be set by RLS
-        current_participants: 0,
         tiers: tiers.map(tier => ({
           ...tier,
           discount_percent: tier.discount_percent || null,
