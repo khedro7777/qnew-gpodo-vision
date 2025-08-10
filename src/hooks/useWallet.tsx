@@ -2,58 +2,136 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import type { WalletTransaction, UserBalance } from '@/types';
+
+export interface WalletData {
+  id: string;
+  user_id: string;
+  balance: number;
+  currency: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TransactionData {
+  id: string;
+  wallet_id: string;
+  user_id: string;
+  type: 'recharge' | 'debit' | 'credit' | 'refund';
+  amount: number;
+  description: string;
+  payment_method?: string;
+  status: 'pending' | 'completed' | 'failed';
+  payment_reference?: string;
+  metadata: any;
+  created_at: string;
+  updated_at: string;
+}
 
 export const useWallet = () => {
   const queryClient = useQueryClient();
 
-  // Get user balance (mock data for now)
-  const { data: balance, isLoading: balanceLoading } = useQuery({
-    queryKey: ['user_balance'],
+  // Get user wallet balance
+  const { data: wallet, isLoading: walletLoading } = useQuery({
+    queryKey: ['wallet'],
     queryFn: async () => {
-      console.log('Fetching user balance...');
-      // Return mock balance for now
-      return { user_id: 'mock-user-id', balance: 0, updated_at: new Date().toISOString() } as UserBalance;
+      const { data, error } = await supabase
+        .from('wallets')
+        .select('*')
+        .eq('currency', 'USD')
+        .single();
+      
+      if (error && error.code !== 'PGRST116') {
+        console.error('Wallet fetch error:', error);
+        throw error;
+      }
+      
+      return data as WalletData;
     },
   });
 
-  // Get wallet transactions (mock data for now)
-  const { data: transactions, isLoading: transactionsLoading } = useQuery({
-    queryKey: ['wallet_transactions'],
+  // Get wallet transactions
+  const { data: transactions = [], isLoading: transactionsLoading } = useQuery({
+    queryKey: ['transactions'],
     queryFn: async () => {
-      console.log('Fetching wallet transactions...');
-      // Return empty array for now until Supabase types are updated
-      return [] as WalletTransaction[];
+      const { data, error } = await supabase
+        .from('transactions')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(50);
+      
+      if (error) {
+        console.error('Transactions fetch error:', error);
+        throw error;
+      }
+      
+      return data as TransactionData[];
     },
   });
 
-  // Add transaction mutation (mock for now)
+  // Add transaction (for manual entries)
   const addTransaction = useMutation({
-    mutationFn: async (transactionData: Omit<WalletTransaction, 'id' | 'created_at'>) => {
-      console.log('Adding transaction:', transactionData);
-      // Mock implementation
-      return { 
-        id: 'mock-transaction-id', 
-        ...transactionData, 
-        created_at: new Date().toISOString() 
-      } as WalletTransaction;
+    mutationFn: async (transactionData: {
+      type: 'recharge' | 'debit' | 'credit' | 'refund';
+      amount: number;
+      description: string;
+      payment_method?: string;
+      payment_reference?: string;
+    }) => {
+      const { data, error } = await supabase.rpc('update_wallet_balance', {
+        p_user_id: (await supabase.auth.getUser()).data.user?.id,
+        p_amount: transactionData.amount,
+        p_type: transactionData.type,
+        p_description: transactionData.description,
+        p_payment_method: transactionData.payment_method,
+        p_payment_reference: transactionData.payment_reference,
+      });
+
+      if (error) throw error;
+      return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['wallet_transactions'] });
-      queryClient.invalidateQueries({ queryKey: ['user_balance'] });
-      toast.success('تم إضافة المعاملة بنجاح');
+      queryClient.invalidateQueries({ queryKey: ['wallet'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      toast.success('Transaction completed successfully');
     },
     onError: (error: any) => {
-      console.error('Add transaction error:', error);
-      toast.error('حدث خطأ في إضافة المعاملة');
+      console.error('Transaction error:', error);
+      toast.error('Transaction failed');
+    },
+  });
+
+  // Spend from wallet
+  const spendFromWallet = useMutation({
+    mutationFn: async ({ amount, description }: { amount: number; description: string }) => {
+      const { data, error } = await supabase.rpc('spend_wallet_balance', {
+        p_user_id: (await supabase.auth.getUser()).data.user?.id,
+        p_amount: amount,
+        p_description: description,
+      });
+
+      if (error) throw error;
+      if (!data) throw new Error('Insufficient balance');
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['wallet'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      toast.success('Payment successful');
+    },
+    onError: (error: any) => {
+      console.error('Spend error:', error);
+      toast.error('Payment failed - insufficient balance');
     },
   });
 
   return {
-    balance: balance?.balance || 0,
-    transactions: transactions || [],
-    isLoading: balanceLoading || transactionsLoading,
+    wallet,
+    balance: wallet?.balance || 0,
+    transactions,
+    isLoading: walletLoading || transactionsLoading,
     addTransaction: addTransaction.mutate,
+    spendFromWallet: spendFromWallet.mutate,
     isAddingTransaction: addTransaction.isPending,
+    isSpending: spendFromWallet.isPending,
   };
 };

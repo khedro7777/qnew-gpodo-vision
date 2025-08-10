@@ -150,6 +150,72 @@ export type Database = {
         }
         Relationships: []
       }
+      complaints: {
+        Row: {
+          admin_notes: string | null
+          attachments: string[] | null
+          complaint_number: string
+          created_at: string
+          from_user_id: string
+          id: string
+          invoice_id: string | null
+          message: string
+          offer_id: string | null
+          status: string
+          subject: string
+          supplier_id: string | null
+          supplier_reply: string | null
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          attachments?: string[] | null
+          complaint_number: string
+          created_at?: string
+          from_user_id: string
+          id?: string
+          invoice_id?: string | null
+          message: string
+          offer_id?: string | null
+          status?: string
+          subject: string
+          supplier_id?: string | null
+          supplier_reply?: string | null
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          attachments?: string[] | null
+          complaint_number?: string
+          created_at?: string
+          from_user_id?: string
+          id?: string
+          invoice_id?: string | null
+          message?: string
+          offer_id?: string | null
+          status?: string
+          subject?: string
+          supplier_id?: string | null
+          supplier_reply?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "complaints_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "complaints_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "group_discount_offers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       content_entries: {
         Row: {
           content_type_id: string
@@ -372,6 +438,113 @@ export type Database = {
           },
         ]
       }
+      group_discount_offers: {
+        Row: {
+          base_price: number
+          category: string | null
+          created_at: string
+          current_participants: number | null
+          deadline: string
+          description: string | null
+          did_identifier: string | null
+          id: string
+          kyc_required: boolean | null
+          minimum_joiners: number
+          pdf_attachments: string[] | null
+          points_required: number | null
+          product_images: string[] | null
+          sales_agreement_template: string | null
+          status: string
+          supplier_id: string
+          target_region: string | null
+          title: string
+          updated_at: string
+          visibility: string
+        }
+        Insert: {
+          base_price: number
+          category?: string | null
+          created_at?: string
+          current_participants?: number | null
+          deadline: string
+          description?: string | null
+          did_identifier?: string | null
+          id?: string
+          kyc_required?: boolean | null
+          minimum_joiners?: number
+          pdf_attachments?: string[] | null
+          points_required?: number | null
+          product_images?: string[] | null
+          sales_agreement_template?: string | null
+          status?: string
+          supplier_id: string
+          target_region?: string | null
+          title: string
+          updated_at?: string
+          visibility?: string
+        }
+        Update: {
+          base_price?: number
+          category?: string | null
+          created_at?: string
+          current_participants?: number | null
+          deadline?: string
+          description?: string | null
+          did_identifier?: string | null
+          id?: string
+          kyc_required?: boolean | null
+          minimum_joiners?: number
+          pdf_attachments?: string[] | null
+          points_required?: number | null
+          product_images?: string[] | null
+          sales_agreement_template?: string | null
+          status?: string
+          supplier_id?: string
+          target_region?: string | null
+          title?: string
+          updated_at?: string
+          visibility?: string
+        }
+        Relationships: []
+      }
+      group_discount_tiers: {
+        Row: {
+          created_at: string
+          discount_percent: number | null
+          fixed_price: number | null
+          id: string
+          min_members: number
+          offer_id: string
+          tier_order: number
+        }
+        Insert: {
+          created_at?: string
+          discount_percent?: number | null
+          fixed_price?: number | null
+          id?: string
+          min_members: number
+          offer_id: string
+          tier_order: number
+        }
+        Update: {
+          created_at?: string
+          discount_percent?: number | null
+          fixed_price?: number | null
+          id?: string
+          min_members?: number
+          offer_id?: string
+          tier_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_discount_tiers_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "group_discount_offers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       group_elections: {
         Row: {
           created_at: string | null
@@ -444,6 +617,41 @@ export type Database = {
             columns: ["group_id"]
             isOneToOne: false
             referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      group_offer_members: {
+        Row: {
+          amount_paid: number | null
+          id: string
+          joined_at: string
+          offer_id: string
+          payment_status: string | null
+          user_id: string
+        }
+        Insert: {
+          amount_paid?: number | null
+          id?: string
+          joined_at?: string
+          offer_id: string
+          payment_status?: string | null
+          user_id: string
+        }
+        Update: {
+          amount_paid?: number | null
+          id?: string
+          joined_at?: string
+          offer_id?: string
+          payment_status?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_offer_members_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "group_discount_offers"
             referencedColumns: ["id"]
           },
         ]
@@ -638,6 +846,68 @@ export type Database = {
           name?: string
         }
         Relationships: []
+      }
+      invoices: {
+        Row: {
+          amount: number
+          buyer_id: string
+          created_at: string
+          currency: string
+          description: string
+          due_date: string
+          id: string
+          invoice_number: string
+          offer_id: string | null
+          paid_at: string | null
+          payment_method: string | null
+          payment_reference: string | null
+          status: string
+          supplier_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          buyer_id: string
+          created_at?: string
+          currency?: string
+          description: string
+          due_date: string
+          id?: string
+          invoice_number: string
+          offer_id?: string | null
+          paid_at?: string | null
+          payment_method?: string | null
+          payment_reference?: string | null
+          status?: string
+          supplier_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          buyer_id?: string
+          created_at?: string
+          currency?: string
+          description?: string
+          due_date?: string
+          id?: string
+          invoice_number?: string
+          offer_id?: string | null
+          paid_at?: string | null
+          payment_method?: string | null
+          payment_reference?: string | null
+          status?: string
+          supplier_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "group_discount_offers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ipfs_storage: {
         Row: {
@@ -957,6 +1227,8 @@ export type Database = {
           company_name: string | null
           country_code: string | null
           created_at: string
+          did_identifier: string | null
+          did_metadata: Json | null
           email: string
           full_name: string | null
           id: string
@@ -973,6 +1245,8 @@ export type Database = {
           company_name?: string | null
           country_code?: string | null
           created_at?: string
+          did_identifier?: string | null
+          did_metadata?: Json | null
           email: string
           full_name?: string | null
           id: string
@@ -989,6 +1263,8 @@ export type Database = {
           company_name?: string | null
           country_code?: string | null
           created_at?: string
+          did_identifier?: string | null
+          did_metadata?: Json | null
           email?: string
           full_name?: string | null
           id?: string
@@ -1048,6 +1324,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      supplier_payment_settings: {
+        Row: {
+          created_at: string
+          crypto_wallet_btc: string | null
+          crypto_wallet_eth: string | null
+          crypto_wallet_usdt: string | null
+          id: string
+          paypal_client_id: string | null
+          paypal_email: string | null
+          paypal_secret_encrypted: string | null
+          supplier_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          crypto_wallet_btc?: string | null
+          crypto_wallet_eth?: string | null
+          crypto_wallet_usdt?: string | null
+          id?: string
+          paypal_client_id?: string | null
+          paypal_email?: string | null
+          paypal_secret_encrypted?: string | null
+          supplier_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          crypto_wallet_btc?: string | null
+          crypto_wallet_eth?: string | null
+          crypto_wallet_usdt?: string | null
+          id?: string
+          paypal_client_id?: string | null
+          paypal_email?: string | null
+          paypal_secret_encrypted?: string | null
+          supplier_id?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       support_requests: {
         Row: {
@@ -1189,6 +1504,59 @@ export type Database = {
           },
         ]
       }
+      transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string
+          id: string
+          metadata: Json | null
+          payment_method: string | null
+          payment_reference: string | null
+          status: string
+          type: string
+          updated_at: string
+          user_id: string
+          wallet_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          description: string
+          id?: string
+          metadata?: Json | null
+          payment_method?: string | null
+          payment_reference?: string | null
+          status?: string
+          type: string
+          updated_at?: string
+          user_id: string
+          wallet_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string
+          id?: string
+          metadata?: Json | null
+          payment_method?: string | null
+          payment_reference?: string | null
+          status?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+          wallet_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_wallet_id_fkey"
+            columns: ["wallet_id"]
+            isOneToOne: false
+            referencedRelation: "wallets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_goals: {
         Row: {
           completed: boolean
@@ -1264,13 +1632,48 @@ export type Database = {
         }
         Relationships: []
       }
+      wallets: {
+        Row: {
+          balance: number
+          created_at: string
+          currency: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          balance?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          balance?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      generate_complaint_number: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       generate_group_number: {
         Args: { gateway_type: string }
+        Returns: string
+      }
+      generate_invoice_number: {
+        Args: Record<PropertyKey, never>
         Returns: string
       }
       get_user_primary_role: {
@@ -1287,6 +1690,21 @@ export type Database = {
       is_api_user: {
         Args: { user_email: string }
         Returns: boolean
+      }
+      spend_wallet_balance: {
+        Args: { p_user_id: string; p_amount: number; p_description: string }
+        Returns: boolean
+      }
+      update_wallet_balance: {
+        Args: {
+          p_user_id: string
+          p_amount: number
+          p_type: string
+          p_description: string
+          p_payment_method?: string
+          p_payment_reference?: string
+        }
+        Returns: string
       }
     }
     Enums: {
