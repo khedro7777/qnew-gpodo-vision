@@ -3,295 +3,316 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
-import { 
-  Bot, 
-  FileText, 
-  Edit, 
-  Save, 
-  RefreshCw,
-  Sparkles
-} from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { 
+  Presentation, 
+  Users, 
+  Clock, 
+  CheckCircle, 
+  AlertCircle,
+  Play,
+  Pause,
+  RotateCcw,
+  Download
+} from 'lucide-react';
 import { toast } from 'sonner';
-import { useTranslation } from '@/hooks/useTranslation';
 
 interface MCPPresentationManagerProps {
   groupId: string;
-  group: any;
 }
 
-interface GroupPresentation {
+interface PresentationSession {
   id: string;
-  group_id: string;
-  presentation_type: 'loi' | 'terms_conditions';
   title: string;
-  content: string;
-  status: 'draft' | 'active' | 'under_review';
-  generated_by_mcp: boolean;
-  last_updated_by: string;
-  version: number;
-  created_at: string;
-  updated_at: string;
+  status: 'scheduled' | 'active' | 'completed' | 'cancelled';
+  presenter: string;
+  startTime: string;
+  duration: number;
+  attendees: number;
+  materials: string[];
 }
 
-const MCPPresentationManager = ({ groupId, group }: MCPPresentationManagerProps) => {
-  const { user } = useAuth();
-  const { t, isRTL } = useTranslation();
-  const [presentations, setPresentations] = useState<GroupPresentation[]>([]);
+const MCPPresentationManager = ({ groupId }: MCPPresentationManagerProps) => {
+  const { user, profile } = useAuth();
+  const [sessions, setSessions] = useState<PresentationSession[]>([]);
   const [loading, setLoading] = useState(true);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editContent, setEditContent] = useState('');
-  const [generatingLOI, setGeneratingLOI] = useState(false);
-  const [generatingTC, setGeneratingTC] = useState(false);
+  const [activeSession, setActiveSession] = useState<string | null>(null);
 
   useEffect(() => {
-    loadPresentations();
+    loadPresentationSessions();
   }, [groupId]);
 
-  const loadPresentations = async () => {
+  const loadPresentationSessions = async () => {
     try {
-      // Mock data for demo - in real app this would come from database
-      const mockPresentations: GroupPresentation[] = [];
-      setPresentations(mockPresentations);
+      // Mock data for demonstration - in real app this would come from database
+      const mockSessions: PresentationSession[] = [
+        {
+          id: '1',
+          title: 'Q3 Group Performance Review',
+          status: 'scheduled',
+          presenter: 'MCP Agent Alpha',
+          startTime: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
+          duration: 45,
+          attendees: 8,
+          materials: ['Q3_Report.pdf', 'Performance_Charts.xlsx']
+        },
+        {
+          id: '2',
+          title: 'New Partnership Opportunities',
+          status: 'active',
+          presenter: 'MCP Agent Beta',
+          startTime: new Date().toISOString(),
+          duration: 30,
+          attendees: 12,
+          materials: ['Partnership_Deck.pdf']
+        },
+        {
+          id: '3',
+          title: 'Risk Assessment Summary',
+          status: 'completed',
+          presenter: 'MCP Agent Gamma',
+          startTime: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+          duration: 60,
+          attendees: 15,
+          materials: ['Risk_Report.pdf', 'Mitigation_Plan.docx']
+        }
+      ];
+
+      setSessions(mockSessions);
+      setActiveSession(mockSessions.find(s => s.status === 'active')?.id || null);
     } catch (error) {
-      console.error('Error loading presentations:', error);
+      console.error('Error loading presentation sessions:', error);
+      toast.error('Failed to load presentation sessions');
     } finally {
       setLoading(false);
     }
   };
 
-  const generatePresentation = async (type: 'loi' | 'terms_conditions') => {
-    const isLOI = type === 'loi';
-    const setGenerating = isLOI ? setGeneratingLOI : setGeneratingTC;
-    
-    setGenerating(true);
+  const schedulePresentation = async () => {
     try {
-      console.log('Generating presentation with DeepSeek MCP...');
-      
-      const { data, error } = await supabase.functions.invoke('deepseek-mcp', {
-        body: {
-          action: isLOI ? 'generate_loi' : 'generate_terms',
-          groupData: group
-        }
-      });
-
-      if (error) {
-        console.error('DeepSeek MCP error:', error);
-        throw error;
-      }
-
-      if (!data.success) {
-        throw new Error(data.error || 'Failed to generate presentation');
-      }
-
-      const newPresentation: GroupPresentation = {
+      const newSession: PresentationSession = {
         id: Date.now().toString(),
-        group_id: groupId,
-        presentation_type: type,
-        title: isLOI ? 'Letter of Intent - Generated by MCP Assistant' : 'Terms and Conditions - Generated by MCP Assistant',
-        content: data.content,
-        status: 'draft',
-        generated_by_mcp: true,
-        last_updated_by: 'MCP Assistant (DeepSeek R1)',
-        version: 1,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        title: 'MCP Automated Presentation',
+        status: 'scheduled',
+        presenter: 'MCP Agent',
+        startTime: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+        duration: 30,
+        attendees: 0,
+        materials: []
       };
 
-      setPresentations(prev => [newPresentation, ...prev.filter(p => p.presentation_type !== type)]);
-      toast.success(t(`${isLOI ? 'Letter of Intent' : 'Terms and Conditions'} generated successfully with DeepSeek R1`));
+      setSessions(prev => [newSession, ...prev]);
+      toast.success('Presentation scheduled successfully');
     } catch (error) {
-      console.error('Error generating presentation:', error);
-      toast.error(t('Failed to generate presentation. Please check your DeepSeek API configuration.'));
-    } finally {
-      setGenerating(false);
+      console.error('Error scheduling presentation:', error);
+      toast.error('Failed to schedule presentation');
     }
   };
 
-  const startEditing = (presentation: GroupPresentation) => {
-    setEditingId(presentation.id);
-    setEditContent(presentation.content);
-  };
-
-  const saveEdit = async (presentationId: string) => {
+  const controlSession = async (sessionId: string, action: 'start' | 'pause' | 'stop') => {
     try {
-      setPresentations(prev => prev.map(p => 
-        p.id === presentationId 
-          ? {
-              ...p,
-              content: editContent,
-              updated_at: new Date().toISOString(),
-              last_updated_by: user?.full_name || 'Member',
-              version: p.version + 1,
-              status: 'under_review' as const
-            }
-          : p
-      ));
-      
-      setEditingId(null);
-      setEditContent('');
-      toast.success(t('Presentation updated successfully'));
+      setSessions(prev => prev.map(session => {
+        if (session.id === sessionId) {
+          switch (action) {
+            case 'start':
+              return { ...session, status: 'active' as const };
+            case 'pause':
+              return { ...session, status: 'scheduled' as const };
+            case 'stop':
+              return { ...session, status: 'completed' as const };
+            default:
+              return session;
+          }
+        }
+        return session;
+      }));
+
+      if (action === 'start') {
+        setActiveSession(sessionId);
+      } else if (action === 'stop') {
+        setActiveSession(null);
+      }
+
+      toast.success(`Session ${action}ed successfully`);
     } catch (error) {
-      console.error('Error saving presentation:', error);
-      toast.error(t('Failed to save presentation'));
+      console.error(`Error ${action}ing session:`, error);
+      toast.error(`Failed to ${action} session`);
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active': return 'bg-green-100 text-green-800';
-      case 'draft': return 'bg-yellow-100 text-yellow-800';
-      case 'under_review': return 'bg-blue-100 text-blue-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
+  const getStatusBadge = (status: PresentationSession['status']) => {
+    const statusConfig = {
+      scheduled: { color: 'bg-blue-100 text-blue-800', icon: Clock },
+      active: { color: 'bg-green-100 text-green-800', icon: Play },
+      completed: { color: 'bg-gray-100 text-gray-800', icon: CheckCircle },
+      cancelled: { color: 'bg-red-100 text-red-800', icon: AlertCircle }
+    };
+
+    const config = statusConfig[status];
+    const Icon = config.icon;
+
+    return (
+      <Badge className={config.color}>
+        <Icon className="w-3 h-3 mr-1" />
+        {status.charAt(0).toUpperCase() + status.slice(1)}
+      </Badge>
+    );
   };
 
   if (loading) {
     return (
       <Card>
-        <CardContent className="p-6 text-center">
-          <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2" />
-          <p>{t('Loading presentations...')}</p>
+        <CardContent className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <div className="space-y-6" dir={isRTL ? 'rtl' : 'ltr'}>
-      {/* Enhanced MCP Assistant Header with DeepSeek */}
-      <Card className="bg-gradient-to-r from-blue-500 via-purple-600 to-indigo-600 text-white">
-        <CardContent className="p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-              <Bot className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="text-xl font-bold flex items-center gap-2">
-                {t('MCP Assistant')}
-                <Sparkles className="w-5 h-5 text-yellow-300" />
-              </h3>
-              <p className="text-white/80">{t('Powered by DeepSeek R1 - Advanced AI Reasoning')}</p>
-            </div>
-          </div>
-          <div className="bg-white/10 rounded-lg p-3 mb-4">
-            <p className="text-sm text-white/90">
-              ✨ Enhanced with DeepSeek R1's reasoning capabilities for intelligent document generation and analysis
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Presentation className="w-6 h-6 text-blue-600" />
+          <div>
+            <h2 className="text-xl font-semibold">MCP Presentation Manager</h2>
+            <p className="text-sm text-gray-600">
+              Managed by {profile?.full_name || 'Unknown User'}
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <Button 
-              onClick={() => generatePresentation('loi')}
-              disabled={generatingLOI}
-              className="bg-white/20 hover:bg-white/30 text-white border-white/30"
-            >
-              {generatingLOI ? (
-                <RefreshCw className="w-4 h-4 animate-spin mr-2" />
-              ) : (
-                <FileText className="w-4 h-4 mr-2" />
-              )}
-              {t('Generate LOI')}
-            </Button>
-            <Button 
-              onClick={() => generatePresentation('terms_conditions')}
-              disabled={generatingTC}
-              className="bg-white/20 hover:bg-white/30 text-white border-white/30"
-            >
-              {generatingTC ? (
-                <RefreshCw className="w-4 h-4 animate-spin mr-2" />
-              ) : (
-                <FileText className="w-4 h-4 mr-2" />
-              )}
-              {t('Generate Terms & Conditions')}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Presentations List */}
-      <div className="space-y-4">
-        {presentations.map((presentation) => (
-          <Card key={presentation.id}>
-            <CardHeader>
-              <div className="flex items-start justify-between">
+        <Button onClick={schedulePresentation}>
+          <Presentation className="w-4 h-4 mr-2" />
+          Schedule Presentation
+        </Button>
+      </div>
+
+      {/* Active Session Alert */}
+      {activeSession && (
+        <Card className="border-green-200 bg-green-50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
                 <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <FileText className="w-5 h-5" />
-                    {presentation.title}
-                  </CardTitle>
-                  <div className="flex items-center gap-2 mt-2">
-                    <Badge className={getStatusColor(presentation.status)}>
-                      {t(presentation.status)}
-                    </Badge>
-                    {presentation.generated_by_mcp && (
-                      <Badge className="bg-purple-100 text-purple-800">
-                        <Bot className="w-3 h-3 mr-1" />
-                        {t('MCP Generated')}
-                      </Badge>
-                    )}
-                    <span className="text-sm text-gray-500">
-                      {t('Version')} {presentation.version}
-                    </span>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  {editingId === presentation.id ? (
-                    <>
-                      <Button 
-                        size="sm" 
-                        onClick={() => saveEdit(presentation.id)}
-                      >
-                        <Save className="w-4 h-4 mr-1" />
-                        {t('Save')}
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => {
-                          setEditingId(null);
-                          setEditContent('');
-                        }}
-                      >
-                        {t('Cancel')}
-                      </Button>
-                    </>
-                  ) : (
-                    <Button 
-                      size="sm" 
-                      variant="outline"
-                      onClick={() => startEditing(presentation)}
-                    >
-                      <Edit className="w-4 h-4 mr-1" />
-                      {t('Edit')}
-                    </Button>
-                  )}
+                  <h3 className="font-medium text-green-900">Live Presentation in Progress</h3>
+                  <p className="text-sm text-green-700">
+                    {sessions.find(s => s.id === activeSession)?.title}
+                  </p>
                 </div>
               </div>
-            </CardHeader>
-            <CardContent>
-              {editingId === presentation.id ? (
-                <Textarea
-                  value={editContent}
-                  onChange={(e) => setEditContent(e.target.value)}
-                  className="min-h-[300px] font-mono text-sm"
-                  placeholder={t('Edit presentation content...')}
-                />
-              ) : (
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <pre className="whitespace-pre-wrap text-sm text-gray-700 font-sans leading-relaxed">
-                    {presentation.content}
-                  </pre>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => controlSession(activeSession, 'pause')}
+                >
+                  <Pause className="w-4 h-4" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => controlSession(activeSession, 'stop')}
+                >
+                  <CheckCircle className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Sessions List */}
+      <div className="space-y-4">
+        {sessions.map((session) => (
+          <Card key={session.id}>
+            <CardContent className="p-6">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-2">
+                    <h3 className="font-semibold">{session.title}</h3>
+                    {getStatusBadge(session.status)}
+                  </div>
+
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600 mb-4">
+                    <div>
+                      <span className="font-medium">Presenter:</span>
+                      <br />
+                      {session.presenter}
+                    </div>
+                    <div>
+                      <span className="font-medium">Start Time:</span>
+                      <br />
+                      {new Date(session.startTime).toLocaleString()}
+                    </div>
+                    <div>
+                      <span className="font-medium">Duration:</span>
+                      <br />
+                      {session.duration} minutes
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Users className="w-4 h-4" />
+                      <span>{session.attendees} attendees</span>
+                    </div>
+                  </div>
+
+                  {session.materials.length > 0 && (
+                    <div className="mb-4">
+                      <span className="text-sm font-medium text-gray-700">Materials:</span>
+                      <div className="flex flex-wrap gap-2 mt-1">
+                        {session.materials.map((material, index) => (
+                          <Badge key={index} variant="outline" className="text-xs">
+                            <Download className="w-3 h-3 mr-1" />
+                            {material}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
-              
-              <div className="mt-4 pt-4 border-t flex items-center justify-between text-sm text-gray-500">
-                <div>
-                  {t('Last updated by')}: {presentation.last_updated_by}
-                </div>
-                <div>
-                  {new Date(presentation.updated_at).toLocaleString()}
+
+                <div className="flex gap-2 ml-4">
+                  {session.status === 'scheduled' && (
+                    <Button
+                      size="sm"
+                      onClick={() => controlSession(session.id, 'start')}
+                    >
+                      <Play className="w-4 h-4 mr-1" />
+                      Start
+                    </Button>
+                  )}
+                  
+                  {session.status === 'active' && (
+                    <>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => controlSession(session.id, 'pause')}
+                      >
+                        <Pause className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() => controlSession(session.id, 'stop')}
+                      >
+                        <CheckCircle className="w-4 h-4" />
+                      </Button>
+                    </>
+                  )}
+
+                  {session.status === 'completed' && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => controlSession(session.id, 'start')}
+                    >
+                      <RotateCcw className="w-4 h-4 mr-1" />
+                      Replay
+                    </Button>
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -299,37 +320,16 @@ const MCPPresentationManager = ({ groupId, group }: MCPPresentationManagerProps)
         ))}
       </div>
 
-      {presentations.length === 0 && (
+      {sessions.length === 0 && (
         <Card>
-          <CardContent className="p-8 text-center">
-            <div className="flex items-center justify-center mb-4">
-              <Bot className="w-12 h-12 text-gray-400 mr-2" />
-              <Sparkles className="w-6 h-6 text-yellow-500" />
-            </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              {t('Ready to Generate Intelligent Presentations')}
-            </h3>
-            <p className="text-gray-600 mb-4">
-              {t('Use MCP Assistant powered by DeepSeek R1 to generate professional Letter of Intent and Terms & Conditions for your group')}
-            </p>
-            <div className="flex justify-center gap-2">
-              <Button onClick={() => generatePresentation('loi')} disabled={generatingLOI}>
-                {generatingLOI ? (
-                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                ) : (
-                  <Sparkles className="w-4 h-4 mr-2" />
-                )}
-                {t('Generate LOI')}
-              </Button>
-              <Button onClick={() => generatePresentation('terms_conditions')} variant="outline" disabled={generatingTC}>
-                {generatingTC ? (
-                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                ) : (
-                  <Sparkles className="w-4 h-4 mr-2" />
-                )}
-                {t('Generate Terms & Conditions')}
-              </Button>
-            </div>
+          <CardContent className="text-center py-12">
+            <Presentation className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-600 mb-2">No Presentations Scheduled</h3>
+            <p className="text-gray-500 mb-4">Schedule your first MCP presentation to get started</p>
+            <Button onClick={schedulePresentation}>
+              <Presentation className="w-4 h-4 mr-2" />
+              Schedule Presentation
+            </Button>
           </CardContent>
         </Card>
       )}

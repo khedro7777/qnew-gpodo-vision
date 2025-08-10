@@ -1,385 +1,289 @@
 
 import React, { useState } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import FileUpload from '@/components/ui/file-upload';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+import { useGroupWorkflow } from '@/hooks/useGroupWorkflow';
+import { 
+  Vote, 
+  MessageSquare, 
+  FileText, 
+  Users, 
+  AlertTriangle,
+  Calendar,
+  Target
+} from 'lucide-react';
 import { toast } from 'sonner';
-import { MessageCircle, Briefcase, Building } from 'lucide-react';
 
-interface WorkflowModalProps {
-  isOpen: boolean;
-  onClose: () => void;
+interface GroupWorkflowModalsProps {
   groupId: string;
-  type: 'contact' | 'supplier' | 'freelancer';
+  isOpen: boolean;
+  modalType: 'vote' | 'proposal' | 'task' | 'arbitration' | null;
+  onClose: () => void;
 }
 
-const GroupWorkflowModals = ({ isOpen, onClose, groupId, type }: WorkflowModalProps) => {
-  const { user } = useAuth();
+const GroupWorkflowModals = ({ groupId, isOpen, modalType, onClose }: GroupWorkflowModalsProps) => {
+  const { user, profile } = useAuth();
+  const workflow = useGroupWorkflow(groupId);
   const [formData, setFormData] = useState({
-    subject: '',
-    message: '',
-    companyName: '',
-    offerTitle: '',
-    price: '',
-    deliveryTime: '',
-    skills: '',
-    experience: '',
-    hourlyRate: '',
-    availability: ''
+    title: '',
+    description: '',
+    assignedTo: '',
+    priority: 'medium',
+    dueDate: '',
+    respondentId: '',
+    evidence: ['']
   });
-  const [files, setFiles] = useState<File[]>([]);
-  const [loading, setLoading] = useState(false);
-
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!user) {
-      toast.error('Please log in to submit');
-      return;
-    }
-
-    setLoading(true);
+    let success = false;
     
-    try {
-      let submissionData: any = {
-        group_id: groupId,
-        user_id: user.id,
-        status: 'pending',
-        created_at: new Date().toISOString(),
-      };
-
-      if (type === 'contact') {
-        // Send to inbox (existing functionality)
-        submissionData = {
-          ...submissionData,
-          type: 'contact',
-          subject: formData.subject,
-          message: formData.message,
-          sender_name: user.full_name || user.email,
-          sender_email: user.email
-        };
-
-        console.log('Contact submission to inbox:', submissionData);
-        toast.success('Your message has been sent to the group admin');
-
-      } else if (type === 'supplier') {
-        // Send to Offers tab
-        submissionData = {
-          ...submissionData,
-          type: 'supplier_offer',
-          title: formData.offerTitle,
-          company_name: formData.companyName,
-          description: formData.message,
-          price: formData.price,
-          delivery_time: formData.deliveryTime,
-          attachments: files.map(f => ({ name: f.name, size: f.size }))
-        };
-
-        // In a real implementation, this would be stored in a offers table
-        console.log('Supplier offer submission:', submissionData);
+    switch (modalType) {
+      case 'vote':
+        success = await workflow.createVote({
+          title: formData.title,
+          description: formData.description,
+          group_id: groupId,
+          created_by: user?.id || '',
+          type: 'standard',
+          status: 'active',
+          start_date: new Date().toISOString(),
+          end_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+          threshold: 50
+        });
+        break;
         
-        // Create a notification for group admin
-        await supabase
-          .from('notifications')
-          .insert({
-            user_id: groupId, // This would be the group admin's user_id
-            title: 'New Supplier Offer',
-            message: `${formData.companyName} has submitted a new supplier offer: ${formData.offerTitle}`,
-            type: 'info',
-            action_url: `/group-room/${groupId}?tab=offers`
-          });
-
-        toast.success('Your supplier offer has been submitted successfully');
-
-      } else if (type === 'freelancer') {
-        // Send to External Parties tab
-        submissionData = {
-          ...submissionData,
-          type: 'freelancer_application',
-          skills: formData.skills,
-          experience: formData.experience,
-          hourly_rate: formData.hourlyRate,
-          availability: formData.availability,
-          cover_letter: formData.message,
-          attachments: files.map(f => ({ name: f.name, size: f.size }))
-        };
-
-        // In a real implementation, this would be stored in an external_applications table
-        console.log('Freelancer application submission:', submissionData);
+      case 'proposal':
+        success = await workflow.submitProposal({
+          title: formData.title,
+          description: formData.description,
+          group_id: groupId,
+          created_by: user?.id || ''
+        });
+        break;
         
-        // Create a notification for group admin
-        await supabase
-          .from('notifications')
-          .insert({
-            user_id: groupId, // This would be the group admin's user_id
-            title: 'New Freelancer Application',
-            message: `${user.full_name || user.email} has applied for a freelancer role`,
-            type: 'info',
-            action_url: `/group-room/${groupId}?tab=external`
-          });
-
-        toast.success('Your freelancer application has been submitted successfully');
-      }
-
-      onClose();
-      resetForm();
-    } catch (error) {
-      console.error('Submission error:', error);
-      toast.error('Failed to submit. Please try again.');
-    } finally {
-      setLoading(false);
+      case 'task':
+        success = await workflow.createTask({
+          title: formData.title,
+          description: formData.description,
+          assigned_to: formData.assignedTo,
+          priority: formData.priority,
+          due_date: formData.dueDate,
+          group_id: groupId,
+          created_by: user?.id || ''
+        });
+        break;
+        
+      case 'arbitration':
+        success = await workflow.fileArbitrationCase({
+          respondent_id: formData.respondentId,
+          title: formData.title,
+          description: formData.description,
+          evidence: formData.evidence.filter(e => e.trim())
+        });
+        break;
     }
-  };
-
-  const resetForm = () => {
-    setFormData({
-      subject: '',
-      message: '',
-      companyName: '',
-      offerTitle: '',
-      price: '',
-      deliveryTime: '',
-      skills: '',
-      experience: '',
-      hourlyRate: '',
-      availability: ''
-    });
-    setFiles([]);
+    
+    if (success) {
+      onClose();
+      setFormData({
+        title: '',
+        description: '',
+        assignedTo: '',
+        priority: 'medium',
+        dueDate: '',
+        respondentId: '',
+        evidence: ['']
+      });
+    }
   };
 
   const getModalConfig = () => {
-    switch (type) {
-      case 'contact':
+    switch (modalType) {
+      case 'vote':
         return {
-          title: 'Contact Group Admin',
-          icon: <MessageCircle className="w-5 h-5" />,
-          submitText: 'Send Message'
+          title: 'Create New Vote',
+          icon: <Vote className="w-5 h-5" />,
+          description: `Creating vote as ${profile?.full_name || 'User'}`
         };
-      case 'supplier':
+      case 'proposal':
         return {
-          title: 'Submit Supplier Offer',
-          icon: <Building className="w-5 h-5" />,
-          submitText: 'Submit Offer'
+          title: 'Submit Proposal',
+          icon: <FileText className="w-5 h-5" />,
+          description: 'Submit a new proposal for group consideration'
         };
-      case 'freelancer':
+      case 'task':
         return {
-          title: 'Apply as Freelancer',
-          icon: <Briefcase className="w-5 h-5" />,
-          submitText: 'Submit Application'
+          title: 'Create Task',
+          icon: <Target className="w-5 h-5" />,
+          description: 'Create a new task for the group'
+        };
+      case 'arbitration':
+        return {
+          title: 'File Arbitration Case',
+          icon: <AlertTriangle className="w-5 h-5" />,
+          description: 'File a dispute for arbitration'
         };
       default:
-        return { title: '', icon: null, submitText: '' };
+        return { title: '', icon: null, description: '' };
     }
   };
 
   const config = getModalConfig();
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg max-h-[80vh] overflow-y-auto">
+    <Dialog open={isOpen && modalType !== null} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {config.icon}
             {config.title}
           </DialogTitle>
+          {config.description && (
+            <p className="text-sm text-gray-600">{config.description}</p>
+          )}
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Contact Admin Form */}
-          {type === 'contact' && (
-            <>
-              <div className="space-y-2">
-                <Label htmlFor="subject">Subject</Label>
-                <Input
-                  id="subject"
-                  value={formData.subject}
-                  onChange={(e) => handleInputChange('subject', e.target.value)}
-                  placeholder="Enter subject"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="message">Message</Label>
-                <Textarea
-                  id="message"
-                  value={formData.message}
-                  onChange={(e) => handleInputChange('message', e.target.value)}
-                  placeholder="Type your message here..."
-                  rows={4}
-                  required
-                />
-              </div>
-            </>
-          )}
-
-          {/* Supplier Offer Form */}
-          {type === 'supplier' && (
-            <>
-              <div className="space-y-2">
-                <Label htmlFor="companyName">Company Name</Label>
-                <Input
-                  id="companyName"
-                  value={formData.companyName}
-                  onChange={(e) => handleInputChange('companyName', e.target.value)}
-                  placeholder="Your company name"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="offerTitle">Offer Title</Label>
-                <Input
-                  id="offerTitle"
-                  value={formData.offerTitle}
-                  onChange={(e) => handleInputChange('offerTitle', e.target.value)}
-                  placeholder="Brief description of your offer"
-                  required
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="price">Price</Label>
-                  <Input
-                    id="price"
-                    value={formData.price}
-                    onChange={(e) => handleInputChange('price', e.target.value)}
-                    placeholder="$0.00"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="deliveryTime">Delivery Time</Label>
-                  <Select onValueChange={(value) => handleInputChange('deliveryTime', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select timeframe" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="1-3 days">1-3 days</SelectItem>
-                      <SelectItem value="1 week">1 week</SelectItem>
-                      <SelectItem value="2 weeks">2 weeks</SelectItem>
-                      <SelectItem value="1 month">1 month</SelectItem>
-                      <SelectItem value="custom">Custom</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="message">Offer Details</Label>
-                <Textarea
-                  id="message"
-                  value={formData.message}
-                  onChange={(e) => handleInputChange('message', e.target.value)}
-                  placeholder="Describe your products/services, terms, and conditions..."
-                  rows={4}
-                  required
-                />
-              </div>
-            </>
-          )}
-
-          {/* Freelancer Application Form */}
-          {type === 'freelancer' && (
-            <>
-              <div className="space-y-2">
-                <Label htmlFor="skills">Skills & Expertise</Label>
-                <Input
-                  id="skills"
-                  value={formData.skills}
-                  onChange={(e) => handleInputChange('skills', e.target.value)}
-                  placeholder="e.g., Web Development, Graphic Design, Marketing"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="experience">Years of Experience</Label>
-                <Select onValueChange={(value) => handleInputChange('experience', value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select experience level" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="0-1">0-1 years</SelectItem>
-                    <SelectItem value="2-3">2-3 years</SelectItem>
-                    <SelectItem value="4-5">4-5 years</SelectItem>
-                    <SelectItem value="6-10">6-10 years</SelectItem>
-                    <SelectItem value="10+">10+ years</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="hourlyRate">Hourly Rate</Label>
-                  <Input
-                    id="hourlyRate"
-                    value={formData.hourlyRate}
-                    onChange={(e) => handleInputChange('hourlyRate', e.target.value)}
-                    placeholder="$0/hour"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="availability">Availability</Label>
-                  <Select onValueChange={(value) => handleInputChange('availability', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select availability" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="full-time">Full-time</SelectItem>
-                      <SelectItem value="part-time">Part-time</SelectItem>
-                      <SelectItem value="project-based">Project-based</SelectItem>
-                      <SelectItem value="weekends">Weekends only</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="message">Cover Letter</Label>
-                <Textarea
-                  id="message"
-                  value={formData.message}
-                  onChange={(e) => handleInputChange('message', e.target.value)}
-                  placeholder="Tell us about your experience and why you're interested in this group..."
-                  rows={4}
-                  required
-                />
-              </div>
-            </>
-          )}
-
-          {/* File Upload Section */}
-          <div className="space-y-2">
-            <Label>Attachments</Label>
-            <FileUpload
-              onFilesChange={setFiles}
-              maxFiles={5}
-              acceptedTypes={['.jpg', '.jpeg', '.png', '.pdf', '.doc', '.docx', '.xls', '.xlsx']}
-              maxSizeInMB={10}
+          <div>
+            <Label htmlFor="title">Title *</Label>
+            <Input
+              id="title"
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              placeholder={`Enter ${modalType} title...`}
+              required
             />
-            <p className="text-xs text-gray-500">
-              Supported formats: JPG, PNG, PDF, DOC, DOCX, XLS, XLSX (max 10MB each)
-            </p>
           </div>
 
-          <div className="flex gap-3 pt-4">
-            <Button type="button" variant="outline" onClick={onClose} className="flex-1">
-              Cancel
-            </Button>
-            <Button type="submit" disabled={loading} className="flex-1">
-              {loading ? 'Submitting...' : config.submitText}
-            </Button>
+          <div>
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              placeholder={`Describe the ${modalType}...`}
+              rows={4}
+            />
+          </div>
+
+          {modalType === 'task' && (
+            <>
+              <div>
+                <Label htmlFor="assignedTo">Assign To (User ID)</Label>
+                <Input
+                  id="assignedTo"
+                  value={formData.assignedTo}
+                  onChange={(e) => setFormData({ ...formData, assignedTo: e.target.value })}
+                  placeholder="Enter user ID to assign task..."
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="priority">Priority</Label>
+                  <select
+                    id="priority"
+                    value={formData.priority}
+                    onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
+                    className="w-full p-2 border rounded-md"
+                  >
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                  </select>
+                </div>
+
+                <div>
+                  <Label htmlFor="dueDate">Due Date</Label>
+                  <Input
+                    id="dueDate"
+                    type="datetime-local"
+                    value={formData.dueDate}
+                    onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+                  />
+                </div>
+              </div>
+            </>
+          )}
+
+          {modalType === 'arbitration' && (
+            <>
+              <div>
+                <Label htmlFor="respondentId">Respondent (User ID) *</Label>
+                <Input
+                  id="respondentId"
+                  value={formData.respondentId}
+                  onChange={(e) => setFormData({ ...formData, respondentId: e.target.value })}
+                  placeholder="Enter the user ID you're filing against..."
+                  required
+                />
+              </div>
+
+              <div>
+                <Label>Evidence/Supporting Documents</Label>
+                {formData.evidence.map((evidence, index) => (
+                  <div key={index} className="flex gap-2 mt-2">
+                    <Input
+                      value={evidence}
+                      onChange={(e) => {
+                        const newEvidence = [...formData.evidence];
+                        newEvidence[index] = e.target.value;
+                        setFormData({ ...formData, evidence: newEvidence });
+                      }}
+                      placeholder="Evidence description or URL..."
+                    />
+                    {index === formData.evidence.length - 1 && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setFormData({ 
+                          ...formData, 
+                          evidence: [...formData.evidence, ''] 
+                        })}
+                      >
+                        Add
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <AlertTriangle className="w-5 h-5 text-yellow-600" />
+                  <span className="font-medium text-yellow-800">Important Notice</span>
+                </div>
+                <p className="text-sm text-yellow-700">
+                  Filing an arbitration case will temporarily freeze the group until resolution.
+                  Make sure you have sufficient evidence to support your claim.
+                </p>
+              </div>
+            </>
+          )}
+
+          <div className="flex justify-between items-center pt-4 border-t">
+            <div className="flex items-center gap-2">
+              <Users className="w-4 h-4 text-gray-500" />
+              <span className="text-sm text-gray-600">
+                Submitted by {profile?.full_name || 'Unknown User'}
+              </span>
+            </div>
+
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" onClick={onClose}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={workflow.loading}>
+                {workflow.loading ? 'Processing...' : `Submit ${modalType || ''}`}
+              </Button>
+            </div>
           </div>
         </form>
       </DialogContent>

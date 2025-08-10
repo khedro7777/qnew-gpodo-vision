@@ -59,13 +59,13 @@ export const memoryUtils = {
 };
 
 // Lazy component wrapper with proper TypeScript support
-export const createLazyComponent = <T extends React.ComponentType<any>>(
-  importFn: () => Promise<{ default: T }>,
+export const createLazyComponent = (
+  importFn: () => Promise<{ default: React.ComponentType<any> }>,
   fallback?: React.ComponentType
 ) => {
   const LazyComponent = React.lazy(importFn);
   
-  return React.forwardRef<any, any>((props, ref) => 
+  return React.forwardRef((props: any, ref: React.ForwardedRef<any>) => 
     React.createElement(
       React.Suspense,
       { 

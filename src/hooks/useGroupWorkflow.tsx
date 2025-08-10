@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import type { Group, GroupMember, Vote, Proposal, Task } from '@/types';
 
 export const useGroupWorkflow = (groupId: string) => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [loading, setLoading] = useState(false);
 
   // Join Group Workflow
@@ -18,14 +18,14 @@ export const useGroupWorkflow = (groupId: string) => {
 
     setLoading(true);
     try {
-      // Check KYC requirement - now using correct property from User type
-      if (user.kyc_status !== 'approved') {
+      // Check KYC requirement - now using profile instead of user
+      if (profile?.kyc_status !== 'approved') {
         toast.error('KYC verification required for this group');
         return false;
       }
 
-      // Check points requirement - now using correct property from User type
-      const userPoints = user.points || 0;
+      // Check points requirement - now using profile instead of user
+      const userPoints = profile?.points || 0;
       if (userPoints < 0) { // Removed entry_points check as it's not in the current schema
         toast.error(`Insufficient points for this group`);
         return false;
@@ -71,7 +71,7 @@ export const useGroupWorkflow = (groupId: string) => {
     } finally {
       setLoading(false);
     }
-  }, [user, groupId]);
+  }, [user, profile, groupId]);
 
   // Create Vote
   const createVote = useCallback(async (voteData: Partial<Vote>) => {
