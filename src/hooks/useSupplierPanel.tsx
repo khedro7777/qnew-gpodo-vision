@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -110,9 +111,9 @@ export const useSupplierPanel = () => {
       const { data, error } = await supabase
         .from('supplier_payment_settings')
         .select('*')
-        .single();
+        .maybeSingle();
       
-      if (error && error.code !== 'PGRST116') throw error;
+      if (error) throw error;
       return data as SupplierPaymentSettings;
     },
   });
@@ -234,9 +235,13 @@ export const useSupplierPanel = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
+      // Generate invoice number
+      const invoiceNumber = `INV-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
       const invoiceWithSupplier = {
         ...invoiceData,
         supplier_id: user.id,
+        invoice_number: invoiceNumber,
       };
 
       const { data, error } = await supabase

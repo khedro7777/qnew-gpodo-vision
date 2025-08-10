@@ -47,7 +47,6 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ isOpen, onClose }) => 
         amount: parseFloat(formData.amount),
         offer_id: formData.offer_id || undefined,
         status: 'pending',
-        supplier_id: '', // Will be set by the hook
       });
 
       onClose();
