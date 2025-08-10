@@ -1231,6 +1231,39 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          id: string
+          is_active: boolean
+          is_approved: boolean
+          requested_at: string
+          role: Database["public"]["Enums"]["user_role_type"]
+          user_id: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          id?: string
+          is_active?: boolean
+          is_approved?: boolean
+          requested_at?: string
+          role: Database["public"]["Enums"]["user_role_type"]
+          user_id: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          id?: string
+          is_active?: boolean
+          is_approved?: boolean
+          requested_at?: string
+          role?: Database["public"]["Enums"]["user_role_type"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -1239,6 +1272,17 @@ export type Database = {
       generate_group_number: {
         Args: { gateway_type: string }
         Returns: string
+      }
+      get_user_primary_role: {
+        Args: { user_id: string }
+        Returns: Database["public"]["Enums"]["user_role_type"]
+      }
+      has_role: {
+        Args: {
+          user_id: string
+          role_name: Database["public"]["Enums"]["user_role_type"]
+        }
+        Returns: boolean
       }
       is_api_user: {
         Args: { user_email: string }
@@ -1261,6 +1305,15 @@ export type Database = {
       group_status: "active" | "pending" | "closed" | "archived"
       kyc_status: "pending" | "submitted" | "approved" | "rejected"
       user_role: "user" | "supplier" | "freelancer" | "admin" | "api"
+      user_role_type:
+        | "supplier"
+        | "buyer"
+        | "freelancer"
+        | "group_member"
+        | "investor"
+        | "judge"
+        | "admin"
+        | "ai_agent"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1405,6 +1458,16 @@ export const Constants = {
       group_status: ["active", "pending", "closed", "archived"],
       kyc_status: ["pending", "submitted", "approved", "rejected"],
       user_role: ["user", "supplier", "freelancer", "admin", "api"],
+      user_role_type: [
+        "supplier",
+        "buyer",
+        "freelancer",
+        "group_member",
+        "investor",
+        "judge",
+        "admin",
+        "ai_agent",
+      ],
     },
   },
 } as const

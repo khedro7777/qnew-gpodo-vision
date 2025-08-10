@@ -19,6 +19,12 @@ const GroupProfile = lazy(() => import("@/pages/GroupProfile"));
 const OfferDetails = lazy(() => import("@/pages/OfferDetails"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 
+// Board Selector and Role-based Dashboards
+const BoardSelector = lazy(() => import("@/components/dashboard/BoardSelector"));
+const SupplierDashboard = lazy(() => import("@/pages/dashboard/SupplierDashboard"));
+const BuyerDashboard = lazy(() => import("@/pages/dashboard/BuyerDashboard"));
+const FreelancerDashboard = lazy(() => import("@/pages/dashboard/FreelancerDashboard"));
+
 // Admin components
 const AdminLogin = lazy(() => import("@/pages/AdminLogin"));
 const AdminLayout = lazy(() => import("@/components/admin/AdminLayout"));
@@ -42,7 +48,20 @@ function App() {
                 <Routes>
                   {/* Main app routes */}
                   <Route path="/" element={<Index />} />
-                  <Route path="/dashboard" element={<Dashboard />} />
+                  
+                  {/* Board Selector - main dashboard entry point */}
+                  <Route path="/dashboard" element={<BoardSelector />} />
+                  
+                  {/* Role-specific dashboards */}
+                  <Route path="/dashboard/supplier" element={<SupplierDashboard />} />
+                  <Route path="/dashboard/buyer" element={<BuyerDashboard />} />
+                  <Route path="/dashboard/freelancer" element={<FreelancerDashboard />} />
+                  <Route path="/dashboard/group-buying" element={<ClientDashboard />} />
+                  <Route path="/dashboard/investor" element={<ClientDashboard />} />
+                  <Route path="/dashboard/judge" element={<ClientDashboard />} />
+                  <Route path="/dashboard/ai-agent" element={<ClientDashboard />} />
+                  
+                  {/* Legacy routes */}
                   <Route path="/client-dashboard" element={<ClientDashboard />} />
                   <Route path="/profile" element={<UserProfile />} />
                   <Route path="/settings" element={<AccountSettings />} />
