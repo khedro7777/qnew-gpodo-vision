@@ -2,12 +2,8 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useSupplierPanel } from '@/hooks/useSupplierPanel';
-import { toast } from 'sonner';
+import { Card, CardContent } from '@/components/ui/card';
+import { AlertCircle } from 'lucide-react';
 
 interface InvoiceFormProps {
   isOpen: boolean;
@@ -15,162 +11,25 @@ interface InvoiceFormProps {
 }
 
 export const InvoiceForm: React.FC<InvoiceFormProps> = ({ isOpen, onClose }) => {
-  const { createInvoice, isCreatingInvoice } = useSupplierPanel();
-  
-  const [formData, setFormData] = useState({
-    buyer_id: '',
-    offer_id: '',
-    description: '',
-    amount: '',
-    currency: 'USD',
-    payment_method: 'PayPal' as 'PayPal' | 'BTC' | 'ETH' | 'USDT',
-    due_date: '',
-  });
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!formData.buyer_id || !formData.description || !formData.amount || !formData.due_date) {
-      toast.error('Please fill in all required fields');
-      return;
-    }
-
-    // Validate due date is in future
-    if (new Date(formData.due_date) <= new Date()) {
-      toast.error('Due date must be in the future');
-      return;
-    }
-
-    try {
-      createInvoice({
-        ...formData,
-        amount: parseFloat(formData.amount),
-        offer_id: formData.offer_id || undefined,
-        status: 'pending',
-      });
-
-      onClose();
-      
-      // Reset form
-      setFormData({
-        buyer_id: '',
-        offer_id: '',
-        description: '',
-        amount: '',
-        currency: 'USD',
-        payment_method: 'PayPal',
-        due_date: '',
-      });
-    } catch (error) {
-      console.error('Error creating invoice:', error);
-    }
-  };
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Create Invoice</DialogTitle>
+          <DialogTitle>Payment Processing</DialogTitle>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="buyer_id">Buyer ID *</Label>
-            <Input
-              id="buyer_id"
-              value={formData.buyer_id}
-              onChange={(e) => setFormData({ ...formData, buyer_id: e.target.value })}
-              placeholder="Enter buyer user ID"
-              required
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="offer_id">Related Offer ID (Optional)</Label>
-            <Input
-              id="offer_id"
-              value={formData.offer_id}
-              onChange={(e) => setFormData({ ...formData, offer_id: e.target.value })}
-              placeholder="Enter offer ID if applicable"
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="description">Description *</Label>
-            <Textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Describe the invoice..."
-              rows={3}
-              required
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="amount">Amount *</Label>
-              <Input
-                id="amount"
-                type="number"
-                step="0.01"
-                value={formData.amount}
-                onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                placeholder="0.00"
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="currency">Currency</Label>
-              <Select value={formData.currency} onValueChange={(value) => setFormData({ ...formData, currency: value })}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="USD">USD</SelectItem>
-                  <SelectItem value="EUR">EUR</SelectItem>
-                  <SelectItem value="GBP">GBP</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="payment_method">Payment Method</Label>
-              <Select value={formData.payment_method} onValueChange={(value: 'PayPal' | 'BTC' | 'ETH' | 'USDT') => setFormData({ ...formData, payment_method: value })}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="PayPal">PayPal</SelectItem>
-                  <SelectItem value="BTC">Bitcoin</SelectItem>
-                  <SelectItem value="ETH">Ethereum</SelectItem>
-                  <SelectItem value="USDT">USDT</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="due_date">Due Date *</Label>
-              <Input
-                id="due_date"
-                type="datetime-local"
-                value={formData.due_date}
-                onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
-                required
-              />
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-3">
-            <Button type="button" variant="outline" onClick={onClose}>
-              Cancel
+        <Card>
+          <CardContent className="text-center py-8">
+            <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">PayPal Integration</h3>
+            <p className="text-muted-foreground mb-4">
+              Invoices are now handled through PayPal directly. Please configure your PayPal settings in the Payment Settings tab.
+            </p>
+            <Button onClick={onClose}>
+              Close
             </Button>
-            <Button type="submit" disabled={isCreatingInvoice}>
-              {isCreatingInvoice ? 'Creating...' : 'Create Invoice'}
-            </Button>
-          </div>
-        </form>
+          </CardContent>
+        </Card>
       </DialogContent>
     </Dialog>
   );
