@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -89,12 +88,19 @@ export const useSupplierPanel = () => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
+  console.log('useSupplierPanel - user:', user?.id);
+
   // Get supplier offers
   const { data: offers = [], isLoading: offersLoading } = useQuery({
     queryKey: ['supplier-offers', user?.id],
     queryFn: async () => {
-      if (!user?.id) throw new Error('Not authenticated');
+      if (!user?.id) {
+        console.log('No user ID, returning empty offers');
+        return [];
+      }
 
+      console.log('Fetching offers for user:', user.id);
+      
       const { data, error } = await supabase
         .from('group_discount_offers')
         .select(`
@@ -104,7 +110,12 @@ export const useSupplierPanel = () => {
         .eq('supplier_id', user.id)
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching offers:', error);
+        return [];
+      }
+      
+      console.log('Fetched offers:', data?.length || 0);
       return data as SupplierOffer[];
     },
     enabled: !!user?.id,
@@ -114,7 +125,7 @@ export const useSupplierPanel = () => {
   const { data: paymentSettings, isLoading: settingsLoading } = useQuery({
     queryKey: ['supplier-payment-settings', user?.id],
     queryFn: async () => {
-      if (!user?.id) throw new Error('Not authenticated');
+      if (!user?.id) return null;
 
       const { data, error } = await supabase
         .from('supplier_payment_settings')
@@ -122,7 +133,9 @@ export const useSupplierPanel = () => {
         .eq('supplier_id', user.id)
         .maybeSingle();
       
-      if (error) throw error;
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error fetching payment settings:', error);
+      }
       return data as SupplierPaymentSettings;
     },
     enabled: !!user?.id,
@@ -132,7 +145,7 @@ export const useSupplierPanel = () => {
   const { data: invoices = [], isLoading: invoicesLoading } = useQuery({
     queryKey: ['supplier-invoices', user?.id],
     queryFn: async () => {
-      if (!user?.id) throw new Error('Not authenticated');
+      if (!user?.id) return [];
 
       const { data, error } = await supabase
         .from('invoices')
@@ -140,7 +153,10 @@ export const useSupplierPanel = () => {
         .eq('supplier_id', user.id)
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching invoices:', error);
+        return [];
+      }
       return data as Invoice[];
     },
     enabled: !!user?.id,
@@ -150,7 +166,7 @@ export const useSupplierPanel = () => {
   const { data: complaints = [], isLoading: complaintsLoading } = useQuery({
     queryKey: ['supplier-complaints', user?.id],
     queryFn: async () => {
-      if (!user?.id) throw new Error('Not authenticated');
+      if (!user?.id) return [];
 
       const { data, error } = await supabase
         .from('complaints')
@@ -158,7 +174,10 @@ export const useSupplierPanel = () => {
         .eq('supplier_id', user.id)
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching complaints:', error);
+        return [];
+      }
       return data as Complaint[];
     },
     enabled: !!user?.id,
@@ -318,12 +337,22 @@ export const useSupplierPanel = () => {
     },
   });
 
+  const isLoading = offersLoading || settingsLoading || invoicesLoading || complaintsLoading;
+  
+  console.log('useSupplierPanel state:', {
+    isLoading,
+    offersCount: offers?.length || 0,
+    invoicesCount: invoices?.length || 0,
+    complaintsCount: complaints?.length || 0,
+    hasPaymentSettings: !!paymentSettings
+  });
+
   return {
     offers,
     paymentSettings,
     invoices,
     complaints,
-    isLoading: offersLoading || settingsLoading || invoicesLoading || complaintsLoading,
+    isLoading,
     createOffer: createOffer.mutate,
     updateOffer: updateOffer.mutate,
     updatePaymentSettings: updatePaymentSettings.mutate,
