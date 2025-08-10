@@ -20,8 +20,10 @@ import { PaymentSettingsForm } from './PaymentSettingsForm';
 import { InvoiceForm } from './InvoiceForm';
 import { ComplaintsList } from './ComplaintsList';
 import WalletBalance from '@/components/dashboard/WalletBalance';
+import { useAuth } from '@/hooks/useAuth';
 
 const SupplierDashboard: React.FC = () => {
+  const { user, loading: authLoading } = useAuth();
   const { 
     offers, 
     paymentSettings, 
@@ -34,10 +36,33 @@ const SupplierDashboard: React.FC = () => {
   const [showCreateOffer, setShowCreateOffer] = useState(false);
   const [showCreateInvoice, setShowCreateInvoice] = useState(false);
 
+  // Show loading while auth is loading
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-productivity-blue"></div>
+      </div>
+    );
+  }
+
+  // Show login prompt if not authenticated
+  if (!user) {
+    return (
+      <div className="container mx-auto p-6">
+        <Card>
+          <CardContent className="p-8 text-center">
+            <h2 className="text-2xl font-bold mb-4">Authentication Required</h2>
+            <p className="text-gray-600 mb-4">Please log in to access the Supplier Dashboard</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   const stats = {
     totalOffers: offers.length,
     activeOffers: offers.filter(offer => offer.status === 'active').length,
-    totalParticipants: offers.reduce((sum, offer) => sum + offer.current_participants, 0),
+    totalParticipants: offers.reduce((sum, offer) => sum + (offer.current_participants || 0), 0),
     pendingInvoices: invoices.filter(invoice => invoice.status === 'pending').length
   };
 
@@ -134,10 +159,48 @@ const SupplierDashboard: React.FC = () => {
         <TabsContent value="overview" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Overview</CardTitle>
+              <CardTitle>Welcome to Your Supplier Dashboard</CardTitle>
             </CardHeader>
             <CardContent>
-              <p>This is the overview tab content.</p>
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <h3 className="text-lg font-semibold mb-3">Quick Actions</h3>
+                  <div className="space-y-2">
+                    <Button 
+                      onClick={() => setShowCreateOffer(true)} 
+                      className="w-full justify-start bg-productivity-blue hover:bg-productivity-blue/90"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Create New Offer
+                    </Button>
+                    <Button 
+                      onClick={() => setShowCreateInvoice(true)} 
+                      variant="outline" 
+                      className="w-full justify-start"
+                    >
+                      <FileText className="w-4 h-4 mr-2" />
+                      Create Invoice
+                    </Button>
+                    <Button 
+                      onClick={() => setActiveTab('settings')} 
+                      variant="outline" 
+                      className="w-full justify-start"
+                    >
+                      <Settings className="w-4 h-4 mr-2" />
+                      Payment Settings
+                    </Button>
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold mb-3">Recent Activity</h3>
+                  <div className="space-y-2 text-sm text-gray-600">
+                    <p>• Dashboard loaded successfully</p>
+                    <p>• {offers.length} offers currently managed</p>
+                    <p>• {invoices.length} invoices in system</p>
+                    <p>• {complaints.length} complaints to review</p>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -233,7 +296,7 @@ const SupplierDashboard: React.FC = () => {
         </TabsContent>
       </Tabs>
 
-      {/* Modals - Fixed to pass isOpen prop */}
+      {/* Modals */}
       <CreateOfferForm 
         isOpen={showCreateOffer}
         onClose={() => setShowCreateOffer(false)} 

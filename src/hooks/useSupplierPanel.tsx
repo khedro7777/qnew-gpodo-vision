@@ -91,12 +91,16 @@ export const useSupplierPanel = () => {
   const { data: offers = [], isLoading: offersLoading } = useQuery({
     queryKey: ['supplier-offers'],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
       const { data, error } = await supabase
         .from('group_discount_offers')
         .select(`
           *,
           group_discount_tiers (*)
         `)
+        .eq('supplier_id', user.id)
         .order('created_at', { ascending: false });
       
       if (error) throw error;
@@ -108,9 +112,13 @@ export const useSupplierPanel = () => {
   const { data: paymentSettings, isLoading: settingsLoading } = useQuery({
     queryKey: ['supplier-payment-settings'],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
       const { data, error } = await supabase
         .from('supplier_payment_settings')
         .select('*')
+        .eq('supplier_id', user.id)
         .maybeSingle();
       
       if (error) throw error;
@@ -122,9 +130,13 @@ export const useSupplierPanel = () => {
   const { data: invoices = [], isLoading: invoicesLoading } = useQuery({
     queryKey: ['supplier-invoices'],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
       const { data, error } = await supabase
         .from('invoices')
         .select('*')
+        .eq('supplier_id', user.id)
         .order('created_at', { ascending: false });
       
       if (error) throw error;
@@ -136,9 +148,13 @@ export const useSupplierPanel = () => {
   const { data: complaints = [], isLoading: complaintsLoading } = useQuery({
     queryKey: ['supplier-complaints'],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
       const { data, error } = await supabase
         .from('complaints')
         .select('*')
+        .eq('supplier_id', user.id)
         .order('created_at', { ascending: false });
       
       if (error) throw error;
