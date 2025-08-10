@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -58,7 +57,6 @@ export const CreateOfferForm: React.FC<CreateOfferFormProps> = ({ isOpen, onClos
         base_price: parseFloat(formData.base_price),
         minimum_joiners: parseInt(formData.minimum_joiners),
         status: 'draft',
-        current_participants: 0,
         tiers: tiers.map(tier => ({
           min_members: tier.min_members,
           discount_percent: tier.discount_percent,

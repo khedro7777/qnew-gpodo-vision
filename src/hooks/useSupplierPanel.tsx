@@ -170,7 +170,11 @@ export const useSupplierPanel = () => {
       if (!user?.id) throw new Error('Not authenticated');
       
       const { tiers, ...offer } = offerData;
-      const offerWithSupplier = { ...offer, supplier_id: user.id };
+      const offerWithSupplier = { 
+        ...offer, 
+        supplier_id: user.id,
+        current_participants: 0
+      };
       
       const { data: offerResult, error: offerError } = await supabase
         .from('group_discount_offers')
@@ -259,9 +263,13 @@ export const useSupplierPanel = () => {
     mutationFn: async (invoiceData: Omit<Invoice, 'id' | 'created_at' | 'updated_at' | 'invoice_number' | 'supplier_id'>) => {
       if (!user?.id) throw new Error('Not authenticated');
 
+      // Generate invoice number
+      const invoiceNumber = `INV-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+
       const invoiceWithSupplier = {
         ...invoiceData,
         supplier_id: user.id,
+        invoice_number: invoiceNumber,
       };
 
       const { data, error } = await supabase
