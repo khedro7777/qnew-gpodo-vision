@@ -1,4 +1,6 @@
+
 import { useQuery } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useKYCStatus } from './useKYCStatus';
@@ -57,7 +59,7 @@ export const useUserRoles = () => {
   };
 
   // Auto-approve if conditions are met
-  React.useEffect(() => {
+  useEffect(() => {
     if (kycData?.isKYCComplete && userRoles.length > 0) {
       autoApproveSupplierRole();
     }
