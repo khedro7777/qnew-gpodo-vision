@@ -1,10 +1,11 @@
-import { AuthModal } from "@/components/auth/AuthModal";
-import { Header } from "@/components/Header";
-import { HeroSection } from "@/components/HeroSection";
-import { MainPortals } from "@/components/MainPortals";
-import { LiveGroups } from "@/components/LiveGroups";
-import { Stats } from "@/components/Stats";
-import { Footer } from "@/components/Footer";
+
+import AuthModal from "@/components/auth/AuthModal";
+import Header from "@/components/Header";
+import HeroSection from "@/components/HeroSection";
+import MainPortals from "@/components/MainPortals";
+import LiveGroups from "@/components/LiveGroups";
+import Stats from "@/components/Stats";
+import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { useDemo } from "@/contexts/DemoContext";
 import { useNavigate } from "react-router-dom";
