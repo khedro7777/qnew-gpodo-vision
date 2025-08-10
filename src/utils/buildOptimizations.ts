@@ -65,7 +65,7 @@ export const createLazyComponent = <T extends React.ComponentType<any>>(
 ) => {
   const LazyComponent = React.lazy(importFn);
   
-  return React.forwardRef<any, React.ComponentProps<T>>((props, ref) => 
+  return React.forwardRef<any, any>((props, ref) => 
     React.createElement(
       React.Suspense,
       { 

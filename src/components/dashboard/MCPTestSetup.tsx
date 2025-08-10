@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -18,7 +17,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import type { GatewayType } from '@/types';
 
 const MCPTestSetup = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [setupStatus, setSetupStatus] = useState({
     mcpAgent: false,
     sampleGroups: false,
@@ -36,7 +35,7 @@ const MCPTestSetup = () => {
         .insert({
           user_id: user?.id,
           agent_code: 'MCP' + Math.floor(Math.random() * 1000).toString().padStart(3, '0'),
-          full_name: user?.full_name || 'Test MCP Agent',
+          full_name: profile?.full_name || 'Test MCP Agent',
           specialization: 'Group Management & Operations'
         });
 

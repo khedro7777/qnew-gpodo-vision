@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   Dialog,
@@ -38,13 +37,7 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await signUp(formData.email, formData.password, {
-        full_name: formData.fullName,
-        company_name: formData.companyName,
-        role: formData.role,
-        country_code: formData.countryCod,
-        industry_sector: formData.industrySector,
-      });
+      await signUp(formData.email, formData.password, formData.fullName);
       onClose();
     } catch (error) {
       // Error is handled in the context

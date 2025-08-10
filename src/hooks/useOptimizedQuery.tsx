@@ -17,7 +17,7 @@ export const useOptimizedQuery = <T,>({
   ...options
 }: OptimizedQueryOptions<T>) => {
   const queryClient = useQueryClient();
-  const debounceRef = useRef<NodeJS.Timeout>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
   
   // Cleanup debounce on unmount
   useEffect(() => {
@@ -50,7 +50,7 @@ export const useOptimizedQuery = <T,>({
     queryKey,
     queryFn: debouncedQueryFn,
     staleTime: 5 * 60 * 1000, // 5 minutes
-    cacheTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
     retry: (failureCount, error: any) => {
       // Don't retry on 4xx errors
       if (error?.statusCode >= 400 && error?.statusCode < 500) {
