@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useWallet } from '@/hooks/useWallet';
 import { usePayPalPayment } from '@/hooks/usePayPalPayment';
+import { BuyPointsButton } from '@/components/wallet/BuyPointsButton';
 import { 
   Wallet, 
   CreditCard, 
@@ -250,10 +251,12 @@ export const SupplierWalletPanel = () => {
                   </div>
                   
                   <div className="mt-4 space-y-2">
-                    <Button className="w-full" variant="outline">
-                      <Plus className="w-4 h-4 mr-2" />
-                      Buy More Points
-                    </Button>
+                    <BuyPointsButton 
+                      currentPoints={pointsBalance}
+                      variant="default"
+                      size="default"
+                      className="w-full"
+                    />
                     <p className="text-xs text-center text-muted-foreground">
                       1 USD = 100 Points
                     </p>
