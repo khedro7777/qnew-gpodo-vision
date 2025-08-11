@@ -27,6 +27,7 @@ export const useRoleRedirect = () => {
 
       const targetRoute = roleRoutes[primaryRole];
       if (targetRoute && window.location.pathname === '/dashboard') {
+        console.log(`Redirecting ${primaryRole} to ${targetRoute}`);
         navigate(targetRoute, { replace: true });
       }
     }
