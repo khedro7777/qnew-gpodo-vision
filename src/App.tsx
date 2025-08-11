@@ -1,3 +1,4 @@
+
 import { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -25,6 +26,9 @@ const BoardSelector = lazy(() => import("@/components/dashboard/BoardSelector"))
 const SupplierDashboard = lazy(() => import("@/pages/dashboard/SupplierDashboard"));
 const BuyerDashboard = lazy(() => import("@/pages/dashboard/BuyerDashboard"));
 const FreelancerDashboard = lazy(() => import("@/pages/dashboard/FreelancerDashboard"));
+
+// New Seller Board
+const SellerBoard = lazy(() => import("@/pages/SellerBoard"));
 
 // Admin components
 const AdminLogin = lazy(() => import("@/pages/AdminLogin"));
@@ -54,6 +58,9 @@ function App() {
                     
                     {/* Board Selector - main dashboard entry point */}
                     <Route path="/dashboard" element={<BoardSelector />} />
+                    
+                    {/* New Seller Board - dedicated supplier control panel */}
+                    <Route path="/seller-board" element={<SellerBoard />} />
                     
                     {/* Role-specific dashboards */}
                     <Route path="/dashboard/supplier" element={<SupplierDashboard />} />
