@@ -147,8 +147,8 @@ const DiscussionSystem = ({ groupId, userRole, isManager }: DiscussionSystemProp
 
               {/* Messages for this date */}
               {dateMessages.map((message, index) => {
-                const isOwnMessage = message.sender_id === user?.id;
-                const showAvatar = index === 0 || dateMessages[index - 1].sender_id !== message.sender_id;
+                const isOwnMessage = message.user_id === user?.id;
+                const showAvatar = index === 0 || dateMessages[index - 1].user_id !== message.user_id;
 
                 return (
                   <div key={message.id} className={`flex gap-3 ${isOwnMessage ? 'flex-row-reverse' : ''}`}>

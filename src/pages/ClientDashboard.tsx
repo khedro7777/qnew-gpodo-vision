@@ -1,236 +1,136 @@
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
+import { useAuth } from '@/contexts/AuthContext';
+import MyGroupsTab from '@/components/dashboard/MyGroupsTab';
+import GroupRoomsTab from '@/components/dashboard/GroupRoomsTab';
 import WalletTab from '@/components/dashboard/WalletTab';
-import { ClientPointsSection } from '@/components/dashboard/ClientPointsSection';
-import { BuyPointsButton } from '@/components/wallet/BuyPointsButton';
-import { 
-  User, 
-  Wallet, 
-  Star,
-  ShoppingCart, 
-  TrendingUp, 
-  Bell,
-  Settings,
-  CreditCard,
-  Gift,
-  Crown
-} from 'lucide-react';
+import MCPAssistantTab from '@/components/dashboard/MCPAssistantTab';
+import DiscountOffersTab from '@/components/dashboard/DiscountOffersTab';
+import ArbitrationTab from '@/components/dashboard/ArbitrationTab';
+import ArchiveTab from '@/components/dashboard/ArchiveTab';
+import StoreTab from '@/components/dashboard/StoreTab';
+import CompanyFormationTab from '@/components/dashboard/CompanyFormationTab';
+import NotificationsTab from '@/components/dashboard/NotificationsTab';
+import MarketInsightsTab from '@/components/dashboard/MarketInsightsTab';
+import RiskManagementTab from '@/components/dashboard/RiskManagementTab';
+import { Card } from '@/components/ui/card';
+import { Shield } from 'lucide-react';
 
 const ClientDashboard = () => {
-  const [activeTab, setActiveTab] = useState('overview');
+  const { user, profile } = useAuth();
+  const [activeTab, setActiveTab] = useState('my-groups');
 
-  // Mock user data
-  const userData = {
-    name: 'John Doe',
-    email: 'john@example.com',
-    membershipTier: 'Premium',
-    joinDate: '2024-01-15',
-    totalSpent: 15420,
-    pointsBalance: 2500,
-    activeOrders: 3,
-    completedOrders: 27
-  };
+  const tabs = [
+    { id: 'my-groups', label: 'My Groups', shortLabel: 'Groups' },
+    { id: 'group-rooms', label: 'Group Rooms', shortLabel: 'Rooms' },
+    { id: 'wallet', label: 'Wallet', shortLabel: 'Wallet' },
+    { id: 'mcp-assistant', label: 'MCP Assistant', shortLabel: 'MCP' },
+    { id: 'discount-offers', label: 'Discount Offers', shortLabel: 'Offers' },
+    { id: 'arbitration', label: 'Arbitration', shortLabel: 'Legal' },
+    { id: 'archive', label: 'Archive', shortLabel: 'Archive' },
+    { id: 'store', label: 'Store', shortLabel: 'Store' },
+    { id: 'company-formation', label: 'Company Formation', shortLabel: 'Company' },
+    { id: 'notifications', label: 'Notifications', shortLabel: 'Alerts' },
+    { id: 'market-insights', label: 'Market Insights', shortLabel: 'Market' },
+    { id: 'risk-management', label: 'Risk Management', shortLabel: 'Risk' }
+  ];
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="border-b bg-white">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Client Dashboard</h1>
-              <p className="text-muted-foreground">Welcome back, {userData.name}</p>
-            </div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
+      <Header />
+      <main className="py-4 sm:py-8 px-2 sm:px-4 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          {/* Demo Mode Banner */}
+          <Card className="p-3 sm:p-4 bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-200 mb-4 sm:mb-8">
             <div className="flex items-center gap-3">
-              <BuyPointsButton 
-                currentPoints={userData.pointsBalance}
-                variant="default"
-              />
-              <Button variant="outline" size="sm">
-                <Bell className="w-4 h-4 mr-2" />
-                Notifications
-              </Button>
-              <Button variant="outline" size="sm">
-                <Settings className="w-4 h-4 mr-2" />
-                Settings
-              </Button>
+              <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-600 shrink-0" />
+              <div>
+                <h3 className="font-semibold text-yellow-900 text-sm sm:text-base">Demo Mode - Development Version</h3>
+                <p className="text-xs sm:text-sm text-yellow-700">Authentication temporarily disabled • Mock data for development</p>
+              </div>
             </div>
+          </Card>
+
+          <div className="mb-4 sm:mb-8">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">Client Dashboard</h1>
+            <p className="text-sm sm:text-base text-gray-600">Welcome, {profile?.full_name || user?.email}</p>
           </div>
-        </div>
-      </div>
 
-      {/* Main Content */}
-      <div className="container mx-auto px-4 py-8">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
-            <TabsTrigger value="overview" className="flex items-center gap-2">
-              <User className="w-4 h-4" />
-              Overview
-            </TabsTrigger>
-            <TabsTrigger value="points" className="flex items-center gap-2">
-              <Star className="w-4 h-4" />
-              Points
-            </TabsTrigger>
-            <TabsTrigger value="wallet" className="flex items-center gap-2">
-              <Wallet className="w-4 h-4" />
-              Wallet
-            </TabsTrigger>
-            <TabsTrigger value="orders" className="flex items-center gap-2">
-              <ShoppingCart className="w-4 h-4" />
-              Orders
-            </TabsTrigger>
-            <TabsTrigger value="rewards" className="flex items-center gap-2">
-              <Gift className="w-4 h-4" />
-              Rewards
-            </TabsTrigger>
-            <TabsTrigger value="membership" className="flex items-center gap-2">
-              <Crown className="w-4 h-4" />
-              Membership
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="overview" className="space-y-6">
-            {/* Quick Stats */}
-            <div className="grid md:grid-cols-4 gap-6">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Points Balance</CardTitle>
-                  <Star className="h-4 w-4 text-yellow-500" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-blue-600">{userData.pointsBalance.toLocaleString()}</div>
-                  <p className="text-xs text-muted-foreground">Available to spend</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Spent</CardTitle>
-                  <CreditCard className="h-4 w-4 text-green-500" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">${userData.totalSpent.toLocaleString()}</div>
-                  <p className="text-xs text-muted-foreground">Lifetime spending</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Active Orders</CardTitle>
-                  <ShoppingCart className="h-4 w-4 text-orange-500" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{userData.activeOrders}</div>
-                  <p className="text-xs text-muted-foreground">In progress</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Membership</CardTitle>
-                  <Crown className="h-4 w-4 text-purple-500" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{userData.membershipTier}</div>
-                  <p className="text-xs text-muted-foreground">Current tier</p>
-                </CardContent>
-              </Card>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            {/* Mobile-friendly tabs with horizontal scroll */}
+            <div className="mb-4 sm:mb-8">
+              <ScrollArea className="w-full whitespace-nowrap">
+                <TabsList className="inline-flex h-10 items-center justify-start rounded-md bg-muted p-1 text-muted-foreground min-w-full sm:min-w-0">
+                  {tabs.map((tab) => (
+                    <TabsTrigger 
+                      key={tab.id}
+                      value={tab.id}
+                      className="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm shrink-0"
+                    >
+                      <span className="sm:hidden">{tab.shortLabel}</span>
+                      <span className="hidden sm:inline">{tab.label}</span>
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+                <ScrollBar orientation="horizontal" className="sm:hidden" />
+              </ScrollArea>
             </div>
 
-            {/* Recent Activity */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Activity</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div>
-                      <div className="font-medium">Joined group purchase for Electronics</div>
-                      <div className="text-sm text-muted-foreground">2 hours ago</div>
-                    </div>
-                    <Badge>Active</Badge>
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div>
-                      <div className="font-medium">Earned 100 bonus points</div>
-                      <div className="text-sm text-muted-foreground">1 day ago</div>
-                    </div>
-                    <Badge variant="secondary">+100 pts</Badge>
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div>
-                      <div className="font-medium">Completed purchase from Supplier ABC</div>
-                      <div className="text-sm text-muted-foreground">3 days ago</div>
-                    </div>
-                    <Badge variant="outline">Completed</Badge>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+            <TabsContent value="my-groups">
+              <MyGroupsTab />
+            </TabsContent>
 
-          <TabsContent value="points">
-            <ClientPointsSection />
-          </TabsContent>
+            <TabsContent value="group-rooms">
+              <GroupRoomsTab />
+            </TabsContent>
 
-          <TabsContent value="wallet">
-            <WalletTab />
-          </TabsContent>
+            <TabsContent value="wallet">
+              <WalletTab />
+            </TabsContent>
 
-          <TabsContent value="orders" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Order Management</CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Track your group purchases and individual orders
-                </p>
-              </CardHeader>
-              <CardContent>
-                <p className="text-center text-muted-foreground py-8">
-                  Order management features coming soon...
-                </p>
-              </CardContent>
-            </Card>
-          </TabsContent>
+            <TabsContent value="mcp-assistant">
+              <MCPAssistantTab />
+            </TabsContent>
 
-          <TabsContent value="rewards" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Rewards & Loyalty Program</CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Earn points and unlock exclusive benefits
-                </p>
-              </CardHeader>
-              <CardContent>
-                <p className="text-center text-muted-foreground py-8">
-                  Rewards program features coming soon...
-                </p>
-              </CardContent>
-            </Card>
-          </TabsContent>
+            <TabsContent value="discount-offers">
+              <DiscountOffersTab />
+            </TabsContent>
 
-          <TabsContent value="membership" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Membership & Subscriptions</CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Manage your membership tier and benefits
-                </p>
-              </CardHeader>
-              <CardContent>
-                <p className="text-center text-muted-foreground py-8">
-                  Membership management features coming soon...
-                </p>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </div>
+            <TabsContent value="arbitration">
+              <ArbitrationTab />
+            </TabsContent>
+
+            <TabsContent value="archive">
+              <ArchiveTab />
+            </TabsContent>
+
+            <TabsContent value="store">
+              <StoreTab />
+            </TabsContent>
+
+            <TabsContent value="company-formation">
+              <CompanyFormationTab />
+            </TabsContent>
+
+            <TabsContent value="notifications">
+              <NotificationsTab />
+            </TabsContent>
+
+            <TabsContent value="market-insights">
+              <MarketInsightsTab />
+            </TabsContent>
+
+            <TabsContent value="risk-management">
+              <RiskManagementTab />
+            </TabsContent>
+          </Tabs>
+        </div>
+      </main>
+      <Footer />
     </div>
   );
 };

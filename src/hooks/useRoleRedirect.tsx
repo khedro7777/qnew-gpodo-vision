@@ -10,28 +10,26 @@ export const useRoleRedirect = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Temporarily disabled for development preview
-    // if (!user || isLoading) return;
+    if (!user || isLoading) return;
 
     // Auto-redirect to appropriate dashboard based on primary role
-    // if (primaryRole) {
-    //   const roleRoutes = {
-    //     supplier: '/seller-board',
-    //     buyer: '/dashboard/buyer',
-    //     freelancer: '/dashboard/freelancer',
-    //     group_member: '/dashboard/group-buying',
-    //     investor: '/dashboard/investor',
-    //     judge: '/dashboard/judge',
-    //     admin: '/admin/overview',
-    //     ai_agent: '/dashboard/ai-agent'
-    //   };
+    if (primaryRole) {
+      const roleRoutes = {
+        supplier: '/dashboard/supplier',
+        buyer: '/dashboard/buyer',
+        freelancer: '/dashboard/freelancer',
+        group_member: '/dashboard/group-buying',
+        investor: '/dashboard/investor',
+        judge: '/dashboard/judge',
+        admin: '/admin/overview',
+        ai_agent: '/dashboard/ai-agent'
+      };
 
-    //   const targetRoute = roleRoutes[primaryRole];
-    //   if (targetRoute && window.location.pathname === '/dashboard') {
-    //     console.log(`Redirecting ${primaryRole} to ${targetRoute}`);
-    //     navigate(targetRoute, { replace: true });
-    //   }
-    // }
+      const targetRoute = roleRoutes[primaryRole];
+      if (targetRoute && window.location.pathname === '/dashboard') {
+        navigate(targetRoute, { replace: true });
+      }
+    }
   }, [user, primaryRole, isLoading, navigate]);
 
   return { primaryRole, isLoading };
