@@ -20,7 +20,50 @@ const SellerOfferBoardPage = () => {
   }
 
   // Find the specific offer or use mock data for demo
-  const offer = offers.find(o => o.id === offerId) || {
+  const supplierOffer = offers.find(o => o.id === offerId);
+  
+  // Transform SupplierOffer to the expected format
+  const offer = supplierOffer ? {
+    id: supplierOffer.id,
+    title: supplierOffer.title,
+    category: supplierOffer.category || 'General',
+    target_region: supplierOffer.target_region || 'Global',
+    base_price: supplierOffer.base_price,
+    current_participants: supplierOffer.current_participants,
+    minimum_joiners: supplierOffer.minimum_joiners,
+    deadline: supplierOffer.deadline,
+    status: supplierOffer.status,
+    visibility: supplierOffer.visibility,
+    kyc_required: supplierOffer.kyc_required,
+    points_required: supplierOffer.points_required,
+    product_images: supplierOffer.product_images || ['/placeholder.svg'],
+    pdf_attachments: supplierOffer.pdf_attachments || [],
+    supplier: {
+      id: 'sup1',
+      name: 'Workspace Solutions Inc.',
+      logo: '/placeholder.svg',
+      rating: 4.8,
+      review_count: 245,
+      kyc_status: 'approved' as const,
+      verified: true
+    },
+    discount_tiers: supplierOffer.group_discount_tiers?.map(tier => ({
+      min_members: tier.min_members,
+      discount_percent: tier.discount_percent || 0,
+      tier_order: tier.tier_order
+    })) || [
+      { min_members: 5, discount_percent: 10, tier_order: 1 },
+      { min_members: 10, discount_percent: 15, tier_order: 2 },
+      { min_members: 20, discount_percent: 25, tier_order: 3 },
+      { min_members: 50, discount_percent: 35, tier_order: 4 }
+    ],
+    payment_options: {
+      deposit: true,
+      installments: true,
+      full_payment: true,
+      cod: false
+    }
+  } : {
     id: offerId || '1',
     title: 'Premium Office Furniture Bundle - Complete Workspace Solution',
     category: 'Office Equipment',
