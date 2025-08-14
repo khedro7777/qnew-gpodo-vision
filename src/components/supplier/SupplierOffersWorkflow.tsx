@@ -26,7 +26,7 @@ const SupplierOffersWorkflow = () => {
   const activeOffers = allOffers.filter(offer => offer.status === 'active');
   const pendingOffers = allOffers.filter(offer => offer.status === 'pending' || offer.status === 'draft');
   const completedOffers = allOffers.filter(offer => offer.status === 'completed');
-  const expiredOffers = allOffers.filter(offer => offer.status === 'expired');
+  const expiredOffers = allOffers.filter(offer => offer.status === 'expired' || offer.status === 'cancelled');
 
   const getStatusColor = (status: string) => {
     switch (status) {
