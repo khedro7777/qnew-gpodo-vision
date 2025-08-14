@@ -1,6 +1,6 @@
 
 import React from 'react';
-import SupplierOffersWorkflow from '@/components/supplier/SupplierOffersWorkflow';
+import { SupplierOffersWorkflow } from '@/components/supplier/SupplierOffersWorkflow';
 
 const SellerBoard = () => {
   console.log('SellerBoard rendering');

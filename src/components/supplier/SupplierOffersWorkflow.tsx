@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -5,8 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Plus, Package, Clock, CheckCircle, XCircle, Edit } from 'lucide-react';
 import { useSupplierPanel } from '@/hooks/useSupplierPanel';
-import { CreateOfferForm } from './CreateOfferForm';
-import { SupplierMyOffers } from './SupplierMyOffers';
+import CreateOfferForm from './CreateOfferForm';
+import SupplierMyOffers from './SupplierMyOffers';
 
 const SupplierOffersWorkflow = () => {
   const { offers, isLoading } = useSupplierPanel();
@@ -21,12 +22,12 @@ const SupplierOffersWorkflow = () => {
     );
   }
 
-  // Fix the filtering logic to properly filter by status
+  // Fix the filtering logic to avoid TypeScript errors
   const allOffers = offers || [];
   const activeOffers = allOffers.filter(offer => offer.status === 'active');
   const pendingOffers = allOffers.filter(offer => offer.status === 'pending' || offer.status === 'draft');
   const completedOffers = allOffers.filter(offer => offer.status === 'completed');
-  const expiredOffers = allOffers.filter(offer => offer.status === 'expired' || offer.status === 'cancelled');
+  const expiredOffers = allOffers.filter(offer => offer.status === 'expired');
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -74,10 +75,7 @@ const SupplierOffersWorkflow = () => {
             Back to Overview
           </Button>
         </div>
-        <CreateOfferForm 
-          isOpen={showCreateForm}
-          onClose={() => setShowCreateForm(false)}
-        />
+        <CreateOfferForm onSuccess={() => setShowCreateForm(false)} />
       </div>
     );
   }
@@ -160,23 +158,23 @@ const SupplierOffersWorkflow = () => {
             </Card>
           </div>
 
-          <SupplierMyOffers offers={allOffers} onViewOffer={(offerId) => console.log('View offer:', offerId)} />
+          <SupplierMyOffers />
         </TabsContent>
 
         <TabsContent value="active">
-          <SupplierMyOffers offers={activeOffers} onViewOffer={(offerId) => console.log('View offer:', offerId)} />
+          <SupplierMyOffers filter="active" />
         </TabsContent>
 
         <TabsContent value="pending">
-          <SupplierMyOffers offers={pendingOffers} onViewOffer={(offerId) => console.log('View offer:', offerId)} />
+          <SupplierMyOffers filter="pending" />
         </TabsContent>
 
         <TabsContent value="completed">
-          <SupplierMyOffers offers={completedOffers} onViewOffer={(offerId) => console.log('View offer:', offerId)} />
+          <SupplierMyOffers filter="completed" />
         </TabsContent>
 
         <TabsContent value="expired">
-          <SupplierMyOffers offers={expiredOffers} onViewOffer={(offerId) => console.log('View offer:', offerId)} />
+          <SupplierMyOffers filter="expired" />
         </TabsContent>
       </Tabs>
     </div>
