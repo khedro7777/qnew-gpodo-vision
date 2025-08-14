@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -6,11 +7,11 @@ import { Badge } from '@/components/ui/badge';
 import { BarChart3, Users, ShoppingCart, TrendingUp, Package, Clock, CheckCircle } from 'lucide-react';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { useSupplierPanel } from '@/hooks/useSupplierPanel';
-import { GroupOffersSection } from '@/components/offers/GroupOffersSection';
-import { FreelancerServicesSection } from '@/components/freelancer/FreelancerServicesSection';
-import { InvestmentProjectsSection } from '@/components/investment/InvestmentProjectsSection';
-import { GroupPurchasingSection } from '@/components/purchasing/GroupPurchasingSection';
-import { SupplierOffersSection } from '@/components/supplier/SupplierOffersSection';
+import GroupOffersSection from '@/components/offers/GroupOffersSection';
+import FreelancerServicesSection from '@/components/freelancer/FreelancerServicesSection';
+import InvestmentProjectsSection from '@/components/investment/InvestmentProjectsSection';
+import GroupPurchasingSection from '@/components/purchasing/GroupPurchasingSection';
+import SupplierOffersSection from '@/components/supplier/SupplierOffersSection';
 
 const ClientDashboard = () => {
   const { offers = [], isLoading } = useSupplierPanel();
