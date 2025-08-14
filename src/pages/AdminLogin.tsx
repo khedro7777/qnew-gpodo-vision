@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Shield, AlertTriangle } from 'lucide-react';
+import { Loader2, Shield, AlertTriangle, Info } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const AdminLogin = () => {
@@ -28,7 +28,7 @@ const AdminLogin = () => {
     setError(null);
     
     try {
-      console.log('Attempting login with:', formData.email);
+      console.log('Attempting temporary login with:', formData.email);
       await signIn(formData.email, formData.password);
     } catch (error: any) {
       console.error('Login failed:', error);
@@ -61,6 +61,14 @@ const AdminLogin = () => {
         </CardHeader>
         
         <CardContent className="space-y-6">
+          <Alert className="border-yellow-200 bg-yellow-50">
+            <Info className="h-4 w-4 text-yellow-600" />
+            <AlertDescription className="text-yellow-700">
+              <div className="font-semibold mb-2">Temporary Access Mode</div>
+              <div className="text-sm">Authentication is temporarily suspended. Any email/password combination will grant admin access.</div>
+            </AlertDescription>
+          </Alert>
+
           {error && (
             <Alert className="border-red-200 bg-red-50">
               <AlertTriangle className="h-4 w-4 text-red-600" />
@@ -79,7 +87,7 @@ const AdminLogin = () => {
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                placeholder="Enter your admin email"
+                placeholder="Enter any email (temporary)"
                 required
                 dir="ltr"
                 className="text-left"
@@ -93,7 +101,7 @@ const AdminLogin = () => {
                 type="password"
                 value={formData.password}
                 onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                placeholder="Enter your password"
+                placeholder="Enter any password (temporary)"
                 required
                 dir="ltr"
                 className="text-left"
@@ -113,7 +121,7 @@ const AdminLogin = () => {
               ) : (
                 <>
                   <Shield className="w-4 h-4 mr-2" />
-                  Sign In
+                  Access Dashboard (Temporary)
                 </>
               )}
             </Button>

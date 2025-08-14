@@ -18,9 +18,10 @@ const AdminLayout = () => {
     );
   }
 
-  if (!adminUser) {
-    return <Navigate to="/admin/login" replace />;
-  }
+  // TEMPORARILY BYPASS AUTH CHECK - Allow access without authentication
+  // if (!adminUser) {
+  //   return <Navigate to="/admin/login" replace />;
+  // }
 
   return (
     <div className="min-h-screen bg-gray-50 flex">

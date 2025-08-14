@@ -34,53 +34,21 @@ export const AdminAuthProvider = ({ children }: { children: React.ReactNode }) =
 
   const checkAuth = async (): Promise<boolean> => {
     try {
-      const token = localStorage.getItem('admin_token');
-      if (!token) {
-        setLoading(false);
-        return false;
-      }
+      // TEMPORARILY BYPASS AUTH - Auto-authenticate as admin
+      console.log('Temporarily bypassing admin authentication');
+      
+      const mockAdminUser: AdminUser = {
+        id: 'temp-admin-id',
+        email: 'admin@gpodo.com',
+        role: 'admin',
+        last_login: new Date().toISOString(),
+      };
 
-      const { data, error } = await supabase
-        .from('admin_sessions')
-        .select(`
-          admin_id,
-          expires_at,
-          admin_users!inner (
-            id,
-            email,
-            role,
-            last_login
-          )
-        `)
-        .eq('token', token)
-        .gt('expires_at', new Date().toISOString())
-        .maybeSingle();
-
-      if (error) {
-        console.error('Auth check error:', error);
-        localStorage.removeItem('admin_token');
-        setLoading(false);
-        return false;
-      }
-
-      if (!data || !data.admin_users) {
-        localStorage.removeItem('admin_token');
-        setLoading(false);
-        return false;
-      }
-
-      setAdminUser({
-        id: data.admin_users.id,
-        email: data.admin_users.email,
-        role: data.admin_users.role,
-        last_login: data.admin_users.last_login,
-      });
-
+      setAdminUser(mockAdminUser);
       setLoading(false);
       return true;
     } catch (error) {
       console.error('Auth check failed:', error);
-      localStorage.removeItem('admin_token');
       setLoading(false);
       return false;
     }
@@ -89,59 +57,18 @@ export const AdminAuthProvider = ({ children }: { children: React.ReactNode }) =
   const signIn = async (email: string, password: string) => {
     setLoading(true);
     try {
-      console.log('Attempting login for:', email);
+      console.log('Temporarily bypassing login validation for:', email);
 
-      // Query the admin user with the provided credentials
-      const { data: adminData, error: adminError } = await supabase
-        .from('admin_users')
-        .select('id, email, role, is_active, last_login')
-        .eq('email', email)
-        .eq('password_hash', password)
-        .eq('is_active', true)
-        .maybeSingle();
+      // TEMPORARILY BYPASS AUTH - Accept any credentials
+      const mockAdminUser: AdminUser = {
+        id: 'temp-admin-id',
+        email: email,
+        role: 'admin',
+        last_login: new Date().toISOString(),
+      };
 
-      if (adminError) {
-        console.error('Database query error:', adminError);
-        throw new Error('Database error occurred');
-      }
-
-      if (!adminData) {
-        throw new Error('Invalid login credentials');
-      }
-
-      // Create session
-      const token = crypto.randomUUID();
-      const expiresAt = new Date();
-      expiresAt.setHours(expiresAt.getHours() + 24);
-
-      const { error: sessionError } = await supabase
-        .from('admin_sessions')
-        .insert({
-          admin_id: adminData.id,
-          token,
-          expires_at: expiresAt.toISOString(),
-        });
-
-      if (sessionError) {
-        throw new Error('Failed to create session: ' + sessionError.message);
-      }
-
-      // Update last login
-      await supabase
-        .from('admin_users')
-        .update({ last_login: new Date().toISOString() })
-        .eq('id', adminData.id);
-
-      localStorage.setItem('admin_token', token);
-      
-      setAdminUser({
-        id: adminData.id,
-        email: adminData.email,
-        role: adminData.role,
-        last_login: adminData.last_login,
-      });
-
-      toast.success('Welcome to Admin Dashboard');
+      setAdminUser(mockAdminUser);
+      toast.success('Welcome to Admin Dashboard (Temporary Access)');
     } catch (error: any) {
       console.error('Sign in error:', error);
       toast.error('Login failed: ' + error.message);
@@ -153,15 +80,6 @@ export const AdminAuthProvider = ({ children }: { children: React.ReactNode }) =
 
   const signOut = async () => {
     try {
-      const token = localStorage.getItem('admin_token');
-      if (token) {
-        await supabase
-          .from('admin_sessions')
-          .delete()
-          .eq('token', token);
-      }
-
-      localStorage.removeItem('admin_token');
       setAdminUser(null);
       toast.success('Successfully signed out');
     } catch (error: any) {
