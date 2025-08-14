@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUserRoles, UserRole } from '@/hooks/useUserRoles';
@@ -23,10 +22,10 @@ import { toast } from 'sonner';
 
 const roleConfigs = {
   supplier: {
-    title: 'Supplier Dashboard',
-    description: 'Manage your products and supplier offers',
+    title: 'Supplier Control Panel',
+    description: 'Manage your offers and supplier business',
     icon: Store,
-    route: '/dashboard/supplier',
+    route: '/seller-board',
     color: 'bg-blue-500',
     requiresApproval: false
   },
@@ -97,6 +96,7 @@ const BoardSelector = () => {
   const handleBoardSelect = (role: UserRole) => {
     const config = roleConfigs[role];
     if (hasRole(role)) {
+      console.log(`Navigating to ${config.route} for role ${role}`);
       navigate(config.route);
     }
   };
