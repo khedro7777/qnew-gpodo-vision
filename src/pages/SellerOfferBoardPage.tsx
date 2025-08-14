@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useParams } from 'react-router-dom';
 import SellerOfferBoard from '@/components/seller/SellerOfferBoard';
@@ -22,7 +21,7 @@ const SellerOfferBoardPage = () => {
   // Find the specific offer or use mock data for demo
   const supplierOffer = offers.find(o => o.id === offerId);
   
-  // Transform SupplierOffer to the expected format
+  // Transform SupplierOffer to the expected format with all required properties
   const offer = supplierOffer ? {
     id: supplierOffer.id,
     title: supplierOffer.title,
@@ -39,7 +38,7 @@ const SellerOfferBoardPage = () => {
     product_images: supplierOffer.product_images || ['/placeholder.svg'],
     pdf_attachments: supplierOffer.pdf_attachments || [],
     supplier: {
-      id: 'sup1',
+      id: supplierOffer.supplier_id,
       name: 'Workspace Solutions Inc.',
       logo: '/placeholder.svg',
       rating: 4.8,

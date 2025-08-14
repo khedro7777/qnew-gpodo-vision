@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -19,9 +18,9 @@ import {
   Trash2
 } from 'lucide-react';
 import { useSupplierPanel } from '@/hooks/useSupplierPanel';
-import CreateOfferForm from './CreateOfferForm';
-import PaymentSettingsForm from './PaymentSettingsForm';
-import ComplaintsList from './ComplaintsList';
+import { CreateOfferForm } from '@/components/supplier/CreateOfferForm';
+import { PaymentSettingsForm } from '@/components/supplier/PaymentSettingsForm';
+import { ComplaintsList } from '@/components/supplier/ComplaintsList';
 
 const SellerDashboard = () => {
   const [showCreateForm, setShowCreateForm] = useState(false);
