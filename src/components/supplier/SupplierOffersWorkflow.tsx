@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -22,7 +21,7 @@ const SupplierOffersWorkflow = () => {
     );
   }
 
-  // Fix the filtering logic to avoid TypeScript errors
+  // Fix the filtering logic to properly filter by status
   const allOffers = offers || [];
   const activeOffers = allOffers.filter(offer => offer.status === 'active');
   const pendingOffers = allOffers.filter(offer => offer.status === 'pending' || offer.status === 'draft');
