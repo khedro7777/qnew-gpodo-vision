@@ -17,6 +17,7 @@ import CompanyFormationTab from '@/components/dashboard/CompanyFormationTab';
 import NotificationsTab from '@/components/dashboard/NotificationsTab';
 import MarketInsightsTab from '@/components/dashboard/MarketInsightsTab';
 import RiskManagementTab from '@/components/dashboard/RiskManagementTab';
+import { SupplierDashboard } from '@/components/supplier/SupplierDashboard';
 import { Card } from '@/components/ui/card';
 import { Shield } from 'lucide-react';
 
@@ -30,6 +31,7 @@ const ClientDashboard = () => {
     { id: 'wallet', label: 'Wallet', shortLabel: 'Wallet' },
     { id: 'mcp-assistant', label: 'MCP Assistant', shortLabel: 'MCP' },
     { id: 'discount-offers', label: 'Discount Offers', shortLabel: 'Offers' },
+    { id: 'seller', label: 'Seller Dashboard', shortLabel: 'Seller' },
     { id: 'arbitration', label: 'Arbitration', shortLabel: 'Legal' },
     { id: 'archive', label: 'Archive', shortLabel: 'Archive' },
     { id: 'store', label: 'Store', shortLabel: 'Store' },
@@ -98,6 +100,10 @@ const ClientDashboard = () => {
 
             <TabsContent value="discount-offers">
               <DiscountOffersTab />
+            </TabsContent>
+
+            <TabsContent value="seller">
+              <SupplierDashboard />
             </TabsContent>
 
             <TabsContent value="arbitration">
