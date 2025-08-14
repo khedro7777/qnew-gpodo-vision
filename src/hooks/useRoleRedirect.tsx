@@ -15,7 +15,7 @@ export const useRoleRedirect = () => {
     // Auto-redirect to appropriate dashboard based on primary role
     if (primaryRole) {
       const roleRoutes = {
-        supplier: '/dashboard/supplier',
+        supplier: '/seller-board',
         buyer: '/dashboard/buyer',
         freelancer: '/dashboard/freelancer',
         group_member: '/dashboard/group-buying',

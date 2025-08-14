@@ -1,42 +1,43 @@
 
+import { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { AdminAuthProvider } from "@/contexts/AdminAuthContext";
 import { DemoProvider } from "@/contexts/DemoContext";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
-import Index from "@/pages/Index";
-import Dashboard from "@/pages/Dashboard";
-import GroupProfile from "@/pages/GroupProfile";
-import GroupRoom from "@/pages/GroupRoom";
-import UserProfile from "@/pages/UserProfile";
-import AccountSettings from "@/pages/AccountSettings";
-import GatewayLanding from "@/pages/GatewayLanding";
-import NotFound from "@/pages/NotFound";
-import OfferDetails from "@/pages/OfferDetails";
-import ClientDashboard from "@/pages/ClientDashboard";
-import AdminLogin from "@/pages/AdminLogin";
+import { DemoToggle } from "@/components/demo/DemoToggle";
 
-// Dashboard Pages
-import BuyerDashboard from "@/pages/dashboard/BuyerDashboard";
-import SupplierDashboard from "@/pages/dashboard/SupplierDashboard";
-import SellerDashboard from "@/pages/dashboard/SellerDashboard";
-import FreelancerDashboard from "@/pages/dashboard/FreelancerDashboard";
+// Lazy load components
+const Index = lazy(() => import("@/pages/Index"));
+const Dashboard = lazy(() => import("@/pages/Dashboard"));
+const ClientDashboard = lazy(() => import("@/pages/ClientDashboard"));
+const UserProfile = lazy(() => import("@/pages/UserProfile"));
+const AccountSettings = lazy(() => import("@/pages/AccountSettings"));
+const GroupRoom = lazy(() => import("@/pages/GroupRoom"));
+const GatewayLanding = lazy(() => import("@/pages/GatewayLanding"));
+const GroupProfile = lazy(() => import("@/pages/GroupProfile"));
+const OfferDetails = lazy(() => import("@/pages/OfferDetails"));
+const NotFound = lazy(() => import("@/pages/NotFound"));
 
-// Admin Pages
-import AdminOverview from "@/pages/admin/AdminOverview";
-import AdminUsers from "@/pages/admin/AdminUsers";
-import AdminContent from "@/pages/admin/AdminContent";
-import AdminAPIs from "@/pages/admin/AdminAPIs";
-import AdminPortals from "@/pages/admin/AdminPortals";
-import AdminReferrals from "@/pages/admin/AdminReferrals";
-import SellerManagement from "@/pages/admin/SellerManagement";
+// Board Selector and Role-based Dashboards
+const BoardSelector = lazy(() => import("@/components/dashboard/BoardSelector"));
+const SupplierDashboard = lazy(() => import("@/pages/dashboard/SupplierDashboard"));
+const BuyerDashboard = lazy(() => import("@/pages/dashboard/BuyerDashboard"));
+const FreelancerDashboard = lazy(() => import("@/pages/dashboard/FreelancerDashboard"));
 
-// New Pages
-import SellerOfferBoardPage from "@/pages/SellerOfferBoardPage";
-import HowItWorks from "@/pages/HowItWorks";
+// New Seller Board
+const SellerBoard = lazy(() => import("@/pages/SellerBoard"));
+
+// Admin components
+const AdminLogin = lazy(() => import("@/pages/AdminLogin"));
+const AdminLayout = lazy(() => import("@/components/admin/AdminLayout"));
+const AdminOverview = lazy(() => import("@/pages/admin/AdminOverview"));
+const AdminUsers = lazy(() => import("@/pages/admin/AdminUsers"));
+const AdminPortals = lazy(() => import("@/pages/admin/AdminPortals"));
+const AdminReferrals = lazy(() => import("@/pages/admin/AdminReferrals"));
+const AdminAPIs = lazy(() => import("@/pages/admin/AdminAPIs"));
 
 const queryClient = new QueryClient();
 
@@ -45,48 +46,56 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <DemoProvider>
         <AuthProvider>
-          <TooltipProvider>
-            <Toaster />
-            <BrowserRouter>
-              <div className="min-h-screen flex flex-col">
-                <Header />
-                <main className="flex-1">
+          <AdminAuthProvider>
+            <TooltipProvider>
+              <Toaster />
+              <DemoToggle />
+              <BrowserRouter>
+                <Suspense fallback={<div>Loading...</div>}>
                   <Routes>
+                    {/* Main app routes */}
                     <Route path="/" element={<Index />} />
-                    <Route path="/dashboard" element={<Dashboard />} />
-                    <Route path="/dashboard/buyer" element={<BuyerDashboard />} />
+                    
+                    {/* Board Selector - main dashboard entry point */}
+                    <Route path="/dashboard" element={<BoardSelector />} />
+                    
+                    {/* New Seller Board - dedicated supplier control panel */}
+                    <Route path="/seller-board" element={<SellerBoard />} />
+                    
+                    {/* Role-specific dashboards */}
                     <Route path="/dashboard/supplier" element={<SupplierDashboard />} />
-                    <Route path="/dashboard/seller" element={<SellerDashboard />} />
+                    <Route path="/dashboard/buyer" element={<BuyerDashboard />} />
                     <Route path="/dashboard/freelancer" element={<FreelancerDashboard />} />
+                    <Route path="/dashboard/group-buying" element={<ClientDashboard />} />
+                    <Route path="/dashboard/investor" element={<ClientDashboard />} />
+                    <Route path="/dashboard/judge" element={<ClientDashboard />} />
+                    <Route path="/dashboard/ai-agent" element={<ClientDashboard />} />
                     
-                    <Route path="/group/:groupId/profile" element={<GroupProfile />} />
-                    <Route path="/group/:groupId/room" element={<GroupRoom />} />
-                    <Route path="/offer/:offerId" element={<OfferDetails />} />
-                    <Route path="/seller-offer/:offerId" element={<SellerOfferBoardPage />} />
-                    <Route path="/how-it-works" element={<HowItWorks />} />
-                    
+                    {/* Legacy routes */}
+                    <Route path="/client-dashboard" element={<ClientDashboard />} />
                     <Route path="/profile" element={<UserProfile />} />
                     <Route path="/settings" element={<AccountSettings />} />
-                    <Route path="/client" element={<ClientDashboard />} />
+                    <Route path="/group-room/:groupId" element={<GroupRoom />} />
+                    <Route path="/gateway/:gatewayType" element={<GatewayLanding />} />
+                    <Route path="/group/:groupId/profile" element={<GroupProfile />} />
+                    <Route path="/offer/:offerId" element={<OfferDetails />} />
                     
-                    <Route path="/:gatewayType" element={<GatewayLanding />} />
-                    
+                    {/* Admin routes */}
                     <Route path="/admin/login" element={<AdminLogin />} />
-                    <Route path="/admin/overview" element={<AdminOverview />} />
-                    <Route path="/admin/users" element={<AdminUsers />} />
-                    <Route path="/admin/sellers" element={<SellerManagement />} />
-                    <Route path="/admin/content" element={<AdminContent />} />
-                    <Route path="/admin/apis" element={<AdminAPIs />} />
-                    <Route path="/admin/portals" element={<AdminPortals />} />
-                    <Route path="/admin/referrals" element={<AdminReferrals />} />
+                    <Route path="/admin" element={<AdminLayout />}>
+                      <Route path="overview" element={<AdminOverview />} />
+                      <Route path="users" element={<AdminUsers />} />
+                      <Route path="portals" element={<AdminPortals />} />
+                      <Route path="referrals" element={<AdminReferrals />} />
+                      <Route path="apis" element={<AdminAPIs />} />
+                    </Route>
                     
                     <Route path="*" element={<NotFound />} />
                   </Routes>
-                </main>
-                <Footer />
-              </div>
-            </BrowserRouter>
-          </TooltipProvider>
+                </Suspense>
+              </BrowserRouter>
+            </TooltipProvider>
+          </AdminAuthProvider>
         </AuthProvider>
       </DemoProvider>
     </QueryClientProvider>
