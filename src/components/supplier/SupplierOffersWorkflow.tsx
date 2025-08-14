@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -28,6 +27,11 @@ const SupplierOffersWorkflow = () => {
   const pendingOffers = allOffers.filter(offer => offer.status === 'pending' || offer.status === 'draft');
   const completedOffers = allOffers.filter(offer => offer.status === 'completed');
   const expiredOffers = allOffers.filter(offer => offer.status === 'expired' || offer.status === 'cancelled');
+
+  const handleViewOffer = (offerId: string) => {
+    console.log('Viewing offer:', offerId);
+    // Add navigation logic here
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -161,23 +165,23 @@ const SupplierOffersWorkflow = () => {
             </Card>
           </div>
 
-          <SupplierMyOffers />
+          <SupplierMyOffers offers={allOffers} onViewOffer={handleViewOffer} />
         </TabsContent>
 
         <TabsContent value="active">
-          <SupplierMyOffers filter="active" />
+          <SupplierMyOffers offers={activeOffers} onViewOffer={handleViewOffer} />
         </TabsContent>
 
         <TabsContent value="pending">
-          <SupplierMyOffers filter="pending" />
+          <SupplierMyOffers offers={pendingOffers} onViewOffer={handleViewOffer} />
         </TabsContent>
 
         <TabsContent value="completed">
-          <SupplierMyOffers filter="completed" />
+          <SupplierMyOffers offers={completedOffers} onViewOffer={handleViewOffer} />
         </TabsContent>
 
         <TabsContent value="expired">
-          <SupplierMyOffers filter="expired" />
+          <SupplierMyOffers offers={expiredOffers} onViewOffer={handleViewOffer} />
         </TabsContent>
       </Tabs>
     </div>
