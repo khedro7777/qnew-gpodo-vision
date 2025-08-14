@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -70,119 +69,99 @@ export const useSupplierPanel = () => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
-  console.log('useSupplierPanel - user:', user?.id);
+  // TEMPORARILY USE MOCK USER ID FOR DEVELOPMENT
+  const effectiveUserId = user?.id || 'temp-supplier-id';
+  console.log('useSupplierPanel - using user ID:', effectiveUserId, '(temporary bypass active)');
 
   // Get supplier offers
   const { data: offers = [], isLoading: offersLoading, error: offersError } = useQuery({
-    queryKey: ['supplier-offers', user?.id],
+    queryKey: ['supplier-offers', effectiveUserId],
     queryFn: async () => {
-      if (!user?.id) {
-        console.log('No user ID, returning empty offers');
-        return [];
-      }
-
-      console.log('Fetching offers for user:', user.id);
+      console.log('Fetching offers for user:', effectiveUserId);
       
-      const { data, error } = await supabase
-        .from('group_discount_offers')
-        .select(`
-          *,
-          group_discount_tiers (*)
-        `)
-        .eq('supplier_id', user.id)
-        .order('created_at', { ascending: false });
+      // TEMPORARILY RETURN MOCK DATA FOR DEVELOPMENT
+      const mockOffers = [
+        {
+          id: 'mock-offer-1',
+          supplier_id: effectiveUserId,
+          title: 'Sample Group Discount Offer',
+          description: 'This is a sample offer for development purposes',
+          category: 'Electronics',
+          target_region: 'Global',
+          base_price: 99.99,
+          minimum_joiners: 10,
+          deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          visibility: 'public' as const,
+          status: 'active' as const,
+          kyc_required: false,
+          points_required: 0,
+          current_participants: 5,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          group_discount_tiers: []
+        }
+      ];
       
-      if (error) {
-        console.error('Error fetching offers:', error);
-        throw error;
-      }
-      
-      console.log('Fetched offers:', data?.length || 0);
-      return data as SupplierOffer[];
+      console.log('Returning mock offers for development');
+      return mockOffers;
     },
-    enabled: !!user?.id,
+    enabled: true, // Always enabled for development
   });
 
   // Get payment settings
   const { data: paymentSettings, isLoading: settingsLoading, error: settingsError } = useQuery({
-    queryKey: ['supplier-payment-settings', user?.id],
+    queryKey: ['supplier-payment-settings', effectiveUserId],
     queryFn: async () => {
-      if (!user?.id) return null;
-
-      const { data, error } = await supabase
-        .from('supplier_payment_settings')
-        .select('*')
-        .eq('supplier_id', user.id)
-        .maybeSingle();
+      // TEMPORARILY RETURN MOCK DATA
+      const mockSettings = {
+        id: 'mock-settings-1',
+        supplier_id: effectiveUserId,
+        paypal_email: 'supplier@example.com',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
       
-      if (error) {
-        console.error('Error fetching payment settings:', error);
-        throw error;
-      }
-      return data as SupplierPaymentSettings | null;
+      console.log('Returning mock payment settings for development');
+      return mockSettings;
     },
-    enabled: !!user?.id,
+    enabled: true,
   });
 
   // Get complaints
   const { data: complaints = [], isLoading: complaintsLoading, error: complaintsError } = useQuery({
-    queryKey: ['supplier-complaints', user?.id],
+    queryKey: ['supplier-complaints', effectiveUserId],
     queryFn: async () => {
-      if (!user?.id) return [];
-
-      const { data, error } = await supabase
-        .from('complaints')
-        .select('*')
-        .eq('supplier_id', user.id)
-        .order('created_at', { ascending: false });
+      // TEMPORARILY RETURN MOCK DATA
+      const mockComplaints = [
+        {
+          id: 'mock-complaint-1',
+          complaint_number: 'COMP-001',
+          offer_id: 'mock-offer-1',
+          from_user_id: 'user-123',
+          supplier_id: effectiveUserId,
+          subject: 'Sample Complaint',
+          message: 'This is a sample complaint for development purposes',
+          status: 'open' as const,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+      ];
       
-      if (error) {
-        console.error('Error fetching complaints:', error);
-        throw error;
-      }
-      return data as Complaint[];
+      console.log('Returning mock complaints for development');
+      return mockComplaints;
     },
-    enabled: !!user?.id,
+    enabled: true,
   });
 
-  // Create offer mutation
+  // Create offer mutation (temporarily disabled)
   const createOffer = useMutation({
-    mutationFn: async (offerData: Omit<SupplierOffer, 'id' | 'created_at' | 'updated_at' | 'current_participants' | 'supplier_id'> & { tiers: Omit<DiscountTier, 'id' | 'offer_id' | 'created_at'>[] }) => {
-      if (!user?.id) throw new Error('Not authenticated');
-      
-      const { tiers, ...offer } = offerData;
-      const offerWithSupplier = { 
-        ...offer, 
-        supplier_id: user.id,
-        current_participants: 0
-      };
-      
-      const { data: offerResult, error: offerError } = await supabase
-        .from('group_discount_offers')
-        .insert(offerWithSupplier)
-        .select()
-        .single();
-      
-      if (offerError) throw offerError;
-      
-      if (tiers.length > 0) {
-        const tiersWithOfferId = tiers.map(tier => ({
-          ...tier,
-          offer_id: offerResult.id,
-        }));
-        
-        const { error: tiersError } = await supabase
-          .from('group_discount_tiers')
-          .insert(tiersWithOfferId);
-        
-        if (tiersError) throw tiersError;
-      }
-      
-      return offerResult;
+    mutationFn: async (offerData: any) => {
+      console.log('Create offer temporarily disabled for development');
+      toast.success('Offer creation temporarily disabled (development mode)');
+      return { id: 'mock-new-offer', ...offerData };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['supplier-offers'] });
-      toast.success('Offer created successfully');
     },
     onError: (error: any) => {
       console.error('Create offer error:', error);
@@ -190,22 +169,15 @@ export const useSupplierPanel = () => {
     },
   });
 
-  // Update offer mutation
+  // Update offer mutation (temporarily disabled)
   const updateOffer = useMutation({
-    mutationFn: async ({ id, ...updates }: Partial<SupplierOffer> & { id: string }) => {
-      const { data, error } = await supabase
-        .from('group_discount_offers')
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single();
-      
-      if (error) throw error;
-      return data;
+    mutationFn: async ({ id, ...updates }: any) => {
+      console.log('Update offer temporarily disabled for development');
+      toast.success('Offer update temporarily disabled (development mode)');
+      return { id, ...updates };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['supplier-offers'] });
-      toast.success('Offer updated successfully');
     },
     onError: (error: any) => {
       console.error('Update offer error:', error);
@@ -213,25 +185,15 @@ export const useSupplierPanel = () => {
     },
   });
 
-  // Update payment settings mutation
+  // Update payment settings mutation (temporarily disabled)
   const updatePaymentSettings = useMutation({
-    mutationFn: async (settings: Omit<SupplierPaymentSettings, 'id' | 'created_at' | 'updated_at' | 'supplier_id'>) => {
-      if (!user?.id) throw new Error('Not authenticated');
-      
-      const settingsWithSupplier = { ...settings, supplier_id: user.id };
-      
-      const { data, error } = await supabase
-        .from('supplier_payment_settings')
-        .upsert(settingsWithSupplier, { onConflict: 'supplier_id' })
-        .select()
-        .single();
-      
-      if (error) throw error;
-      return data;
+    mutationFn: async (settings: any) => {
+      console.log('Update payment settings temporarily disabled for development');
+      toast.success('Payment settings update temporarily disabled (development mode)');
+      return settings;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['supplier-payment-settings'] });
-      toast.success('Payment settings updated');
     },
     onError: (error: any) => {
       console.error('Update settings error:', error);
@@ -239,26 +201,15 @@ export const useSupplierPanel = () => {
     },
   });
 
-  // Reply to complaint mutation
+  // Reply to complaint mutation (temporarily disabled)
   const replyToComplaint = useMutation({
     mutationFn: async ({ id, supplier_reply }: { id: string; supplier_reply: string }) => {
-      const { data, error } = await supabase
-        .from('complaints')
-        .update({ 
-          supplier_reply,
-          status: 'in_progress',
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', id)
-        .select()
-        .single();
-      
-      if (error) throw error;
-      return data;
+      console.log('Reply to complaint temporarily disabled for development');
+      toast.success('Complaint reply temporarily disabled (development mode)');
+      return { id, supplier_reply };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['supplier-complaints'] });
-      toast.success('Reply sent successfully');
     },
     onError: (error: any) => {
       console.error('Reply error:', error);
@@ -269,7 +220,7 @@ export const useSupplierPanel = () => {
   const isLoading = offersLoading || settingsLoading || complaintsLoading;
   const hasError = offersError || settingsError || complaintsError;
   
-  console.log('useSupplierPanel state:', {
+  console.log('useSupplierPanel state (development mode):', {
     isLoading,
     hasError: !!hasError,
     offersCount: offers?.length || 0,

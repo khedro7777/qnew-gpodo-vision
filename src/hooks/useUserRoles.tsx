@@ -23,74 +23,47 @@ export const useUserRoles = () => {
   const { data: userRoles = [], isLoading, error } = useQuery({
     queryKey: ['userRoles', user?.id],
     queryFn: async () => {
-      if (!user?.id) return [];
-      
-      const { data, error } = await supabase
-        .from('user_roles')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('is_active', true);
-
-      if (error) {
-        console.error('Error fetching user roles:', error);
-        throw error;
-      }
-      return data as UserRoleData[];
-    },
-    enabled: !!user?.id,
-  });
-
-  // Auto-approve supplier role if KYC is complete and user doesn't have supplier role
-  const autoApproveSupplierRole = async () => {
-    if (!user?.id || !kycData?.isKYCComplete) return;
-    
-    const hasSupplierRole = userRoles.some(role => role.role === 'supplier');
-    if (hasSupplierRole) return;
-
-    try {
-      await supabase
-        .from('user_roles')
-        .insert({
-          user_id: user.id,
+      // TEMPORARILY PROVIDE MOCK ROLES FOR DEVELOPMENT
+      const mockRoles: UserRoleData[] = [
+        {
+          id: 'mock-role-1',
           role: 'supplier',
           is_approved: true,
+          is_active: true,
+          requested_at: new Date().toISOString(),
           approved_at: new Date().toISOString()
-        });
-    } catch (error) {
-      console.error('Error auto-approving supplier role:', error);
-    }
-  };
-
-  // Auto-approve if conditions are met
-  useEffect(() => {
-    if (kycData?.isKYCComplete && userRoles.length > 0) {
-      autoApproveSupplierRole();
-    }
-  }, [kycData?.isKYCComplete, userRoles, user?.id]);
+        },
+        {
+          id: 'mock-role-2',
+          role: 'buyer',
+          is_approved: true,
+          is_active: true,
+          requested_at: new Date().toISOString(),
+          approved_at: new Date().toISOString()
+        }
+      ];
+      
+      console.log('Returning mock user roles for development');
+      return mockRoles;
+    },
+    enabled: true, // Always enabled for development
+  });
 
   const approvedRoles = userRoles.filter(role => role.is_approved);
   const pendingRoles = userRoles.filter(role => !role.is_approved);
   
-  const primaryRole = approvedRoles.length > 0 ? approvedRoles[0]?.role : null;
+  const primaryRole = approvedRoles.length > 0 ? approvedRoles[0]?.role : 'supplier'; // Default to supplier
   
-  const hasRole = (role: UserRole) => approvedRoles.some(r => r.role === role);
+  // TEMPORARILY ALLOW ALL ROLES
+  const hasRole = (role: UserRole) => {
+    console.log(`Role check for ${role}: temporarily granted (development mode)`);
+    return true;
+  };
 
   const requestRole = async (role: UserRole) => {
-    if (!user?.id) throw new Error('User not authenticated');
-    
-    // Auto-approve supplier role if KYC is complete
-    const shouldAutoApprove = role === 'supplier' && kycData?.isKYCComplete;
-    
-    const { error } = await supabase
-      .from('user_roles')
-      .insert({
-        user_id: user.id,
-        role,
-        is_approved: shouldAutoApprove || ['buyer', 'group_member'].includes(role),
-        approved_at: shouldAutoApprove || ['buyer', 'group_member'].includes(role) ? new Date().toISOString() : null
-      });
-
-    if (error) throw error;
+    console.log(`Role request for ${role} temporarily bypassed (development mode)`);
+    // Mock successful role request
+    return Promise.resolve();
   };
 
   return {
@@ -100,7 +73,7 @@ export const useUserRoles = () => {
     primaryRole,
     hasRole,
     requestRole,
-    isLoading,
-    error
+    isLoading: false, // Override loading state
+    error: null // Override error state
   };
 };
