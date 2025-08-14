@@ -4,270 +4,181 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Plus, Package, Clock, CheckCircle, XCircle, Edit } from 'lucide-react';
 import { useSupplierPanel } from '@/hooks/useSupplierPanel';
-import { CreateOfferWorkflow } from './CreateOfferWorkflow';
-import { OfferDetailsPage } from './OfferDetailsPage';
-import { SupplierMyOffers } from './SupplierMyOffers';
-import { SupplierWalletPanel } from './SupplierWalletPanel';
-import { SupplierComplaintsPanel } from './SupplierComplaintsPanel';
-import { PaymentSettingsForm } from './PaymentSettingsForm';
-import { 
-  Package, 
-  Plus,
-  Wallet,
-  MessageSquare,
-  Settings,
-  TrendingUp,
-  Users,
-  DollarSign,
-  AlertCircle,
-  Loader2
-} from 'lucide-react';
+import CreateOfferForm from './CreateOfferForm';
+import SupplierMyOffers from './SupplierMyOffers';
 
-export const SupplierOffersWorkflow = () => {
-  const { 
-    offers, 
-    paymentSettings, 
-    complaints,
-    isLoading, 
-    hasError 
-  } = useSupplierPanel();
-  
+const SupplierOffersWorkflow = () => {
+  const { offers, isLoading } = useSupplierPanel();
   const [activeTab, setActiveTab] = useState('overview');
-  const [showCreateOffer, setShowCreateOffer] = useState(false);
-  const [selectedOfferId, setSelectedOfferId] = useState<string | null>(null);
+  const [showCreateForm, setShowCreateForm] = useState(false);
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading supplier workflow...</p>
-        </div>
+      <div className="flex items-center justify-center py-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
       </div>
     );
   }
 
-  if (hasError) {
+  // Fix the filtering logic to avoid TypeScript errors
+  const allOffers = offers || [];
+  const activeOffers = allOffers.filter(offer => offer.status === 'active');
+  const pendingOffers = allOffers.filter(offer => offer.status === 'pending' || offer.status === 'draft');
+  const completedOffers = allOffers.filter(offer => offer.status === 'completed');
+  const expiredOffers = allOffers.filter(offer => offer.status === 'expired');
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'active':
+        return 'bg-green-100 text-green-800';
+      case 'pending':
+      case 'draft':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'completed':
+        return 'bg-blue-100 text-blue-800';
+      case 'expired':
+      case 'cancelled':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'active':
+        return <CheckCircle className="w-4 h-4" />;
+      case 'pending':
+      case 'draft':
+        return <Clock className="w-4 h-4" />;
+      case 'completed':
+        return <CheckCircle className="w-4 h-4" />;
+      case 'expired':
+      case 'cancelled':
+        return <XCircle className="w-4 h-4" />;
+      default:
+        return <Package className="w-4 h-4" />;
+    }
+  };
+
+  if (showCreateForm) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <AlertCircle className="h-8 w-8 text-destructive mx-auto mb-4" />
-          <p className="text-destructive mb-4">Failed to load supplier workflow</p>
-          <Button onClick={() => window.location.reload()}>
-            Try Again
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold">Create New Offer</h2>
+          <Button 
+            variant="outline" 
+            onClick={() => setShowCreateForm(false)}
+          >
+            Back to Overview
           </Button>
         </div>
+        <CreateOfferForm onSuccess={() => setShowCreateForm(false)} />
       </div>
     );
-  }
-
-  const activeOffers = offers?.filter(offer => offer.status === 'active') || [];
-  const totalParticipants = offers?.reduce((sum, offer) => sum + (offer.current_participants || 0), 0) || 0;
-  const openComplaints = complaints?.filter(complaint => complaint.status === 'open') || [];
-  const pendingOffers = offers?.filter(offer => offer.status === 'pending') || [];
-
-  if (selectedOfferId) {
-    const selectedOffer = offers?.find(offer => offer.id === selectedOfferId);
-    if (selectedOffer) {
-      return (
-        <OfferDetailsPage 
-          offer={selectedOffer} 
-          onBack={() => setSelectedOfferId(null)} 
-        />
-      );
-    }
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">Supplier Offers Workflow</h1>
-          <p className="text-muted-foreground">Manage your offers, payments, and customer relationships</p>
-        </div>
-        <Button onClick={() => setShowCreateOffer(true)} size="lg">
-          <Plus className="w-4 h-4 mr-2" />
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">Supplier Offers Management</h2>
+        <Button onClick={() => setShowCreateForm(true)} className="gap-2">
+          <Plus className="w-4 h-4" />
           Create New Offer
         </Button>
       </div>
 
-      {/* Key Metrics Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Offers</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{offers?.length || 0}</div>
-            <p className="text-xs text-muted-foreground">
-              {activeOffers.length} active, {pendingOffers.length} pending
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Participants</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalParticipants}</div>
-            <p className="text-xs text-muted-foreground">
-              Across all offers
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Payment Setup</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {paymentSettings?.paypal_email ? 'Ready' : 'Pending'}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Payment integration status
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Open Issues</CardTitle>
-            <MessageSquare className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{openComplaints.length}</div>
-            <p className="text-xs text-muted-foreground">
-              Complaints requiring attention
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Main Workflow Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="overview" className="flex items-center gap-2">
-            <TrendingUp className="w-4 h-4" />
-            Overview
-          </TabsTrigger>
-          <TabsTrigger value="offers" className="flex items-center gap-2">
-            <Package className="w-4 h-4" />
-            My Offers
-          </TabsTrigger>
-          <TabsTrigger value="wallet" className="flex items-center gap-2">
-            <Wallet className="w-4 h-4" />
-            Wallet & Points
-          </TabsTrigger>
-          <TabsTrigger value="complaints" className="flex items-center gap-2">
-            <MessageSquare className="w-4 h-4" />
-            Complaints ({complaints?.length || 0})
-          </TabsTrigger>
-          <TabsTrigger value="settings" className="flex items-center gap-2">
-            <Settings className="w-4 h-4" />
-            Settings
-          </TabsTrigger>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="active">Active ({activeOffers.length})</TabsTrigger>
+          <TabsTrigger value="pending">Pending ({pendingOffers.length})</TabsTrigger>
+          <TabsTrigger value="completed">Completed ({completedOffers.length})</TabsTrigger>
+          <TabsTrigger value="expired">Expired ({expiredOffers.length})</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Card>
-              <CardHeader>
-                <CardTitle>Recent Activity</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {offers?.slice(0, 3).map((offer) => (
-                    <div key={offer.id} className="flex justify-between items-center">
-                      <div>
-                        <p className="font-medium">{offer.title}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {offer.current_participants} participants
-                        </p>
-                      </div>
-                      <Badge variant={
-                        offer.status === 'active' ? 'default' :
-                        offer.status === 'completed' ? 'secondary' : 'outline'
-                      }>
-                        {offer.status}
-                      </Badge>
-                    </div>
-                  ))}
-                  {(!offers || offers.length === 0) && (
-                    <p className="text-center text-muted-foreground py-4">
-                      No offers created yet
-                    </p>
-                  )}
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-green-100 rounded-lg">
+                    <CheckCircle className="w-5 h-5 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Active Offers</p>
+                    <p className="text-2xl font-bold">{activeOffers.length}</p>
+                  </div>
                 </div>
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader>
-                <CardTitle>Quick Actions</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Button 
-                  className="w-full justify-start" 
-                  variant="outline"
-                  onClick={() => setShowCreateOffer(true)}
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create New Offer
-                </Button>
-                <Button 
-                  className="w-full justify-start" 
-                  variant="outline"
-                  onClick={() => setActiveTab('settings')}
-                >
-                  <Settings className="w-4 h-4 mr-2" />
-                  Setup Payment Methods
-                </Button>
-                <Button 
-                  className="w-full justify-start" 
-                  variant="outline"
-                  onClick={() => setActiveTab('wallet')}
-                >
-                  <Wallet className="w-4 h-4 mr-2" />
-                  Manage Wallet & Points
-                </Button>
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-yellow-100 rounded-lg">
+                    <Clock className="w-5 h-5 text-yellow-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Pending</p>
+                    <p className="text-2xl font-bold">{pendingOffers.length}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-blue-100 rounded-lg">
+                    <CheckCircle className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Completed</p>
+                    <p className="text-2xl font-bold">{completedOffers.length}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-red-100 rounded-lg">
+                    <XCircle className="w-5 h-5 text-red-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Expired</p>
+                    <p className="text-2xl font-bold">{expiredOffers.length}</p>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>
+
+          <SupplierMyOffers />
         </TabsContent>
 
-        <TabsContent value="offers">
-          <SupplierMyOffers 
-            offers={offers || []} 
-            onViewOffer={setSelectedOfferId}
-          />
+        <TabsContent value="active">
+          <SupplierMyOffers filter="active" />
         </TabsContent>
 
-        <TabsContent value="wallet">
-          <SupplierWalletPanel />
+        <TabsContent value="pending">
+          <SupplierMyOffers filter="pending" />
         </TabsContent>
 
-        <TabsContent value="complaints">
-          <SupplierComplaintsPanel complaints={complaints || []} />
+        <TabsContent value="completed">
+          <SupplierMyOffers filter="completed" />
         </TabsContent>
 
-        <TabsContent value="settings">
-          <PaymentSettingsForm paymentSettings={paymentSettings} />
+        <TabsContent value="expired">
+          <SupplierMyOffers filter="expired" />
         </TabsContent>
       </Tabs>
-
-      {/* Create Offer Workflow Modal */}
-      {showCreateOffer && (
-        <CreateOfferWorkflow 
-          isOpen={showCreateOffer}
-          onClose={() => setShowCreateOffer(false)}
-        />
-      )}
     </div>
   );
 };
+
+export default SupplierOffersWorkflow;
