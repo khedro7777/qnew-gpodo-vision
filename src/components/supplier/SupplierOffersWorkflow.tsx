@@ -6,8 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Plus, Package, Clock, CheckCircle, XCircle, Edit } from 'lucide-react';
 import { useSupplierPanel } from '@/hooks/useSupplierPanel';
-import CreateOfferForm from './CreateOfferForm';
-import SupplierMyOffers from './SupplierMyOffers';
+import { CreateOfferForm } from './CreateOfferForm';
+import { SupplierMyOffers } from './SupplierMyOffers';
 
 const SupplierOffersWorkflow = () => {
   const { offers, isLoading } = useSupplierPanel();
@@ -27,7 +27,7 @@ const SupplierOffersWorkflow = () => {
   const activeOffers = allOffers.filter(offer => offer.status === 'active');
   const pendingOffers = allOffers.filter(offer => offer.status === 'pending' || offer.status === 'draft');
   const completedOffers = allOffers.filter(offer => offer.status === 'completed');
-  const expiredOffers = allOffers.filter(offer => offer.status === 'expired');
+  const expiredOffers = allOffers.filter(offer => offer.status === 'expired' || offer.status === 'cancelled');
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -75,7 +75,10 @@ const SupplierOffersWorkflow = () => {
             Back to Overview
           </Button>
         </div>
-        <CreateOfferForm onSuccess={() => setShowCreateForm(false)} />
+        <CreateOfferForm 
+          isOpen={true} 
+          onClose={() => setShowCreateForm(false)} 
+        />
       </div>
     );
   }
