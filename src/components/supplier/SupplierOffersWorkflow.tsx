@@ -6,8 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Plus, Package, Clock, CheckCircle, XCircle, Edit } from 'lucide-react';
 import { useSupplierPanel } from '@/hooks/useSupplierPanel';
-import CreateOfferForm from './CreateOfferForm';
-import SupplierMyOffers from './SupplierMyOffers';
+import { CreateOfferForm } from './CreateOfferForm';
+import { SupplierMyOffers } from './SupplierMyOffers';
 
 const SupplierOffersWorkflow = () => {
   const { offers, isLoading } = useSupplierPanel();
@@ -75,7 +75,10 @@ const SupplierOffersWorkflow = () => {
             Back to Overview
           </Button>
         </div>
-        <CreateOfferForm onSuccess={() => setShowCreateForm(false)} />
+        <CreateOfferForm 
+          isOpen={showCreateForm}
+          onClose={() => setShowCreateForm(false)}
+        />
       </div>
     );
   }
@@ -158,23 +161,23 @@ const SupplierOffersWorkflow = () => {
             </Card>
           </div>
 
-          <SupplierMyOffers />
+          <SupplierMyOffers offers={allOffers} onViewOffer={(offerId) => console.log('View offer:', offerId)} />
         </TabsContent>
 
         <TabsContent value="active">
-          <SupplierMyOffers filter="active" />
+          <SupplierMyOffers offers={activeOffers} onViewOffer={(offerId) => console.log('View offer:', offerId)} />
         </TabsContent>
 
         <TabsContent value="pending">
-          <SupplierMyOffers filter="pending" />
+          <SupplierMyOffers offers={pendingOffers} onViewOffer={(offerId) => console.log('View offer:', offerId)} />
         </TabsContent>
 
         <TabsContent value="completed">
-          <SupplierMyOffers filter="completed" />
+          <SupplierMyOffers offers={completedOffers} onViewOffer={(offerId) => console.log('View offer:', offerId)} />
         </TabsContent>
 
         <TabsContent value="expired">
-          <SupplierMyOffers filter="expired" />
+          <SupplierMyOffers offers={expiredOffers} onViewOffer={(offerId) => console.log('View offer:', offerId)} />
         </TabsContent>
       </Tabs>
     </div>
