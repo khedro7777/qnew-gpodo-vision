@@ -1,244 +1,209 @@
 
 import React, { useState, useEffect } from 'react';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/contexts/AuthContext';
-import { useGroupWorkflow } from '@/hooks/useGroupWorkflow';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
   Users, 
-  Calendar,
-  Download,
+  Calendar, 
+  MapPin, 
+  Globe, 
+  Lock, 
+  Star,
   Settings,
-  Crown
+  Share2,
+  Bell,
+  MoreHorizontal
 } from 'lucide-react';
-import GroupRoomTabs from './GroupRoomTabs';
+import EnhancedGroupRoomTabs from './EnhancedGroupRoomTabs';
+import { useAuth } from '@/contexts/AuthContext';
 
-interface GroupRoomProps {
+interface GroupRoomInterfaceProps {
   groupId: string;
 }
 
-const GroupRoomInterface = ({ groupId }: GroupRoomProps) => {
+const GroupRoomInterface = ({ groupId }: GroupRoomInterfaceProps) => {
   const { user } = useAuth();
-  const workflow = useGroupWorkflow(groupId);
   const [group, setGroup] = useState<any>(null);
-  const [userRole, setUserRole] = useState<string>('member');
+  const [userRole, setUserRole] = useState('member');
   const [isManager, setIsManager] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadGroupData();
-  }, [groupId, user]);
-
-  const loadGroupData = async () => {
-    try {
-      // Load group details with mock data for demo
-      const mockGroup = {
-        id: groupId,
-        name: 'Medical Equipment Group Purchasing',
-        description: 'Specialized group for bulk purchasing of medical equipment at competitive prices',
-        gateway_type: 'purchasing',
-        status: 'active',
-        current_members: 12,
-        max_members: 20,
-        is_public: true,
-        created_at: new Date().toISOString(),
-        creator_id: 'mock-creator-id',
-        countries: {
-          name: 'Saudi Arabia',
-          flag_emoji: '🇸🇦'
-        },
-        industry_sectors: {
-          name: 'Healthcare',
-          icon: '🏥'
-        }
-      };
-
-      setGroup(mockGroup);
-
-      // Mock user role - in real app this would come from database
-      const mockUserRole = user?.id === 'mock-creator-id' ? 'founder' : 'member';
-      setUserRole(mockUserRole);
-      
-      // Check if user is an elected manager
-      const mockIsManager = Math.random() > 0.5; // 50% chance for demo
-      setIsManager(mockIsManager);
-
-      if (mockIsManager && mockUserRole !== 'founder') {
-        toast.success('Welcome to the managers panel! You are an elected manager of this group');
+    // Mock group data - replace with actual API call
+    const mockGroup = {
+      id: groupId,
+      name: 'Tech Innovators Collective',
+      description: 'A collaborative space for technology professionals to share ideas, discuss trends, and work together on innovative projects.',
+      type: 'professional',
+      privacy: 'public',
+      category: 'Technology',
+      location: 'Global',
+      members_count: 156,
+      max_members: 500,
+      created_at: '2024-01-01T00:00:00Z',
+      image_url: null,
+      tags: ['technology', 'innovation', 'collaboration', 'networking'],
+      rules: [
+        'Respect all members and maintain professional conduct',
+        'Share knowledge and help others learn',
+        'No spam or irrelevant content',
+        'Use appropriate channels for different topics'
+      ],
+      stats: {
+        messages_today: 23,
+        active_proposals: 3,
+        completed_deals: 12,
+        satisfaction_rate: 94
       }
+    };
 
-    } catch (error) {
-      console.error('Load group data error:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const exportGroupData = async () => {
-    try {
-      toast.success('Group report exported successfully');
-    } catch (error) {
-      console.error('Export error:', error);
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active': return 'bg-green-100 text-green-800';
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'closed': return 'bg-red-100 text-red-800';
-      case 'archived': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'active': return 'Active';
-      case 'pending': return 'Under Review';
-      case 'closed': return 'Closed';
-      case 'archived': return 'Archived';
-      default: return status;
-    }
-  };
-
-  const getGatewayTypeText = (type: string) => {
-    switch (type) {
-      case 'purchasing': return '🛒 Group Purchasing';
-      case 'marketing': return '📢 Cooperative Marketing';
-      case 'formation': return '🏢 Company Formation';
-      case 'freelancers': return '👨‍💻 Freelance Teams';
-      default: return type;
-    }
-  };
+    setGroup(mockGroup);
+    setUserRole('member');
+    setIsManager(true); // Mock manager status
+    setLoading(false);
+  }, [groupId]);
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-productivity-blue"></div>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   if (!group) {
     return (
-      <div className="text-center py-12">
-        <h2 className="text-xl font-semibold text-gray-900">Group Not Found</h2>
-        <p className="text-gray-600 mt-2">The group you're looking for doesn't exist or you don't have access to it.</p>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center">
+        <Card className="p-8 text-center">
+          <h2 className="text-2xl font-bold text-foreground mb-2">Group Not Found</h2>
+          <p className="text-muted-foreground">The group you're looking for doesn't exist or has been removed.</p>
+        </Card>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Group Header */}
-      <div className="mb-8">
-        <div className="flex items-start justify-between">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-3xl font-bold text-gray-900">{group.name}</h1>
-              <Badge className={getStatusColor(group.status)}>
-                {getStatusText(group.status)}
-              </Badge>
-              {userRole === 'founder' && (
-                <Badge className="bg-purple-100 text-purple-800">Founder</Badge>
-              )}
-              {isManager && userRole !== 'founder' && (
-                <Badge className="bg-yellow-100 text-yellow-800">
-                  <Crown className="w-3 h-3 mr-1" />
-                  Elected Manager
-                </Badge>
-              )}
-            </div>
-            
-            <p className="text-gray-600 mb-2">{getGatewayTypeText(group.gateway_type)}</p>
-            
-            {group.description && (
-              <p className="text-gray-600 mb-4">{group.description}</p>
-            )}
-
-            <div className="flex items-center gap-6 text-sm text-gray-500">
-              <div className="flex items-center gap-1">
-                <Users className="w-4 h-4" />
-                <span>{group.current_members}/{group.max_members} members</span>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Enhanced Group Header */}
+        <Card className="mb-6 overflow-hidden">
+          <div className="h-32 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600"></div>
+          <CardContent className="relative -mt-16 pb-6">
+            <div className="flex items-start justify-between">
+              <div className="flex items-start gap-4">
+                <Avatar className="w-24 h-24 border-4 border-background">
+                  <AvatarImage src={group.image_url} />
+                  <AvatarFallback className="text-2xl font-bold bg-primary text-primary-foreground">
+                    {group.name.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                
+                <div className="mt-8">
+                  <div className="flex items-center gap-3 mb-2">
+                    <h1 className="text-3xl font-bold text-foreground">{group.name}</h1>
+                    <Badge variant={group.privacy === 'public' ? 'default' : 'secondary'}>
+                      {group.privacy === 'public' ? (
+                        <>
+                          <Globe className="w-3 h-3 mr-1" />
+                          Public
+                        </>
+                      ) : (
+                        <>
+                          <Lock className="w-3 h-3 mr-1" />
+                          Private
+                        </>
+                      )}
+                    </Badge>
+                    <Badge variant="outline">{group.category}</Badge>
+                  </div>
+                  
+                  <p className="text-muted-foreground mb-3 max-w-2xl">{group.description}</p>
+                  
+                  <div className="flex items-center gap-6 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1">
+                      <Users className="w-4 h-4" />
+                      <span>{group.members_count} members</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <MapPin className="w-4 h-4" />
+                      <span>{group.location}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Calendar className="w-4 h-4" />
+                      <span>Created {new Date(group.created_at).toLocaleDateString()}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Star className="w-4 h-4 text-yellow-500" />
+                      <span>{group.stats.satisfaction_rate}% satisfaction</span>
+                    </div>
+                  </div>
+                </div>
               </div>
               
-              <div className="flex items-center gap-1">
-                <Calendar className="w-4 h-4" />
-                <span>Created {new Date(group.created_at).toLocaleDateString('en-US')}</span>
+              <div className="flex items-center gap-2 mt-8">
+                <Button variant="outline" size="sm">
+                  <Bell className="w-4 h-4 mr-2" />
+                  Notifications
+                </Button>
+                <Button variant="outline" size="sm">
+                  <Share2 className="w-4 h-4 mr-2" />
+                  Share
+                </Button>
+                {isManager && (
+                  <Button variant="outline" size="sm">
+                    <Settings className="w-4 h-4 mr-2" />
+                    Manage
+                  </Button>
+                )}
+                <Button variant="outline" size="sm">
+                  <MoreHorizontal className="w-4 h-4" />
+                </Button>
               </div>
-
-              {group.countries && (
-                <div className="flex items-center gap-1">
-                  <span>{group.countries.flag_emoji}</span>
-                  <span>{group.countries.name}</span>
-                </div>
-              )}
-
-              {group.industry_sectors && (
-                <div className="flex items-center gap-1">
-                  <span>{group.industry_sectors.icon}</span>
-                  <span>{group.industry_sectors.name}</span>
-                </div>
-              )}
             </div>
-          </div>
-
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={exportGroupData}>
-              <Download className="w-4 h-4 mr-2" />
-              Export PDF
-            </Button>
-            
-            {(userRole === 'founder' || isManager) && (
-              <Button variant="outline" size="sm">
-                <Settings className="w-4 h-4 mr-2" />
-                Settings
-              </Button>
-            )}
-          </div>
-        </div>
-
-        {/* Progress Bar */}
-        <div className="mt-4">
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-sm font-medium text-gray-700">Group Capacity</span>
-            <span className="text-sm text-gray-500">
-              {Math.round((group.current_members / group.max_members) * 100)}%
-            </span>
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div
-              className="bg-productivity-blue h-2 rounded-full transition-all duration-300"
-              style={{ width: `${(group.current_members / group.max_members) * 100}%` }}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Manager Welcome Message */}
-      {isManager && (
-        <Card className="mb-6 p-4 bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-200">
-          <div className="flex items-center gap-3">
-            <Crown className="w-6 h-6 text-yellow-600" />
-            <div>
-              <h3 className="font-semibold text-yellow-900">You are now an elected manager of this group</h3>
-              <p className="text-sm text-yellow-700">You can now access the managers panel and create decisions and approve offers</p>
-            </div>
-          </div>
+          </CardContent>
         </Card>
-      )}
 
-      {/* Group Room Tabs */}
-      <GroupRoomTabs 
-        groupId={groupId}
-        group={group} 
-        userRole={userRole} 
-        isManager={isManager}
-      />
+        {/* Group Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <Card>
+            <CardContent className="p-4 text-center">
+              <div className="text-2xl font-bold text-primary">{group.stats.messages_today}</div>
+              <div className="text-sm text-muted-foreground">Messages Today</div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-4 text-center">
+              <div className="text-2xl font-bold text-blue-600">{group.stats.active_proposals}</div>
+              <div className="text-sm text-muted-foreground">Active Proposals</div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-4 text-center">
+              <div className="text-2xl font-bold text-green-600">{group.stats.completed_deals}</div>
+              <div className="text-sm text-muted-foreground">Completed Deals</div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-4 text-center">
+              <div className="text-2xl font-bold text-purple-600">{group.members_count}</div>
+              <div className="text-sm text-muted-foreground">Total Members</div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Enhanced Group Room Tabs */}
+        <EnhancedGroupRoomTabs 
+          groupId={groupId}
+          group={group}
+          userRole={userRole}
+          isManager={isManager}
+        />
+      </div>
     </div>
   );
 };
