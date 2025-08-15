@@ -9,29 +9,50 @@ import { CreateOfferForm } from './CreateOfferForm';
 import { OfferDetailsPage } from './OfferDetailsPage';
 import { OfferOrganizersPanel } from './OfferOrganizersPanel';
 
-// Mock data for supplier offers
-const mockOffers = [
+// Define the SupplierOffer interface to match the expected type
+interface SupplierOffer {
+  id: string;
+  supplier_id: string;
+  title: string;
+  description: string;
+  status: 'active' | 'pending' | 'completed' | 'expired' | 'cancelled' | 'draft';
+  base_price: number;
+  minimum_joiners: number;
+  current_participants: number;
+  deadline: string;
+  visibility: 'public' | 'invite_only';
+  kyc_required: boolean;
+  points_required: number;
+  target_region: string;
+  created_at: string;
+  updated_at: string;
+  category?: string;
+  group_discount_tiers?: Array<{
+    min_members: number;
+    discount_percent?: number;
+    tier_order: number;
+  }>;
+}
+
+// Mock data for supplier offers - properly typed
+const mockOffers: SupplierOffer[] = [
   {
     id: '1',
+    supplier_id: 'supplier-1',
     title: 'Premium Office Chairs - Group Discount',
     description: 'High-quality ergonomic office chairs with bulk pricing',
-    status: 'active' as const,
-    price: 250,
-    currency: 'USD',
-    minQuantity: 10,
-    maxQuantity: 100,
-    currentOrders: 25,
-    expiryDate: '2024-02-15',
-    category: 'Office Furniture',
-    createdAt: '2024-01-01',
+    status: 'active',
     base_price: 250,
     minimum_joiners: 10,
     current_participants: 25,
-    deadline: '2024-02-15',
-    visibility: 'public' as const,
+    deadline: '2024-02-15T00:00:00Z',
+    visibility: 'public',
     kyc_required: false,
     points_required: 0,
     target_region: 'Global',
+    category: 'Office Furniture',
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2024-01-01T00:00:00Z',
     group_discount_tiers: [
       { min_members: 10, discount_percent: 10, tier_order: 1 },
       { min_members: 20, discount_percent: 15, tier_order: 2 }
@@ -39,25 +60,21 @@ const mockOffers = [
   },
   {
     id: '2',
+    supplier_id: 'supplier-1',
     title: 'Industrial Laptops Bulk Sale',
     description: 'Rugged laptops perfect for industrial environments',
-    status: 'pending' as const,
-    price: 1200,
-    currency: 'USD',
-    minQuantity: 5,
-    maxQuantity: 50,
-    currentOrders: 3,
-    expiryDate: '2024-02-20',
-    category: 'Electronics',
-    createdAt: '2024-01-05',
+    status: 'pending',
     base_price: 1200,
     minimum_joiners: 5,
     current_participants: 3,
-    deadline: '2024-02-20',
-    visibility: 'public' as const,
+    deadline: '2024-02-20T00:00:00Z',
+    visibility: 'public',
     kyc_required: false,
     points_required: 0,
     target_region: 'Global',
+    category: 'Electronics',
+    created_at: '2024-01-05T00:00:00Z',
+    updated_at: '2024-01-05T00:00:00Z',
     group_discount_tiers: [
       { min_members: 5, discount_percent: 8, tier_order: 1 },
       { min_members: 10, discount_percent: 12, tier_order: 2 }
@@ -65,25 +82,21 @@ const mockOffers = [
   },
   {
     id: '3',
+    supplier_id: 'supplier-1',
     title: 'Medical Supplies Package',
     description: 'Essential medical supplies for clinics and hospitals',
-    status: 'completed' as const,
-    price: 500,
-    currency: 'USD',
-    minQuantity: 20,
-    maxQuantity: 200,
-    currentOrders: 45,
-    expiryDate: '2023-12-31',
-    category: 'Medical',
-    createdAt: '2023-11-15',
+    status: 'completed',
     base_price: 500,
     minimum_joiners: 20,
     current_participants: 45,
-    deadline: '2023-12-31',
-    visibility: 'public' as const,
+    deadline: '2023-12-31T00:00:00Z',
+    visibility: 'public',
     kyc_required: true,
     points_required: 5,
     target_region: 'North America',
+    category: 'Medical',
+    created_at: '2023-11-15T00:00:00Z',
+    updated_at: '2023-11-15T00:00:00Z',
     group_discount_tiers: [
       { min_members: 20, discount_percent: 12, tier_order: 1 },
       { min_members: 50, discount_percent: 18, tier_order: 2 }
@@ -91,25 +104,21 @@ const mockOffers = [
   },
   {
     id: '4',
+    supplier_id: 'supplier-1',
     title: 'Construction Tools Set',
     description: 'Professional grade construction tools for contractors',
-    status: 'expired' as const,
-    price: 800,
-    currency: 'USD',
-    minQuantity: 8,
-    maxQuantity: 40,
-    currentOrders: 2,
-    expiryDate: '2023-12-25',
-    category: 'Tools',
-    createdAt: '2023-11-01',
+    status: 'expired',
     base_price: 800,
     minimum_joiners: 8,
     current_participants: 2,
-    deadline: '2023-12-25',
-    visibility: 'public' as const,
+    deadline: '2023-12-25T00:00:00Z',
+    visibility: 'public',
     kyc_required: false,
     points_required: 0,
     target_region: 'Europe',
+    category: 'Tools',
+    created_at: '2023-11-01T00:00:00Z',
+    updated_at: '2023-11-01T00:00:00Z',
     group_discount_tiers: [
       { min_members: 8, discount_percent: 10, tier_order: 1 },
       { min_members: 15, discount_percent: 15, tier_order: 2 }
@@ -150,17 +159,7 @@ export const SupplierOffersWorkflow = () => {
     );
   };
 
-  const getOffersForTab = (tab: string) => {
-    switch (tab) {
-      case 'active': return activeOffers;
-      case 'pending': return pendingOffers;
-      case 'completed': return completedOffers;
-      case 'expired': return expiredOffers;
-      default: return allOffers;
-    }
-  };
-
-  const renderOfferCard = (offer: typeof mockOffers[0]) => (
+  const renderOfferCard = (offer: SupplierOffer) => (
     <Card key={offer.id} className="hover:shadow-lg transition-shadow">
       <CardHeader className="pb-3">
         <div className="flex justify-between items-start">
@@ -182,24 +181,24 @@ export const SupplierOffersWorkflow = () => {
       <CardContent className="pt-0">
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div>
-            <p className="text-sm text-gray-500">Price per unit</p>
+            <p className="text-sm text-gray-500">Base Price</p>
             <p className="font-semibold text-lg text-green-600">
-              ${offer.price} {offer.currency}
+              ${offer.base_price}
             </p>
           </div>
           <div>
-            <p className="text-sm text-gray-500">Current Orders</p>
+            <p className="text-sm text-gray-500">Current Participants</p>
             <p className="font-semibold text-lg">
-              {offer.currentOrders}/{offer.maxQuantity}
+              {offer.current_participants}/{offer.minimum_joiners}
             </p>
           </div>
           <div>
-            <p className="text-sm text-gray-500">Min Quantity</p>
-            <p className="font-semibold">{offer.minQuantity} units</p>
+            <p className="text-sm text-gray-500">Min Joiners</p>
+            <p className="font-semibold">{offer.minimum_joiners} users</p>
           </div>
           <div>
-            <p className="text-sm text-gray-500">Expires</p>
-            <p className="font-semibold">{offer.expiryDate}</p>
+            <p className="text-sm text-gray-500">Deadline</p>
+            <p className="font-semibold">{new Date(offer.deadline).toLocaleDateString()}</p>
           </div>
         </div>
 
@@ -221,7 +220,7 @@ export const SupplierOffersWorkflow = () => {
             className="flex items-center gap-1"
           >
             <Users className="w-4 h-4" />
-            Organizers ({offer.currentOrders})
+            Buyers ({offer.current_participants})
           </Button>
 
           {offer.status === 'active' && (
@@ -297,7 +296,7 @@ export const SupplierOffersWorkflow = () => {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold">Offer Organizers</h2>
+          <h2 className="text-2xl font-bold">Offer Buyers</h2>
           <Button 
             variant="outline" 
             onClick={() => setShowOrganizers(null)}
