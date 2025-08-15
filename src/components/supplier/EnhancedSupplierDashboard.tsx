@@ -10,7 +10,7 @@ import { EnhancedPaymentSettingsForm } from './EnhancedPaymentSettingsForm';
 import { ComplaintsList } from './ComplaintsList';
 import { SupplierOffersWorkflow } from './SupplierOffersWorkflow';
 import { OfferOrganizersPanel } from './OfferOrganizersPanel';
-import { PayPalRechargeButton } from '@/components/wallet/PayPalRechargeButton';
+import PayPalRechargeButton from '@/components/wallet/PayPalRechargeButton';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { 
