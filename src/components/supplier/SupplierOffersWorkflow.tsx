@@ -1,184 +1,322 @@
 
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { useSupplierPanel } from '@/hooks/useSupplierPanel';
+import { Eye, Edit, Trash2, Users, Package, Clock, CheckCircle, XCircle } from 'lucide-react';
 import { CreateOfferForm } from './CreateOfferForm';
-import { 
-  Package, 
-  Plus,
-  Users,
-  Clock,
-  DollarSign,
-  Eye,
-  Edit,
-  Trash2
-} from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
+import { OfferDetailsPage } from './OfferDetailsPage';
+import { OfferOrganizersPanel } from './OfferOrganizersPanel';
+
+// Mock data for supplier offers
+const mockOffers = [
+  {
+    id: '1',
+    title: 'Premium Office Chairs - Group Discount',
+    description: 'High-quality ergonomic office chairs with bulk pricing',
+    status: 'active' as const,
+    price: 250,
+    currency: 'USD',
+    minQuantity: 10,
+    maxQuantity: 100,
+    currentOrders: 25,
+    expiryDate: '2024-02-15',
+    category: 'Office Furniture',
+    createdAt: '2024-01-01'
+  },
+  {
+    id: '2',
+    title: 'Industrial Laptops Bulk Sale',
+    description: 'Rugged laptops perfect for industrial environments',
+    status: 'pending' as const,
+    price: 1200,
+    currency: 'USD',
+    minQuantity: 5,
+    maxQuantity: 50,
+    currentOrders: 3,
+    expiryDate: '2024-02-20',
+    category: 'Electronics',
+    createdAt: '2024-01-05'
+  },
+  {
+    id: '3',
+    title: 'Medical Supplies Package',
+    description: 'Essential medical supplies for clinics and hospitals',
+    status: 'completed' as const,
+    price: 500,
+    currency: 'USD',
+    minQuantity: 20,
+    maxQuantity: 200,
+    currentOrders: 45,
+    expiryDate: '2023-12-31',
+    category: 'Medical',
+    createdAt: '2023-11-15'
+  },
+  {
+    id: '4',
+    title: 'Construction Tools Set',
+    description: 'Professional grade construction tools for contractors',
+    status: 'expired' as const,
+    price: 800,
+    currency: 'USD',
+    minQuantity: 8,
+    maxQuantity: 40,
+    currentOrders: 2,
+    expiryDate: '2023-12-25',
+    category: 'Tools',
+    createdAt: '2023-11-01'
+  }
+];
 
 export const SupplierOffersWorkflow = () => {
-  const { offers, isLoading } = useSupplierPanel();
-  const [showCreateOffer, setShowCreateOffer] = useState(false);
+  const [selectedTab, setSelectedTab] = useState('all');
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [selectedOffer, setSelectedOffer] = useState<string | null>(null);
+  const [showOrganizers, setShowOrganizers] = useState<string | null>(null);
 
-  if (isLoading) {
-    return <div>Loading offers...</div>;
+  // Filter offers based on status
+  const allOffers = mockOffers;
+  const activeOffers = allOffers.filter(offer => offer.status === 'active');
+  const pendingOffers = allOffers.filter(offer => offer.status === 'pending');
+  const completedOffers = allOffers.filter(offer => offer.status === 'completed');
+  const expiredOffers = allOffers.filter(offer => offer.status === 'expired');
+
+  const getStatusBadge = (status: string) => {
+    const statusConfig = {
+      active: { color: 'bg-green-100 text-green-800', icon: CheckCircle },
+      pending: { color: 'bg-yellow-100 text-yellow-800', icon: Clock },
+      completed: { color: 'bg-blue-100 text-blue-800', icon: CheckCircle },
+      expired: { color: 'bg-red-100 text-red-800', icon: XCircle },
+      cancelled: { color: 'bg-gray-100 text-gray-800', icon: XCircle }
+    };
+    
+    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
+    const IconComponent = config.icon;
+    
+    return (
+      <Badge className={`${config.color} flex items-center gap-1`}>
+        <IconComponent className="w-3 h-3" />
+        {status.charAt(0).toUpperCase() + status.slice(1)}
+      </Badge>
+    );
+  };
+
+  const getOffersForTab = (tab: string) => {
+    switch (tab) {
+      case 'active': return activeOffers;
+      case 'pending': return pendingOffers;
+      case 'completed': return completedOffers;
+      case 'expired': return expiredOffers;
+      default: return allOffers;
+    }
+  };
+
+  const renderOfferCard = (offer: typeof mockOffers[0]) => (
+    <Card key={offer.id} className="hover:shadow-lg transition-shadow">
+      <CardHeader className="pb-3">
+        <div className="flex justify-between items-start">
+          <div className="flex-1">
+            <CardTitle className="text-lg font-semibold text-gray-900 mb-2">
+              {offer.title}
+            </CardTitle>
+            <p className="text-gray-600 text-sm mb-3">{offer.description}</p>
+            <div className="flex items-center gap-2">
+              {getStatusBadge(offer.status)}
+              <Badge variant="outline" className="text-xs">
+                {offer.category}
+              </Badge>
+            </div>
+          </div>
+        </div>
+      </CardHeader>
+      
+      <CardContent className="pt-0">
+        <div className="grid grid-cols-2 gap-4 mb-4">
+          <div>
+            <p className="text-sm text-gray-500">Price per unit</p>
+            <p className="font-semibold text-lg text-green-600">
+              ${offer.price} {offer.currency}
+            </p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-500">Current Orders</p>
+            <p className="font-semibold text-lg">
+              {offer.currentOrders}/{offer.maxQuantity}
+            </p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-500">Min Quantity</p>
+            <p className="font-semibold">{offer.minQuantity} units</p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-500">Expires</p>
+            <p className="font-semibold">{offer.expiryDate}</p>
+          </div>
+        </div>
+
+        <div className="flex gap-2 flex-wrap">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => setSelectedOffer(offer.id)}
+            className="flex items-center gap-1"
+          >
+            <Eye className="w-4 h-4" />
+            View Details
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => setShowOrganizers(offer.id)}
+            className="flex items-center gap-1"
+          >
+            <Users className="w-4 h-4" />
+            Organizers ({offer.currentOrders})
+          </Button>
+
+          {offer.status === 'active' && (
+            <>
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="flex items-center gap-1"
+              >
+                <Edit className="w-4 h-4" />
+                Edit
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="flex items-center gap-1 text-red-600 hover:text-red-700"
+              >
+                <Trash2 className="w-4 h-4" />
+                Cancel
+              </Button>
+            </>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  if (showCreateForm) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold">Create New Offer</h2>
+          <Button 
+            variant="outline" 
+            onClick={() => setShowCreateForm(false)}
+          >
+            Back to Offers
+          </Button>
+        </div>
+        <CreateOfferForm onClose={() => setShowCreateForm(false)} />
+      </div>
+    );
   }
 
-  // Fix the filtering logic by using proper status comparisons
-  const allOffers = offers || [];
-  const activeOffers = allOffers.filter(offer => offer.status === 'active');
-  const pendingOffers = allOffers.filter(offer => offer.status === 'pending' || offer.status === 'draft');
-  const completedOffers = allOffers.filter(offer => offer.status === 'completed');
-  const expiredOffers = allOffers.filter(offer => offer.status === 'expired' || offer.status === 'cancelled');
+  if (selectedOffer) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold">Offer Details</h2>
+          <Button 
+            variant="outline" 
+            onClick={() => setSelectedOffer(null)}
+          >
+            Back to Offers
+          </Button>
+        </div>
+        <OfferDetailsPage 
+          offerId={selectedOffer} 
+          onClose={() => setSelectedOffer(null)}
+        />
+      </div>
+    );
+  }
+
+  if (showOrganizers) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold">Offer Organizers</h2>
+          <Button 
+            variant="outline" 
+            onClick={() => setShowOrganizers(null)}
+          >
+            Back to Offers
+          </Button>
+        </div>
+        <OfferOrganizersPanel 
+          offerId={showOrganizers} 
+          onClose={() => setShowOrganizers(null)}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold">My Offers</h2>
-          <p className="text-muted-foreground">Manage your group discount offers</p>
-        </div>
-        <Button onClick={() => setShowCreateOffer(true)}>
-          <Plus className="w-4 h-4 mr-2" />
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">My Offers</h2>
+        <Button onClick={() => setShowCreateForm(true)} className="flex items-center gap-2">
+          <Package className="w-4 h-4" />
           Create New Offer
         </Button>
       </div>
 
-      <Tabs defaultValue="active" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="active">
-            Active ({activeOffers.length})
-          </TabsTrigger>
-          <TabsTrigger value="pending">
-            Pending ({pendingOffers.length})
-          </TabsTrigger>
-          <TabsTrigger value="completed">
-            Completed ({completedOffers.length})
-          </TabsTrigger>
-          <TabsTrigger value="expired">
-            Expired ({expiredOffers.length})
-          </TabsTrigger>
+      <Tabs value={selectedTab} onValueChange={setSelectedTab}>
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="all">All ({allOffers.length})</TabsTrigger>
+          <TabsTrigger value="active">Active ({activeOffers.length})</TabsTrigger>
+          <TabsTrigger value="pending">Pending ({pendingOffers.length})</TabsTrigger>
+          <TabsTrigger value="completed">Completed ({completedOffers.length})</TabsTrigger>
+          <TabsTrigger value="expired">Expired ({expiredOffers.length})</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="active" className="space-y-4">
-          {activeOffers.length > 0 ? (
-            activeOffers.map((offer) => (
-              <OfferCard key={offer.id} offer={offer} />
-            ))
+        <TabsContent value="all" className="space-y-4">
+          {allOffers.length === 0 ? (
+            <Card className="p-8 text-center">
+              <Package className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">No offers yet</h3>
+              <p className="text-gray-600 mb-4">Create your first offer to start selling to groups.</p>
+              <Button onClick={() => setShowCreateForm(true)}>Create First Offer</Button>
+            </Card>
           ) : (
-            <div className="text-center py-8">
-              <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">No active offers</p>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {allOffers.map(renderOfferCard)}
             </div>
           )}
+        </TabsContent>
+
+        <TabsContent value="active" className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {activeOffers.map(renderOfferCard)}
+          </div>
         </TabsContent>
 
         <TabsContent value="pending" className="space-y-4">
-          {pendingOffers.length > 0 ? (
-            pendingOffers.map((offer) => (
-              <OfferCard key={offer.id} offer={offer} />
-            ))
-          ) : (
-            <div className="text-center py-8">
-              <Clock className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">No pending offers</p>
-            </div>
-          )}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {pendingOffers.map(renderOfferCard)}
+          </div>
         </TabsContent>
 
         <TabsContent value="completed" className="space-y-4">
-          {completedOffers.length > 0 ? (
-            completedOffers.map((offer) => (
-              <OfferCard key={offer.id} offer={offer} />
-            ))
-          ) : (
-            <div className="text-center py-8">
-              <DollarSign className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">No completed offers</p>
-            </div>
-          )}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {completedOffers.map(renderOfferCard)}
+          </div>
         </TabsContent>
 
         <TabsContent value="expired" className="space-y-4">
-          {expiredOffers.length > 0 ? (
-            expiredOffers.map((offer) => (
-              <OfferCard key={offer.id} offer={offer} />
-            ))
-          ) : (
-            <div className="text-center py-8">
-              <Clock className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">No expired offers</p>
-            </div>
-          )}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {expiredOffers.map(renderOfferCard)}
+          </div>
         </TabsContent>
       </Tabs>
-
-      <CreateOfferForm 
-        isOpen={showCreateOffer}
-        onClose={() => setShowCreateOffer(false)}
-      />
     </div>
-  );
-};
-
-const OfferCard = ({ offer }: { offer: any }) => {
-  return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-start justify-between">
-          <div>
-            <CardTitle className="text-lg">{offer.title}</CardTitle>
-            <p className="text-muted-foreground mt-1">{offer.description}</p>
-          </div>
-          <Badge variant={
-            offer.status === 'active' ? 'default' :
-            offer.status === 'completed' ? 'secondary' :
-            offer.status === 'expired' || offer.status === 'cancelled' ? 'destructive' : 
-            'outline'
-          }>
-            {offer.status}
-          </Badge>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mb-4">
-          <div>
-            <p className="text-muted-foreground">Base Price</p>
-            <p className="font-semibold">${offer.base_price}</p>
-          </div>
-          <div>
-            <p className="text-muted-foreground">Participants</p>
-            <p className="font-semibold">{offer.current_participants}/{offer.minimum_joiners}</p>
-          </div>
-          <div>
-            <p className="text-muted-foreground">Deadline</p>
-            <p className="font-semibold">
-              {formatDistanceToNow(new Date(offer.deadline), { addSuffix: true })}
-            </p>
-          </div>
-          <div>
-            <p className="text-muted-foreground">Category</p>
-            <p className="font-semibold">{offer.category || 'General'}</p>
-          </div>
-        </div>
-        
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm">
-            <Eye className="w-4 h-4 mr-2" />
-            View Details
-          </Button>
-          <Button variant="outline" size="sm">
-            <Edit className="w-4 h-4 mr-2" />
-            Edit
-          </Button>
-          <Button variant="outline" size="sm" className="text-destructive">
-            <Trash2 className="w-4 h-4 mr-2" />
-            Delete
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
   );
 };
