@@ -1,7 +1,7 @@
 
 import React from 'react';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
-import { SupplierDashboard } from '@/components/supplier/SupplierDashboard';
+import { EnhancedSupplierDashboard } from '@/components/supplier/EnhancedSupplierDashboard';
 
 const SupplierDashboardPage = () => {
   console.log('SupplierDashboardPage rendering');
@@ -9,7 +9,7 @@ const SupplierDashboardPage = () => {
   return (
     <ProtectedRoute requiredRole="supplier">
       <div className="min-h-screen">
-        <SupplierDashboard />
+        <EnhancedSupplierDashboard />
       </div>
     </ProtectedRoute>
   );

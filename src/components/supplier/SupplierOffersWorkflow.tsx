@@ -24,10 +24,10 @@ const SupplierOffersWorkflow = () => {
 
   // Fix the filtering logic to avoid TypeScript errors
   const allOffers = offers || [];
-  const activeOffers = allOffers.filter(offer => offer.status === 'active');
-  const pendingOffers = allOffers.filter(offer => offer.status === 'pending' || offer.status === 'draft');
-  const completedOffers = allOffers.filter(offer => offer.status === 'completed');
-  const expiredOffers = allOffers.filter(offer => offer.status === 'expired' || offer.status === 'cancelled');
+  const activeOffers = allOffers.filter(offer => offer?.status === 'active');
+  const pendingOffers = allOffers.filter(offer => offer?.status === 'pending' || offer?.status === 'draft');
+  const completedOffers = allOffers.filter(offer => offer?.status === 'completed');
+  const expiredOffers = allOffers.filter(offer => offer?.status === 'expired' || offer?.status === 'cancelled');
 
   const handleViewOffer = (offerId: string) => {
     console.log('Viewing offer:', offerId);
