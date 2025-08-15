@@ -13,6 +13,7 @@ import { DemoToggle } from "@/components/demo/DemoToggle";
 const Index = lazy(() => import("@/pages/Index"));
 const Dashboard = lazy(() => import("@/pages/Dashboard"));
 const ClientDashboard = lazy(() => import("@/pages/ClientDashboard"));
+const EnhancedClientDashboard = lazy(() => import("@/components/dashboard/EnhancedClientDashboard"));
 const UserProfile = lazy(() => import("@/pages/UserProfile"));
 const AccountSettings = lazy(() => import("@/pages/AccountSettings"));
 const GroupRoom = lazy(() => import("@/pages/GroupRoom"));
@@ -66,13 +67,13 @@ function App() {
                     <Route path="/dashboard/supplier" element={<SupplierDashboard />} />
                     <Route path="/dashboard/buyer" element={<BuyerDashboard />} />
                     <Route path="/dashboard/freelancer" element={<FreelancerDashboard />} />
-                    <Route path="/dashboard/group-buying" element={<ClientDashboard />} />
-                    <Route path="/dashboard/investor" element={<ClientDashboard />} />
-                    <Route path="/dashboard/judge" element={<ClientDashboard />} />
-                    <Route path="/dashboard/ai-agent" element={<ClientDashboard />} />
+                    <Route path="/dashboard/group-buying" element={<EnhancedClientDashboard />} />
+                    <Route path="/dashboard/investor" element={<EnhancedClientDashboard />} />
+                    <Route path="/dashboard/judge" element={<EnhancedClientDashboard />} />
+                    <Route path="/dashboard/ai-agent" element={<EnhancedClientDashboard />} />
                     
-                    {/* Legacy routes */}
-                    <Route path="/client-dashboard" element={<ClientDashboard />} />
+                    {/* Legacy routes - now using EnhancedClientDashboard */}
+                    <Route path="/client-dashboard" element={<EnhancedClientDashboard />} />
                     <Route path="/profile" element={<UserProfile />} />
                     <Route path="/settings" element={<AccountSettings />} />
                     <Route path="/group-room/:groupId" element={<GroupRoom />} />
