@@ -23,7 +23,19 @@ const mockOffers = [
     currentOrders: 25,
     expiryDate: '2024-02-15',
     category: 'Office Furniture',
-    createdAt: '2024-01-01'
+    createdAt: '2024-01-01',
+    base_price: 250,
+    minimum_joiners: 10,
+    current_participants: 25,
+    deadline: '2024-02-15',
+    visibility: 'public' as const,
+    kyc_required: false,
+    points_required: 0,
+    target_region: 'Global',
+    group_discount_tiers: [
+      { min_members: 10, discount_percent: 10, tier_order: 1 },
+      { min_members: 20, discount_percent: 15, tier_order: 2 }
+    ]
   },
   {
     id: '2',
@@ -37,7 +49,19 @@ const mockOffers = [
     currentOrders: 3,
     expiryDate: '2024-02-20',
     category: 'Electronics',
-    createdAt: '2024-01-05'
+    createdAt: '2024-01-05',
+    base_price: 1200,
+    minimum_joiners: 5,
+    current_participants: 3,
+    deadline: '2024-02-20',
+    visibility: 'public' as const,
+    kyc_required: false,
+    points_required: 0,
+    target_region: 'Global',
+    group_discount_tiers: [
+      { min_members: 5, discount_percent: 8, tier_order: 1 },
+      { min_members: 10, discount_percent: 12, tier_order: 2 }
+    ]
   },
   {
     id: '3',
@@ -51,7 +75,19 @@ const mockOffers = [
     currentOrders: 45,
     expiryDate: '2023-12-31',
     category: 'Medical',
-    createdAt: '2023-11-15'
+    createdAt: '2023-11-15',
+    base_price: 500,
+    minimum_joiners: 20,
+    current_participants: 45,
+    deadline: '2023-12-31',
+    visibility: 'public' as const,
+    kyc_required: true,
+    points_required: 5,
+    target_region: 'North America',
+    group_discount_tiers: [
+      { min_members: 20, discount_percent: 12, tier_order: 1 },
+      { min_members: 50, discount_percent: 18, tier_order: 2 }
+    ]
   },
   {
     id: '4',
@@ -65,7 +101,19 @@ const mockOffers = [
     currentOrders: 2,
     expiryDate: '2023-12-25',
     category: 'Tools',
-    createdAt: '2023-11-01'
+    createdAt: '2023-11-01',
+    base_price: 800,
+    minimum_joiners: 8,
+    current_participants: 2,
+    deadline: '2023-12-25',
+    visibility: 'public' as const,
+    kyc_required: false,
+    points_required: 0,
+    target_region: 'Europe',
+    group_discount_tiers: [
+      { min_members: 8, discount_percent: 10, tier_order: 1 },
+      { min_members: 15, discount_percent: 15, tier_order: 2 }
+    ]
   }
 ];
 
@@ -214,12 +262,18 @@ export const SupplierOffersWorkflow = () => {
             Back to Offers
           </Button>
         </div>
-        <CreateOfferForm onClose={() => setShowCreateForm(false)} />
+        <CreateOfferForm 
+          isOpen={showCreateForm}
+          onClose={() => setShowCreateForm(false)} 
+        />
       </div>
     );
   }
 
   if (selectedOffer) {
+    const offer = allOffers.find(o => o.id === selectedOffer);
+    if (!offer) return null;
+    
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
@@ -232,8 +286,8 @@ export const SupplierOffersWorkflow = () => {
           </Button>
         </div>
         <OfferDetailsPage 
-          offerId={selectedOffer} 
-          onClose={() => setSelectedOffer(null)}
+          offer={offer}
+          onBack={() => setSelectedOffer(null)}
         />
       </div>
     );
@@ -252,8 +306,7 @@ export const SupplierOffersWorkflow = () => {
           </Button>
         </div>
         <OfferOrganizersPanel 
-          offerId={showOrganizers} 
-          onClose={() => setShowOrganizers(null)}
+          offerId={showOrganizers}
         />
       </div>
     );
