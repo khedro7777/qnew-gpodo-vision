@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -45,10 +44,9 @@ const EnhancedArbitrationSystem = ({ groupId }: EnhancedArbitrationSystemProps) 
   const [newCase, setNewCase] = useState({
     title: '',
     description: '',
-    category: '',
+    type: '',
     priority: 'medium',
     respondent_id: '',
-    evidence_urls: [] as string[],
     requested_remedy: ''
   });
 
@@ -61,10 +59,10 @@ const EnhancedArbitrationSystem = ({ groupId }: EnhancedArbitrationSystemProps) 
       description: 'Supplier failed to deliver goods within agreed timeframe causing financial losses.',
       status: 'in_progress',
       priority: 'high',
-      category: 'contract_dispute',
+      type: 'contract_dispute',
       created_at: '2024-01-15T00:00:00Z',
       updated_at: '2024-01-20T00:00:00Z',
-      applicant_id: user?.id || 'user1',
+      complainant_id: user?.id || 'user1',
       respondent_id: 'user2',
       arbitrator_id: 'arbitrator1',
       evidence_urls: ['doc1.pdf', 'contract.pdf'],
@@ -79,10 +77,10 @@ const EnhancedArbitrationSystem = ({ groupId }: EnhancedArbitrationSystemProps) 
       description: 'Dispute over payment terms and additional charges not agreed upon.',
       status: 'pending',
       priority: 'medium',
-      category: 'payment_dispute',
+      type: 'payment_dispute',
       created_at: '2024-01-10T00:00:00Z',
       updated_at: '2024-01-10T00:00:00Z',
-      applicant_id: user?.id || 'user1',
+      complainant_id: user?.id || 'user1',
       respondent_id: 'user3',
       arbitrator_id: null,
       evidence_urls: ['invoice.pdf'],
@@ -100,25 +98,20 @@ const EnhancedArbitrationSystem = ({ groupId }: EnhancedArbitrationSystemProps) 
     createCase({
       title: newCase.title,
       description: newCase.description,
-      category: newCase.category,
+      type: newCase.type,
       priority: newCase.priority as 'low' | 'medium' | 'high',
       status: 'pending',
-      applicant_id: user?.id || '',
+      complainant_id: user?.id || '',
       respondent_id: newCase.respondent_id,
-      arbitrator_id: null,
-      evidence_urls: newCase.evidence_urls,
-      requested_remedy: newCase.requested_remedy,
-      arbitrator_notes: null,
-      resolution_deadline: null
+      group_id: groupId || null
     });
 
     setNewCase({
       title: '',
       description: '',
-      category: '',
+      type: '',
       priority: 'medium',
       respondent_id: '',
-      evidence_urls: [],
       requested_remedy: ''
     });
     setIsCreateModalOpen(false);
@@ -161,7 +154,7 @@ const EnhancedArbitrationSystem = ({ groupId }: EnhancedArbitrationSystemProps) 
       case 'resolved':
         return cases.filter(c => c.status === 'resolved');
       case 'my-cases':
-        return cases.filter(c => c.applicant_id === user?.id);
+        return cases.filter(c => c.complainant_id === user?.id);
       default:
         return cases;
     }
@@ -224,10 +217,10 @@ const EnhancedArbitrationSystem = ({ groupId }: EnhancedArbitrationSystemProps) 
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label>Category</Label>
-                  <Select value={newCase.category} onValueChange={(value) => setNewCase(prev => ({ ...prev, category: value }))}>
+                  <Label>Type</Label>
+                  <Select value={newCase.type} onValueChange={(value) => setNewCase(prev => ({ ...prev, type: value }))}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select category" />
+                      <SelectValue placeholder="Select type" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="contract_dispute">Contract Dispute</SelectItem>
@@ -301,7 +294,7 @@ const EnhancedArbitrationSystem = ({ groupId }: EnhancedArbitrationSystemProps) 
           </DialogContent>
         </Dialog>
       </div>
-
+      
       {/* Case Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
@@ -364,7 +357,7 @@ const EnhancedArbitrationSystem = ({ groupId }: EnhancedArbitrationSystemProps) 
           </TabsTrigger>
           <TabsTrigger value="my-cases" className="flex items-center gap-2">
             <Users className="w-4 h-4" />
-            My Cases ({mockCases.filter(c => c.applicant_id === user?.id).length})
+            My Cases ({mockCases.filter(c => c.complainant_id === user?.id).length})
           </TabsTrigger>
         </TabsList>
 
@@ -402,7 +395,7 @@ const EnhancedArbitrationSystem = ({ groupId }: EnhancedArbitrationSystemProps) 
                         <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
                           <span className="font-mono">{case_.case_number}</span>
                           <span>•</span>
-                          <span>{case_.category.replace('_', ' ')}</span>
+                          <span>{case_.type.replace('_', ' ')}</span>
                           <span>•</span>
                           <span>Filed {new Date(case_.created_at).toLocaleDateString()}</span>
                         </div>
@@ -512,7 +505,7 @@ const EnhancedArbitrationSystem = ({ groupId }: EnhancedArbitrationSystemProps) 
                             Download Evidence
                           </Button>
                           
-                          {case_.applicant_id === user?.id && case_.status === 'pending' && (
+                          {case_.complainant_id === user?.id && case_.status === 'pending' && (
                             <Button variant="outline" size="sm" className="w-full justify-start">
                               <Upload className="w-4 h-4 mr-2" />
                               Add Evidence

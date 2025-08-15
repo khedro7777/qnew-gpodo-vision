@@ -25,7 +25,8 @@ import {
   Calendar,
   Hash,
   Lock,
-  Globe
+  Globe,
+  XCircle
 } from 'lucide-react';
 import { useDiscussion } from '@/hooks/useDiscussion';
 import { useAuth } from '@/contexts/AuthContext';
