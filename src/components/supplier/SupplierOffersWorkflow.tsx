@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -8,33 +7,9 @@ import { Eye, Edit, Trash2, Users, Package, Clock, CheckCircle, XCircle } from '
 import { CreateOfferForm } from './CreateOfferForm';
 import { OfferDetailsPage } from './OfferDetailsPage';
 import { OfferOrganizersPanel } from './OfferOrganizersPanel';
+import { SupplierOffer, DiscountTier } from '@/hooks/useSupplierPanel';
 
-// Define the SupplierOffer interface to match the expected type
-interface SupplierOffer {
-  id: string;
-  supplier_id: string;
-  title: string;
-  description: string;
-  status: 'active' | 'pending' | 'completed' | 'expired' | 'cancelled' | 'draft';
-  base_price: number;
-  minimum_joiners: number;
-  current_participants: number;
-  deadline: string;
-  visibility: 'public' | 'invite_only';
-  kyc_required: boolean;
-  points_required: number;
-  target_region: string;
-  created_at: string;
-  updated_at: string;
-  category?: string;
-  group_discount_tiers?: Array<{
-    min_members: number;
-    discount_percent?: number;
-    tier_order: number;
-  }>;
-}
-
-// Mock data for supplier offers - properly typed
+// Mock data for supplier offers - using the correct SupplierOffer type
 const mockOffers: SupplierOffer[] = [
   {
     id: '1',
@@ -54,8 +29,22 @@ const mockOffers: SupplierOffer[] = [
     created_at: '2024-01-01T00:00:00Z',
     updated_at: '2024-01-01T00:00:00Z',
     group_discount_tiers: [
-      { min_members: 10, discount_percent: 10, tier_order: 1 },
-      { min_members: 20, discount_percent: 15, tier_order: 2 }
+      { 
+        id: 'tier-1-1',
+        offer_id: '1',
+        min_members: 10, 
+        discount_percent: 10, 
+        tier_order: 1,
+        created_at: '2024-01-01T00:00:00Z'
+      },
+      { 
+        id: 'tier-1-2',
+        offer_id: '1',
+        min_members: 20, 
+        discount_percent: 15, 
+        tier_order: 2,
+        created_at: '2024-01-01T00:00:00Z'
+      }
     ]
   },
   {
@@ -76,8 +65,22 @@ const mockOffers: SupplierOffer[] = [
     created_at: '2024-01-05T00:00:00Z',
     updated_at: '2024-01-05T00:00:00Z',
     group_discount_tiers: [
-      { min_members: 5, discount_percent: 8, tier_order: 1 },
-      { min_members: 10, discount_percent: 12, tier_order: 2 }
+      { 
+        id: 'tier-2-1',
+        offer_id: '2',
+        min_members: 5, 
+        discount_percent: 8, 
+        tier_order: 1,
+        created_at: '2024-01-05T00:00:00Z'
+      },
+      { 
+        id: 'tier-2-2',
+        offer_id: '2',
+        min_members: 10, 
+        discount_percent: 12, 
+        tier_order: 2,
+        created_at: '2024-01-05T00:00:00Z'
+      }
     ]
   },
   {
@@ -98,8 +101,22 @@ const mockOffers: SupplierOffer[] = [
     created_at: '2023-11-15T00:00:00Z',
     updated_at: '2023-11-15T00:00:00Z',
     group_discount_tiers: [
-      { min_members: 20, discount_percent: 12, tier_order: 1 },
-      { min_members: 50, discount_percent: 18, tier_order: 2 }
+      { 
+        id: 'tier-3-1',
+        offer_id: '3',
+        min_members: 20, 
+        discount_percent: 12, 
+        tier_order: 1,
+        created_at: '2023-11-15T00:00:00Z'
+      },
+      { 
+        id: 'tier-3-2',
+        offer_id: '3',
+        min_members: 50, 
+        discount_percent: 18, 
+        tier_order: 2,
+        created_at: '2023-11-15T00:00:00Z'
+      }
     ]
   },
   {
@@ -120,8 +137,22 @@ const mockOffers: SupplierOffer[] = [
     created_at: '2023-11-01T00:00:00Z',
     updated_at: '2023-11-01T00:00:00Z',
     group_discount_tiers: [
-      { min_members: 8, discount_percent: 10, tier_order: 1 },
-      { min_members: 15, discount_percent: 15, tier_order: 2 }
+      { 
+        id: 'tier-4-1',
+        offer_id: '4',
+        min_members: 8, 
+        discount_percent: 10, 
+        tier_order: 1,
+        created_at: '2023-11-01T00:00:00Z'
+      },
+      { 
+        id: 'tier-4-2',
+        offer_id: '4',
+        min_members: 15, 
+        discount_percent: 15, 
+        tier_order: 2,
+        created_at: '2023-11-01T00:00:00Z'
+      }
     ]
   }
 ];
