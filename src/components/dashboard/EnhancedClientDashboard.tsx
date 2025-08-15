@@ -17,6 +17,7 @@ import CompanyFormationTab from '@/components/dashboard/CompanyFormationTab';
 import NotificationsTab from '@/components/dashboard/NotificationsTab';
 import MarketInsightsTab from '@/components/dashboard/MarketInsightsTab';
 import RiskManagementTab from '@/components/dashboard/RiskManagementTab';
+import TestingTab from '@/components/dashboard/TestingTab';
 import { SupplierDashboard } from '@/components/supplier/SupplierDashboard';
 import FreelancerDashboardTab from '@/components/dashboard/FreelancerDashboardTab';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -33,7 +34,8 @@ import {
   Zap,
   Star,
   Award,
-  Activity
+  Activity,
+  TestTube
 } from 'lucide-react';
 
 const EnhancedClientDashboard = () => {
@@ -54,7 +56,8 @@ const EnhancedClientDashboard = () => {
     { id: 'company-formation', label: 'Company Formation', shortLabel: 'Company', icon: Package },
     { id: 'notifications', label: 'Notifications', shortLabel: 'Alerts', icon: Activity },
     { id: 'market-insights', label: 'Market Insights', shortLabel: 'Market', icon: TrendingUp },
-    { id: 'risk-management', label: 'Risk Management', shortLabel: 'Risk', icon: Shield }
+    { id: 'risk-management', label: 'Risk Management', shortLabel: 'Risk', icon: Shield },
+    { id: 'testing', label: 'Live Testing', shortLabel: 'Tests', icon: TestTube }
   ];
 
   // Mock dashboard stats
@@ -80,7 +83,7 @@ const EnhancedClientDashboard = () => {
               <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-600 shrink-0" />
               <div className="flex-1">
                 <h3 className="font-semibold text-yellow-900 text-sm sm:text-base">Demo Mode - Development Version</h3>
-                <p className="text-xs sm:text-sm text-yellow-700">Enhanced with Snapshot.js, Loomio, and ODR integrations • Mock data for development</p>
+                <p className="text-xs sm:text-sm text-yellow-700">Enhanced with Snapshot.js, Loomio, and ODR integrations • Live Testing System Active</p>
               </div>
               <PWAInstallButton />
             </div>
@@ -239,6 +242,10 @@ const EnhancedClientDashboard = () => {
 
             <TabsContent value="risk-management">
               <RiskManagementTab />
+            </TabsContent>
+
+            <TabsContent value="testing">
+              <TestingTab />
             </TabsContent>
           </Tabs>
         </div>
